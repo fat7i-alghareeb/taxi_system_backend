@@ -9,4 +9,5 @@ public record CreateCarCommand(
     string Model,
     int Year,
     string DescriptionEn,
-    string DescriptionAr) : IRequest<Result<CarDto>>;
+    string DescriptionAr,
+    string DescriptionNl) : IRequest<Result<CarDto>>;

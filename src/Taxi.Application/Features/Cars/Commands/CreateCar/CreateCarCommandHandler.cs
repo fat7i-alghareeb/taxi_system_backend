@@ -25,7 +25,8 @@ public class CreateCarCommandHandler(
             request.Model,
             request.Year,
             request.DescriptionEn,
-            request.DescriptionAr);
+            request.DescriptionAr,
+            request.DescriptionNl);
 
         if (carResult.IsError)
         {

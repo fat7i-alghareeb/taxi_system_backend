@@ -6,10 +6,11 @@ namespace Taxi.Domain.Common;
 /// </summary>
 public sealed class LocalizedText
 {
-    public LocalizedText(string en, string ar)
+    public LocalizedText(string en, string ar, string nl)
     {
         this.En = en;
         this.Ar = ar;
+        this.Nl = nl;
     }
 
     // Parameterless constructor required by EF Core for JSONB materialization
@@ -17,11 +18,14 @@ public sealed class LocalizedText
     {
         this.En = string.Empty;
         this.Ar = string.Empty;
+        this.Nl = string.Empty;
     }
 
     public string En { get; private set; }
 
     public string Ar { get; private set; }
 
-    public static LocalizedText Create(string en, string ar) => new(en, ar);
+    public string Nl { get; private set; }
+
+    public static LocalizedText Create(string en, string ar, string nl) => new(en, ar, nl);
 }

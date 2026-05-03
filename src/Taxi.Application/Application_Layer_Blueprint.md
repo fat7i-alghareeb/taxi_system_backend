@@ -23,7 +23,7 @@ The Application Layer dictates the flow of control. It implements the CQRS (Comm
 - **HTTP / Presentation Leakage:** Returning `IActionResult`, `HttpResponseMessage`, or checking `HttpContext`. The Application Layer does not know it is hosted in a Web API or a Console App.
 - **Business Rules:** Containing logic like `if (balance < 0) return Error`. All decisions involving object states belong strictly inside the Domain Entities.
 - **Handlers must be kept "slim".** If a mapping takes more than 5 lines, extract it to a dedicated Mapper class.
-- **Bilingual Mapping**: Mapper methods (`ToDto()`) should be minimized. Prefer switch-based projections in Handlers to ensure SQL-side JSONB extraction. If a mapper is used, it must resolve correctly based on the current culture from `ILanguageContext`.
+- **Trilingual Mapping**: Mapper methods (`ToDto()`) should be minimized. Prefer switch-based projections in Handlers to ensure SQL-side JSONB extraction. If a mapper is used, it must resolve correctly based on the current culture from `ILanguageContext`.
 
 ---
 
@@ -80,9 +80,9 @@ src/MechanicShop.Application/
 
 We strictly enforce Command Query Responsibility Segregation using the MediatR library. This means we have two completely distinct channels of data flow.
 
-### 3.1. Bilingual Language Projection (JSONB)
+### 3.1. Trilingual Language Projection (JSONB)
 
-To maximize database performance and satisfy the strict bilingual retrieval constraint, we utilize PostgreSQL JSONB path accessors directly in LINQ projections.
+To maximize database performance and satisfy the strict trilingual retrieval constraint, we utilize PostgreSQL JSONB path accessors directly in LINQ projections.
 
 **Mandatory Patterns:**
 

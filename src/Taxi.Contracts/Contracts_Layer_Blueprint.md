@@ -54,7 +54,7 @@ The Contracts directory structure directly aligns with the features or conceptua
 src/MechanicShop.Contracts/
 ├── Common/
 │   ├── LocalizationKeys.cs  <-- Strongly-Typed Error/UI Keys
-│   ├── Languages.cs         <-- Canonical Language Codes (en, ar)
+│   ├── Languages.cs         <-- Canonical Language Codes (en, ar, nl)
 │   ├── OrderState.cs
 │   ├── PaymentMethod.cs
 │   └── CountryCode.cs
@@ -107,9 +107,9 @@ Contracts should avoid deep inheritance hierarchies. An API payload should be re
 The Contracts layer hosts the `LocalizationKeys` class. This is the **Supreme Dictionary** of the system.
 
 - **No Magic Strings**: Every error message, validation rule, and UI label that requires translation MUST have a constant in `LocalizationKeys`.
-- **Languages Registry**: The `Languages` class defines the supported culture codes (`En`, `Ar`). All layers must use `Languages.Ar` / `Languages.En` instead of raw "ar" / "en" strings.
+- **Languages Registry**: The `Languages` class defines the supported culture codes (`En`, `Ar`, `Nl`). All layers must use `Languages.Ar` / `Languages.En` / `Languages.Nl` instead of raw "ar" / "en" / "nl" strings.
 - **Cross-Layer Parity**: Because the Blazor Client and the API both reference the Contracts layer, they use the exact same keys and language constants.
-- **Shared Resources**: Every key in `LocalizationKeys` MUST have a matching entry in `SharedResource.en.json` and `SharedResource.ar.json`.
+- **Shared Resources**: Every key in `LocalizationKeys` MUST have a matching entry in `SharedResource.en.json`, `SharedResource.ar.json`, and `SharedResource.nl.json`.
 - **DataAnnotation Integration**: Validation attributes such as `[Required(ErrorMessage = LocalizationKeys.Validation.EnglishNameRequired)]` are picked up at runtime by the API's `InvalidModelStateResponseFactory` (registered in `MechanicShop.Api/DependencyInjection.cs` `AddValidation()`) and translated through the same `IStringLocalizer<SharedResource>` used by FluentValidation and domain errors. The `ErrorMessage` value IS the localization key — never a raw English string.
 
 ---

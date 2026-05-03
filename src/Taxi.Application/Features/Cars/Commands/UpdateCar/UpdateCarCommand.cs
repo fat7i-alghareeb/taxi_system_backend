@@ -9,4 +9,5 @@ public record UpdateCarCommand(
     string Model,
     int Year,
     string DescriptionEn,
-    string DescriptionAr) : IRequest<Result<Updated>>;
+    string DescriptionAr,
+    string DescriptionNl) : IRequest<Result<Updated>>;

@@ -13,8 +13,9 @@ public static class Languages
 {
     public const string En = "en";
     public const string Ar = "ar";
+    public const string Nl = "nl";
 
     public const string Default = En;
 
-    public static readonly string[] All = [En, Ar];
+    public static readonly string[] All = [En, Ar, Nl];
 }

@@ -26,7 +26,7 @@ public sealed class Car : AuditableEntity
 
     public LocalizedText Description { get; private set; } = null!;
 
-    public static Result<Car> Create(Guid id, string make, string model, int year, string descriptionEn, string descriptionAr)
+    public static Result<Car> Create(Guid id, string make, string model, int year, string descriptionEn, string descriptionAr, string descriptionNl)
     {
         if (id == Guid.Empty)
         {
@@ -48,15 +48,15 @@ public sealed class Car : AuditableEntity
             return CarErrors.InvalidYear;
         }
 
-        if (string.IsNullOrWhiteSpace(descriptionEn) || string.IsNullOrWhiteSpace(descriptionAr))
+        if (string.IsNullOrWhiteSpace(descriptionEn) || string.IsNullOrWhiteSpace(descriptionAr) || string.IsNullOrWhiteSpace(descriptionNl))
         {
             return CarErrors.DescriptionRequired;
         }
 
-        return new Car(id, make, model, year, new LocalizedText(descriptionEn.Trim(), descriptionAr.Trim()));
+        return new Car(id, make, model, year, new LocalizedText(descriptionEn.Trim(), descriptionAr.Trim(), descriptionNl.Trim()));
     }
 
-    public Result<Updated> Update(string make, string model, int year, string descriptionEn, string descriptionAr)
+    public Result<Updated> Update(string make, string model, int year, string descriptionEn, string descriptionAr, string descriptionNl)
     {
         if (string.IsNullOrWhiteSpace(make))
         {
@@ -73,7 +73,7 @@ public sealed class Car : AuditableEntity
             return CarErrors.InvalidYear;
         }
 
-        if (string.IsNullOrWhiteSpace(descriptionEn) || string.IsNullOrWhiteSpace(descriptionAr))
+        if (string.IsNullOrWhiteSpace(descriptionEn) || string.IsNullOrWhiteSpace(descriptionAr) || string.IsNullOrWhiteSpace(descriptionNl))
         {
             return CarErrors.DescriptionRequired;
         }
@@ -81,7 +81,7 @@ public sealed class Car : AuditableEntity
         this.Make = make;
         this.Model = model;
         this.Year = year;
-        this.Description = new LocalizedText(descriptionEn.Trim(), descriptionAr.Trim());
+        this.Description = new LocalizedText(descriptionEn.Trim(), descriptionAr.Trim(), descriptionNl.Trim());
 
         return Result.Updated;
     }

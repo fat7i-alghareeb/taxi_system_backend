@@ -26,4 +26,8 @@ public class UpdateCarRequest
     [Required(ErrorMessage = LocalizationKeys.Validation.DescriptionRequired)]
     [StringLength(1000)]
     public string DescriptionAr { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = LocalizationKeys.Validation.DescriptionRequired)]
+    [StringLength(1000)]
+    public string DescriptionNl { get; set; } = string.Empty;
 }

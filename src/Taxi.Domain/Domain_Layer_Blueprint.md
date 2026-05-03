@@ -355,7 +355,7 @@ Any codebase submission attempting to corrupt the sanctity of the Domain Layer w
    - **Why it's rejected:** Any external service can call `.Add()` or `.Clear()`, violating aggregate boundaries.
    - **The Right Way:** `private readonly List<OrderLineItem> _lineItems = []; public IEnumerable<OrderLineItem> LineItems => _lineItems.AsReadOnly();`
 
-4. 🚨 **Bilingual String Pollution (Separate Columns):**
+4. 🚨 **Trilingual String Pollution (Separate Columns):**
    - **The Wrong Way**: `public string NameEn { get; set; } public string NameAr { get; set; }`
    - **Why it's rejected**: It pollutes the database table with redundant columns and makes the model inflexible.
    - **The Right Way**: Use the `LocalizedText` Value Object: `public LocalizedText Name { get; private set; }`. Ensure the matching `LocalizationKeys` exist for error reporting and `Languages` constants are used in any language-specific logic.
@@ -415,19 +415,20 @@ Relying on standard primitives (`string`, `decimal`, `int`) to represent complex
 - **Immutability:** Once created, a Value Object cannot be altered. To change it, you must replace it entirely.
 - **Structural Equality:** Two Value Objects are equal if, and only if, all their internal properties match exactly.
 
-#### The "Right Way" Example: LocalizedText (Bilingual Strings)
+#### The "Right Way" Example: LocalizedText (Trilingual Strings)
 
-The `LocalizedText` Value Object is the mandated carrier for all translatable fields (Names, Descriptions). It ensures English and Arabic versions are always coupled and stored atomically in JSONB.
+The `LocalizedText` Value Object is the mandated carrier for all translatable fields (Names, Descriptions). It ensures English, Arabic, and Dutch versions are always coupled and stored atomically in JSONB.
 
 ```csharp
 namespace MechanicShop.Domain.Common;
 
 public sealed class LocalizedText : ValueObject
 {
-    public LocalizedText(string en, string ar)
+    public LocalizedText(string en, string ar, string nl)
     {
         En = en;
         Ar = ar;
+        Nl = nl;
     }
 
     // Parameterless constructor required by EF Core for JSONB materialization
@@ -435,20 +436,23 @@ public sealed class LocalizedText : ValueObject
     {
         En = string.Empty;
         Ar = string.Empty;
+        Nl = string.Empty;
     }
 
     public string En { get; private set; }
     public string Ar { get; private set; }
+    public string Nl { get; private set; }
 
     protected override IEnumerable<object> GetEqualityComponents()
     {
         yield return En;
         yield return Ar;
+        yield return Nl;
     }
 }
 ```
 
-**Bilingual Rule**: All translatable string fields on entities MUST use `LocalizedText`. Raw `string` properties for bilingual text (e.g., `NameEn`) are a PR rejection criterion.
+**Trilingual Rule**: All translatable string fields on entities MUST use `LocalizedText`. Raw `string` properties for trilingual text (e.g., `NameEn`) are a PR rejection criterion.
 
 ---
 

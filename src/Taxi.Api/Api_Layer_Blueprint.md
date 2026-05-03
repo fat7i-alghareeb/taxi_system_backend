@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary & Layer Purpose
 
-The API / Presentation Layer is the absolute outermost boundary of our Clean Architecture. It is the "bilingual translator" of our system. Its sole, fundamental purpose is to accept requests from the hostile outside world (via HTTP/REST, SignalR WebSockets, or Blazor UI interactions), translate those diverse payloads into rigid Application Commands/Queries, push them into MediatR, and then seamlessly translate the internal Domain results back into appropriate HTTP status codes or visual render states.
+The API / Presentation Layer is the absolute outermost boundary of our Clean Architecture. It is the "trilingual translator" of our system. Its sole, fundamental purpose is to accept requests from the hostile outside world (via HTTP/REST, SignalR WebSockets, or Blazor UI interactions), translate those diverse payloads into rigid Application Commands/Queries, push them into MediatR, and then seamlessly translate the internal Domain results back into appropriate HTTP status codes or visual render states.
 
 It is absolutely devoid of business logic, database querying logic, and authentication cryptography. The API layer is completely "dumb"; it relies entirely on the Application layer to perform the actual orchestration of the system. If business rules change, this layer should theoretically remain completely untouched.
 
@@ -241,7 +241,7 @@ The API utilizes `My.Extensions.Localization.Json` as the runtime engine, with r
 - **Culture Synchronization**: `UseRequestLocalization` is registered as the very first middleware (see §4.11) so every later component — including `UseExceptionHandler` — sees the correct `CultureInfo.CurrentUICulture`. Supported cultures are defined by `Languages.All`.
 - **SharedResource marker class**: Lives at the project's root namespace `MechanicShop.Api` (file: [`SharedResource.cs`](SharedResource.cs)), **not** inside a `Resources` sub-namespace. This keeps the path computation in `My.Extensions.Localization.Json` clean.
 - **JSON Resources**: Stored at [`Resources/SharedResource.en.json`](Resources/SharedResource.en.json) and [`Resources/SharedResource.ar.json`](Resources/SharedResource.ar.json). Explicitly deployed to `bin/.../Resources/` by an entry in [`MechanicShop.Api.csproj`](MechanicShop.Api.csproj).
-- **Swagger Integration**: All API endpoints in Swagger include an `Accept-Language` header parameter with a dropdown for `en` and `ar` via [`AcceptLanguageOperationTransformer`](OpenApi/Transformers/AcceptLanguageOperationTransformer.cs).
+- **Swagger Integration**: All API endpoints in Swagger include an `Accept-Language` header parameter with a dropdown for `en`, `ar`, and `nl` via [`AcceptLanguageOperationTransformer`](OpenApi/Transformers/AcceptLanguageOperationTransformer.cs).
 - **ModelState Localization**: `InvalidModelStateResponseFactory` (registered in [`DependencyInjection.AddValidation()`](DependencyInjection.cs)) translates DataAnnotation errors through the same `SharedResource` dictionary used by FluentValidation and domain errors. Contracts request DTOs declare `[Required(ErrorMessage = LocalizationKeys.Validation.X)]` and the factory looks the key up at runtime.
 
 ### 4.9. AppSettings & Multi-Environment Configuration
@@ -272,7 +272,7 @@ Security, Telemetry, and Stability dictate the exact chronological execution of 
 7. `UseRateLimiter()` - Pre-Authentication. Protects against DDOS attacks and brute-force Auth looping using the `SlidingWindowLimiter` (max 100 reqs/min).
 8. `UseAuthentication()` - Decodes JWT payload.
 9. `UseAuthorization()` - Examines Role allocations.
-10. `UseOutputCache()` - Post-Authorization caching. The base policy includes `.SetVaryByHeader("Accept-Language")` so cached responses are partitioned by culture and never leak across `en` / `ar` requesters.
+10. `UseOutputCache()` - Post-Authorization caching. The base policy includes `.SetVaryByHeader("Accept-Language")` so cached responses are partitioned by culture and never leak across `en` / `ar` / `nl` requesters.
 
 ---
 

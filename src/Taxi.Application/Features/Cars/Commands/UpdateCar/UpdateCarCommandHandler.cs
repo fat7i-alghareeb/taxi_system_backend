@@ -27,7 +27,8 @@ public class UpdateCarCommandHandler(IAppDbContext context, HybridCache cache) :
             request.Model,
             request.Year,
             request.DescriptionEn,
-            request.DescriptionAr);
+            request.DescriptionAr,
+            request.DescriptionNl);
 
         if (updateResult.IsError)
         {

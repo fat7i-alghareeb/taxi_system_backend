@@ -26,6 +26,7 @@ public class CarConfiguration : IEntityTypeConfiguration<Car>
             description.ToJson();
             description.Property(d => d.En).IsRequired();
             description.Property(d => d.Ar).IsRequired();
+            description.Property(d => d.Nl).IsRequired();
         });
 
         builder.HasIndex(c => new { c.Make, c.Model });

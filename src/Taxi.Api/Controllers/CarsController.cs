@@ -1,7 +1,11 @@
 using Asp.Versioning;
+
 using MediatR;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
+
 using Taxi.Application.Features.Cars.Commands.CreateCar;
 using Taxi.Application.Features.Cars.Commands.RemoveCar;
 using Taxi.Application.Features.Cars.Commands.UpdateCar;
@@ -19,31 +23,49 @@ public sealed class CarsController(ISender sender) : ApiController
 {
     [HttpGet]
     [ProducesResponseType(typeof(List<CarDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [EndpointSummary("Retrieves a list of cars.")]
+    [EndpointDescription("Returns all cars in the system.")]
     [EndpointName("GetCars")]
     [MapToApiVersion("1.0")]
-    public async Task<IActionResult> GetCars(CancellationToken ct)
+    [ProducesDefaultResponseType]
+    [OutputCache(Duration = 60)]
+    public async Task<IActionResult> Get(CancellationToken ct)
     {
         var result = await sender.Send(new GetCarsQuery(), ct);
-        return result.Match(this.Ok, this.Problem);
+
+        return result.Match(
+            response => Ok(response),
+            Problem);
     }
 
-    [HttpGet("{id:guid}")]
+    [HttpGet("{carId:guid}", Name = "GetCarById")]
     [ProducesResponseType(typeof(CarDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [EndpointName("GetCar")]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [EndpointSummary("Retrieves a car by ID.")]
+    [EndpointDescription("Returns detailed information about the specified car if found.")]
+    [EndpointName("GetCarById")]
     [MapToApiVersion("1.0")]
-    public async Task<IActionResult> GetCar(Guid id, CancellationToken ct)
+    [OutputCache(Duration = 60)]
+    public async Task<IActionResult> GetById(Guid carId, CancellationToken ct)
     {
-        var result = await sender.Send(new GetCarByIdQuery(id), ct);
-        return result.Match(this.Ok, this.Problem);
+        var result = await sender.Send(new GetCarByIdQuery(carId), ct);
+
+        return result.Match(
+            response => Ok(response),
+            Problem);
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(Guid), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(CarDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [EndpointSummary("Creates a new car.")]
+    [EndpointDescription("Adds a new car to the system.")]
     [EndpointName("CreateCar")]
     [MapToApiVersion("1.0")]
-    public async Task<IActionResult> CreateCar([FromBody] CreateCarRequest request, CancellationToken ct)
+    public async Task<IActionResult> Create([FromBody] CreateCarRequest request, CancellationToken ct)
     {
         var result = await sender.Send(
             new CreateCarCommand(
@@ -51,23 +73,30 @@ public sealed class CarsController(ISender sender) : ApiController
                 request.Model,
                 request.Year,
                 request.DescriptionEn,
-                request.DescriptionAr),
+                request.DescriptionAr,
+                request.DescriptionNl),
             ct);
 
         return result.Match(
-            id => this.CreatedAtAction(nameof(this.GetCar), new { version = "1.0", id }, id),
-            this.Problem);
+            response => CreatedAtRoute(
+                routeName: "GetCarById",
+                routeValues: new { version = "1.0", carId = response.Id },
+                value: response),
+            Problem);
     }
 
-    [HttpPut("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [HttpPut("{carId:guid}")]
+    [ProducesResponseType(typeof(CarDto), StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [EndpointSummary("Updates an existing car.")]
+    [EndpointDescription("Updates a car's details.")]
     [EndpointName("UpdateCar")]
     [MapToApiVersion("1.0")]
-    public async Task<IActionResult> UpdateCar(Guid id, [FromBody] UpdateCarRequest request, CancellationToken ct)
+    public async Task<IActionResult> Update(Guid carId, [FromBody] UpdateCarRequest request, CancellationToken ct)
     {
-        if (id != request.Id)
+        if (carId != request.Id)
         {
             return this.BadRequest();
         }
@@ -79,20 +108,29 @@ public sealed class CarsController(ISender sender) : ApiController
                 request.Model,
                 request.Year,
                 request.DescriptionEn,
-                request.DescriptionAr),
+                request.DescriptionAr,
+                request.DescriptionNl),
             ct);
 
-        return result.Match(_ => this.NoContent(), this.Problem);
+        return result.Match(
+            response => Ok(response),
+            Problem);
     }
 
-    [HttpDelete("{id:guid}")]
+    [HttpDelete("{carId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [EndpointSummary("Removes a car.")]
+    [EndpointDescription("Deletes the specified car from the system.")]
     [EndpointName("RemoveCar")]
     [MapToApiVersion("1.0")]
-    public async Task<IActionResult> RemoveCar(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Delete(Guid carId, CancellationToken ct)
     {
-        var result = await sender.Send(new RemoveCarCommand(id), ct);
-        return result.Match(_ => this.NoContent(), this.Problem);
+        var result = await sender.Send(new RemoveCarCommand(carId), ct);
+
+        return result.Match(
+            _ => NoContent(),
+            Problem);
     }
 }

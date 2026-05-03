@@ -1,6 +1,5 @@
 @baseUrl = https://localhost:7007/api
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzM2ZmNzc0YS1hOWE4LTQ0MjctOGY5ZC00MDAxNDk0OTVhNGEiLCJlbWFpbCI6ImFkbWluQHRheGkuY29tIiwicm9sZSI6Ik1hbmFnZXIiLCJuYmYiOjE3Nzc3MTI3NTUsImV4cCI6MTc3NzcxNjM1NSwiaWF0IjoxNzc3NzEyNzU1LCJpc3MiOiJUYXhpU2VydmVyIiwiYXVkIjoiVGF4aUNsaWVudCJ9.Hfh1Q3ebHjd5h6Hwe8j1ToxPz7KoRe6x7rbSy93nVUA
-
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YzdhNmQ0Yi01YTFjLTQ2MDctYjVlMS00ZWJkZTk1ZDY3NGIiLCJlbWFpbCI6ImFkbWluQHRheGkuY29tIiwicm9sZSI6Ik1hbmFnZXIiLCJuYmYiOjE3Nzc4MTM5MDIsImV4cCI6MTc3NzgxNzUwMiwiaWF0IjoxNzc3ODEzOTAyLCJpc3MiOiJUYXhpU2VydmVyIiwiYXVkIjoiVGF4aUNsaWVudCJ9.i5h1bfF8DmjaaRLJZJVLdY7KoYObP-EbwTvX8YSMFro
 @carId = 0e7f555e-fd64-47fc-aaa4-a1b7c6f93018
 
 ###############################################################################
@@ -48,6 +47,11 @@ GET {{baseUrl}}/v1/cars
 Authorization: Bearer {{token}}
 Accept-Language: ar
 
+### Get all cars (Dutch)
+GET {{baseUrl}}/v1/cars
+Authorization: Bearer {{token}}
+Accept-Language: nl
+
 ### Get car by Id
 GET {{baseUrl}}/v1/cars/{{carId}}
 Authorization: Bearer {{token}}
@@ -63,7 +67,8 @@ Content-Type: application/json
     "model": "Camry",
     "year": 2024,
     "descriptionEn": "Reliable and fuel-efficient sedan.",
-    "descriptionAr": "سيارة سيدان موثوقة وموفرة للوقود."
+    "descriptionAr": "سيارة سيدان موثوقة وموفرة للوقود.",
+    "descriptionNl": "Betrouwbare en zuinige sedan."
 }
 
 ### Update an existing car
@@ -77,7 +82,8 @@ Content-Type: application/json
     "model": "Camry SE",
     "year": 2025,
     "descriptionEn": "Enhanced sport edition with premium features.",
-    "descriptionAr": "نسخة رياضية مطورة بميزات فاخرة."
+    "descriptionAr": "نسخة رياضية مطورة بميزات فاخرة.",
+    "descriptionNl": "Verbeterde sporteditie met premium functies."
 }
 
 ### Remove a car
@@ -101,10 +107,16 @@ GET {{baseUrl}}/v1/cars/00000000-0000-0000-0000-000000000000
 Accept-Language: ar
 Authorization: Bearer {{token}}
 
-### [LOC 3] Domain Validation failure (Missing Description), English
-# Expect: 400, description required message in English
+### [LOC 5] Car NotFound, Dutch
+# Expect: 404, body.title = "Auto niet gevonden."
+GET {{baseUrl}}/v1/cars/00000000-0000-0000-0000-000000000000
+Accept-Language: nl
+Authorization: Bearer {{token}}
+
+### [LOC 6] Domain Validation failure (Missing Description), Dutch
+# Expect: 400, description required message in Dutch
 POST {{baseUrl}}/v1/cars
-Accept-Language: en
+Accept-Language: nl
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -113,20 +125,6 @@ Content-Type: application/json
     "model": "Model 3",
     "year": 2024,
     "descriptionEn": "",
-    "descriptionAr": ""
-}
-
-### [LOC 4] Domain Validation failure (Missing Description), Arabic
-# Expect: 400, description required message in Arabic
-POST {{baseUrl}}/v1/cars
-Accept-Language: ar
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-    "make": "Tesla",
-    "model": "Model 3",
-    "year": 2024,
-    "descriptionEn": "",
-    "descriptionAr": ""
+    "descriptionAr": "",
+    "descriptionNl": ""
 }

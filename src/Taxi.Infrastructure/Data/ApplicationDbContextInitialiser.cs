@@ -72,7 +72,8 @@ public class ApplicationDbContextInitialiser(
                 "Model S",
                 2024,
                 "A fast electric sedan.",
-                "سيارة سيدان كهربائية سريعة.");
+                "سيارة سيدان كهربائية سريعة.",
+                "Een snelle elektrische sedan.");
             if (carResult.IsSuccess)
             {
                 this.context.Cars.Add(carResult.Value);

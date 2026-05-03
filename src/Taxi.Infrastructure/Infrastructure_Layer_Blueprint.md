@@ -122,7 +122,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.HasKey(o => o.Id);
 
         // Map Value Object into JSONB column in PostgreSQL
-        // All bilingual fields (LocalizedText) must use this pattern
+        // All trilingual fields (LocalizedText) must use this pattern
         builder.OwnsOne(o => o.Name, a =>
         {
             a.ToJson();

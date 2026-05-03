@@ -28,5 +28,9 @@ public sealed class UpdateCarCommandValidator : AbstractValidator<UpdateCarComma
         RuleFor(x => x.DescriptionAr)
             .NotEmpty().WithMessage(LocalizationKeys.Validation.DescriptionRequired)
             .MaximumLength(1000);
+            
+        RuleFor(x => x.DescriptionNl)
+            .NotEmpty().WithMessage(LocalizationKeys.Validation.DescriptionRequired)
+            .MaximumLength(1000);
     }
 }
