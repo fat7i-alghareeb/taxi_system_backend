@@ -12,6 +12,9 @@ using Taxi.Infrastructure.Data;
 using Taxi.Infrastructure.Data.Interceptors;
 using Taxi.Infrastructure.Identity;
 using Taxi.Infrastructure.Settings;
+using Taxi.Infrastructure.Auth;
+using Taxi.Infrastructure.Sms;
+using Taxi.Infrastructure.Maps;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -76,6 +79,11 @@ public static class DependencyInjection
 
         services.AddTransient<IIdentityService, IdentityService>();
         services.AddTransient<ITokenProvider, TokenProvider>();
+
+        services.AddMemoryCache();
+        services.AddSingleton<IOtpService, OtpService>();
+        services.AddSingleton<ISmsProvider, ConsoleSmsProvider>();
+        services.AddTransient<IDirectionsService, GoogleMapsService>();
 
         services.AddHybridCache(options => options.DefaultEntryOptions = new Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions
         {

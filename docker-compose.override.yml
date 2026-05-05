@@ -5,7 +5,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:80
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=TaxiDb;Username=postgres;Password=YourStrong@Password1
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=TaxiDb_Dev;Username=postgres;Password=YourStrong@Password1
       OTEL_EXPORTER_OTLP_ENDPOINT: http://seq:5341/ingest/otlp/v1/traces
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
     restart: on-failure
@@ -14,7 +14,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: YourStrong@Password1
-      POSTGRES_DB: TaxiDb
+      POSTGRES_DB: TaxiDb_Dev
     ports:
       - "5433:5432"
     restart: always

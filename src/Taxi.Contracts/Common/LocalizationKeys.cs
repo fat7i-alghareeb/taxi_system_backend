@@ -23,10 +23,24 @@ public static class LocalizationKeys
     public static class Auth
     {
         public const string ExpiredAccessTokenInvalid = "Auth.ExpiredAccessToken.Invalid";
+        public const string InvalidOtp = "Auth.InvalidOtp";
+        public const string OtpExpired = "Auth.OtpExpired";
+        public const string PhoneBlocked = "Auth.PhoneBlocked";
+        public const string SessionNotFound = "Auth.SessionNotFound";
         public const string UserIdClaimInvalid = "Auth.UserIdClaim.Invalid";
         public const string RefreshTokenExpired = "Auth.RefreshToken.Expired";
         public const string UserNotFound = "Auth.User.NotFound";
         public const string TokenGenerationFailed = "Auth.TokenGeneration.Failed";
+    }
+
+    public static class User
+    {
+        public const string NameEnRequired = "User.NameEnRequired";
+        public const string NameArRequired = "User.NameArRequired";
+        public const string NameNlRequired = "User.NameNlRequired";
+        public const string PhoneRequired = "User.PhoneRequired";
+        public const string Inactive = "User.Inactive";
+        public const string NotFound = "User.NotFound";
     }
 
     public static class Validation
@@ -48,5 +62,19 @@ public static class LocalizationKeys
         public const string ModelRequired = "Validation.Model.Required";
         public const string YearInvalid = "Validation.Year.Invalid";
         public const string DescriptionRequired = "Validation.Description.Required";
+        public const string VehicleTypeIdRequired = "Validation.VehicleTypeId.Required";
+    }
+
+    public static class Vehicle
+    {
+        public const string CodeRequired = "Vehicle.Code.Required";
+        public const string NameEnRequired = "Vehicle.NameEn.Required";
+        public const string NameArRequired = "Vehicle.NameAr.Required";
+        public const string NameNlRequired = "Vehicle.NameNl.Required";
+        public const string NotFound = "Vehicle.NotFound";
+        public const string TypeIdRequired = "Vehicle.TypeId.Required";
+        public const string MakeRequired = "Vehicle.Make.Required";
+        public const string ModelRequired = "Vehicle.Model.Required";
+        public const string LicensePlateRequired = "Vehicle.LicensePlate.Required";
     }
 }

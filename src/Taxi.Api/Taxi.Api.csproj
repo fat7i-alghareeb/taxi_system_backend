@@ -28,6 +28,7 @@
     <ItemGroup>
         <Content Update="Resources\SharedResource.en.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Update="Resources\SharedResource.ar.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Update="Resources\SharedResource.nl.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
 </Project>

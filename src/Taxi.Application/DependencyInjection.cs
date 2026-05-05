@@ -3,6 +3,7 @@ using System.Reflection;
 using FluentValidation;
 
 using Taxi.Application.Common.Behaviours;
+using Taxi.Application.Common.Services;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -20,6 +21,8 @@ public static class DependencyInjection
             cfg.AddOpenBehavior(typeof(UnhandledExceptionBehaviour<,>));
             cfg.AddOpenBehavior(typeof(CachingBehavior<,>));
         });
+
+        services.AddScoped<PricingService>();
 
         return services;
     }

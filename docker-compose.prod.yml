@@ -5,7 +5,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=TaxiDb;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=TaxiDb_Prod;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       JwtSettings__Secret: ${JWT_SECRET}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://seq:5341/ingest/otlp/v1/traces
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
@@ -15,7 +15,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: TaxiDb
+      POSTGRES_DB: TaxiDb_Prod
     restart: always
 
   seq:

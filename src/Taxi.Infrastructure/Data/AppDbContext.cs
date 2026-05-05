@@ -2,18 +2,22 @@ using MediatR;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
-using Taxi.Domain.Cars;
 using Taxi.Domain.Common;
 using Taxi.Domain.Identity;
+using Taxi.Domain.Users;
+using Taxi.Domain.Vehicles;
+using Taxi.Domain.Drivers;
 using Taxi.Infrastructure.Identity;
 
 namespace Taxi.Infrastructure.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options, IMediator mediator) : IdentityDbContext<AppUser>(options), IAppDbContext
 {
-    public DbSet<Car> Cars => this.Set<Car>();
-
     public DbSet<RefreshToken> RefreshTokens => this.Set<RefreshToken>();
+    public DbSet<User> DomainUsers => this.Set<User>();
+    public DbSet<VehicleType> VehicleTypes => this.Set<VehicleType>();
+    public DbSet<Vehicle> Vehicles => this.Set<Vehicle>();
+    public DbSet<Driver> Drivers => this.Set<Driver>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

@@ -1,84 +1,61 @@
-namespace Taxi.Infrastructure.Data;
-
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Taxi.Domain.Cars;
+using Taxi.Domain.Drivers;
+using Taxi.Domain.Users;
+using Taxi.Domain.Vehicles;
 using Taxi.Infrastructure.Identity;
 
+namespace Taxi.Infrastructure.Data;
+
 public class ApplicationDbContextInitialiser(
-    ILogger<ApplicationDbContextInitialiser> logger,
     AppDbContext context,
     UserManager<AppUser> userManager,
     RoleManager<IdentityRole> roleManager)
 {
-    private readonly ILogger<ApplicationDbContextInitialiser> logger = logger;
-    private readonly AppDbContext context = context;
-    private readonly UserManager<AppUser> userManager = userManager;
-    private readonly RoleManager<IdentityRole> roleManager = roleManager;
-
     public async Task InitialiseAsync()
     {
-        try
-        {
-            if (this.context.Database.IsNpgsql())
-            {
-                await this.context.Database.MigrateAsync();
-            }
-        }
-        catch (Exception ex)
-        {
-            this.logger.LogError(ex, "An error occurred while initialising the database.");
-            throw;
-        }
+        // For development/reset
+        // await context.Database.EnsureDeletedAsync();
+        await context.Database.MigrateAsync();
     }
 
     public async Task SeedAsync()
     {
         try
         {
-            await this.TrySeedAsync();
+            await TrySeedAsync();
         }
         catch (Exception ex)
         {
-            this.logger.LogError(ex, "An error occurred while seeding the database.");
+            // Log error in a real app
             throw;
         }
     }
 
-    private async Task TrySeedAsync()
+    public async Task TrySeedAsync()
     {
         // 1. Seed Roles
-        if (!await this.roleManager.RoleExistsAsync("Manager"))
+        var roles = new[] { "Admin", "Driver", "Passenger" };
+        foreach (var roleName in roles)
         {
-            await this.roleManager.CreateAsync(new IdentityRole("Manager"));
-        }
-
-        // 2. Seed Manager
-        var managerEmail = "admin@taxi.com";
-        if (await this.userManager.FindByEmailAsync(managerEmail) == null)
-        {
-            var manager = new AppUser { UserName = managerEmail, Email = managerEmail, EmailConfirmed = true };
-            await this.userManager.CreateAsync(manager, "Admin123!");
-            await this.userManager.AddToRoleAsync(manager, "Manager");
-        }
-
-        // 3. Seed Cars
-        if (!await this.context.Cars.AnyAsync())
-        {
-            var carResult = Car.Create(
-                Guid.NewGuid(),
-                "Tesla",
-                "Model S",
-                2024,
-                "A fast electric sedan.",
-                "سيارة سيدان كهربائية سريعة.",
-                "Een snelle elektrische sedan.");
-            if (carResult.IsSuccess)
+            if (!await roleManager.RoleExistsAsync(roleName))
             {
-                this.context.Cars.Add(carResult.Value);
-                await this.context.SaveChangesAsync();
+                await roleManager.CreateAsync(new IdentityRole(roleName));
             }
+        }
+
+        // 2. Seed Vehicle Types
+        if (!await context.VehicleTypes.AnyAsync())
+        {
+            var types = new List<VehicleType>
+            {
+                VehicleType.Create(Guid.NewGuid(), "standard", "Standard", "عادي", "Standaard", 4, 1.2m, 0.2m, 5.0m).Value,
+                VehicleType.Create(Guid.NewGuid(), "xl", "XL", "كبير", "XL", 6, 1.8m, 0.3m, 8.0m).Value,
+                VehicleType.Create(Guid.NewGuid(), "wheelchair", "Wheelchair", "كرسي متحرك", "Rolstoel", 3, 1.5m, 0.25m, 6.0m).Value
+            };
+
+            context.VehicleTypes.AddRange(types);
+            await context.SaveChangesAsync();
         }
     }
 }
