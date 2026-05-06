@@ -13,6 +13,7 @@ using Taxi.Infrastructure.Data;
 using Taxi.Infrastructure.Data.Interceptors;
 using Taxi.Infrastructure.Identity;
 using Taxi.Infrastructure.Maps;
+using Taxi.Infrastructure.RealTime;
 using Taxi.Infrastructure.Settings;
 using Taxi.Infrastructure.Sms;
 
@@ -84,6 +85,7 @@ public static class DependencyInjection
         services.AddSingleton<IOtpService, OtpService>();
         services.AddSingleton<ISmsProvider, ConsoleSmsProvider>();
         services.AddTransient<IDirectionsService, GoogleMapsService>();
+        services.AddScoped<ITripNotifier, SignalRTripNotifier>();
 
         services.AddHybridCache(options => options.DefaultEntryOptions = new Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions
         {

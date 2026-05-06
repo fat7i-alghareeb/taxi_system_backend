@@ -1,5 +1,6 @@
 using Taxi.Domain.Common;
 using Taxi.Domain.Common.Results;
+using Taxi.Domain.Trips.Events;
 
 namespace Taxi.Domain.Trips;
 
@@ -57,7 +58,16 @@ public sealed class Trip : AuditableEntity
 
         var referenceCode = $"TRP-{new Random().Next(1000, 9999)}";
 
-        return new Trip(id, referenceCode, passengerId, vehicleTypeId, quote.Id, stops);
+        var trip = new Trip(id, referenceCode, passengerId, vehicleTypeId, quote.Id, stops);
+
+        trip.AddDomainEvent(new TripRequested
+        {
+            TripId = trip.Id,
+            VehicleTypeId = vehicleTypeId,
+            PassengerId = passengerId,
+        });
+
+        return trip;
     }
 
     public Result<Success> AssignDriver(Guid driverId)
@@ -69,6 +79,14 @@ public sealed class Trip : AuditableEntity
 
         DriverId = driverId;
         Status = TripStatus.DriverAssigned;
+
+        AddDomainEvent(new DriverAssigned
+        {
+            TripId = Id,
+            DriverId = driverId,
+            PassengerId = PassengerId,
+        });
+
         return Result.Success;
     }
 
@@ -81,6 +99,13 @@ public sealed class Trip : AuditableEntity
 
         Status = TripStatus.InProgress;
         StartedAtUtc = DateTimeOffset.UtcNow;
+
+        AddDomainEvent(new TripStarted
+        {
+            TripId = Id,
+            PassengerId = PassengerId,
+        });
+
         return Result.Success;
     }
 
@@ -93,6 +118,14 @@ public sealed class Trip : AuditableEntity
 
         Status = TripStatus.Completed;
         CompletedAtUtc = DateTimeOffset.UtcNow;
+
+        AddDomainEvent(new TripCompleted
+        {
+            TripId = Id,
+            PassengerId = PassengerId,
+            DriverId = DriverId,
+        });
+
         return Result.Success;
     }
 
@@ -104,6 +137,14 @@ public sealed class Trip : AuditableEntity
         }
 
         Status = TripStatus.Cancelled;
+
+        AddDomainEvent(new TripCancelled
+        {
+            TripId = Id,
+            PassengerId = PassengerId,
+            DriverId = DriverId,
+        });
+
         return Result.Success;
     }
 

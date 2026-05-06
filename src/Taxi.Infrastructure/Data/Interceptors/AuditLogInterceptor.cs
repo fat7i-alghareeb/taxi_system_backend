@@ -37,17 +37,22 @@ public class AuditLogInterceptor(IUser user) : SaveChangesInterceptor
 
         foreach (var entry in entries)
         {
-            if (entry.Entity is AuditLog)
+            if (entry.Entity is AuditLog || entry.Metadata.IsOwned())
             {
                 continue;
             }
+
+            var idProperty = entry.Metadata.FindProperty("Id");
+            var entityId = idProperty != null
+                ? entry.Property("Id").CurrentValue?.ToString()
+                : "N/A";
 
             var auditLogResult = AuditLog.Create(
                 Guid.NewGuid(),
                 userId == Guid.Empty ? (Guid?)null : userId,
                 entry.State.ToString(),
                 entry.Entity.GetType().Name,
-                entry.Property("Id").CurrentValue?.ToString() ?? "Unknown",
+                entityId ?? "Unknown",
                 null,
                 null);
 

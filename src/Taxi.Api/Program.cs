@@ -43,6 +43,6 @@ else
 app.UseCoreMiddlewares(builder.Configuration);
 
 app.MapControllers();
-app.MapHub<TripHub>("/hubs/trips");
+app.MapHub<TripHub>(TripHub.HubUrl);
 
 app.Run();
