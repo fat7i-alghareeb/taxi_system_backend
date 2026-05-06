@@ -1,19 +1,17 @@
+using Taxi.Application.Common.Interfaces;
 using Taxi.Domain.Vehicles;
 
 namespace Taxi.Application.Common.Services;
 
-public class PricingService
+public class PricingService : IPricingService
 {
-    public decimal CalculateFare(VehicleType vehicleType, int distanceMeters, int durationSeconds)
+    public decimal CalculateFare(VehicleType vehicleType, double distanceKm, double durationMin)
     {
-        var distanceKm = (decimal)distanceMeters / 1000;
-        var durationMin = (decimal)durationSeconds / 60;
+        var distanceFare = (decimal)distanceKm * vehicleType.RatePerKm;
+        var durationFare = (decimal)durationMin * vehicleType.RatePerMin;
 
-        var distanceComponent = distanceKm * vehicleType.RatePerKm;
-        var durationComponent = durationMin * vehicleType.RatePerMin;
+        var totalFare = distanceFare + durationFare;
 
-        var rawFare = distanceComponent + durationComponent;
-
-        return Math.Max(rawFare, vehicleType.MinimumFare);
+        return Math.Max(totalFare, vehicleType.MinimumFare);
     }
 }

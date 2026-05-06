@@ -40,7 +40,7 @@ This strict rule prevents developers from taking shortcuts, such as directly inj
 Our Infrastructure layer categorizes files by their technical integration strategy.
 
 ```text
-src/MechanicShop.Infrastructure/
+src/Taxi.Infrastructure/
 ├── BackgroundJobs/
 │   └── AbandonedCartCleanupService.cs
 ├── Data/
@@ -79,13 +79,13 @@ If you throw twenty `[Table]` and `[Column]` data annotations onto a Domain Enti
 The `AppDbContext` should largely just consist of `DbSet<T>` properties and global overrides.
 
 ```csharp
-using MechanicShop.Application.Common.Interfaces;
-using MechanicShop.Domain.Customers;
-using MechanicShop.Domain.Orders;
+using Taxi.Application.Common.Interfaces;
+using Taxi.Domain.Customers;
+using Taxi.Domain.Orders;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace MechanicShop.Infrastructure.Data;
+namespace Taxi.Infrastructure.Data;
 
 // Inherit from IdentityDbContext to seamlessly blend Custom User tables with our Business Tables
 public class AppDbContext(DbContextOptions<AppDbContext> options)
@@ -109,11 +109,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 We use isolated configuration classes to control how objects save to SQL. Particularly, **Value Objects** must be mapped securely so they do not accidentally create separate SQL tables.
 
 ```csharp
-using MechanicShop.Domain.Orders;
+using Taxi.Domain.Orders;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace MechanicShop.Infrastructure.Data.Configurations;
+namespace Taxi.Infrastructure.Data.Configurations;
 
 public class OrderConfiguration : IEntityTypeConfiguration<Order>
 {
@@ -141,6 +141,13 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.State)
             .HasConversion<string>()
             .HasMaxLength(30);
+
+        // Enforce Coordinate Precision
+        builder.OwnsOne(o => o.Location, location =>
+        {
+            location.Property(c => c.Latitude).HasPrecision(18, 10);
+            location.Property(c => c.Longitude).HasPrecision(18, 10);
+        });
     }
 }
 ```
@@ -296,7 +303,7 @@ Often, a system requires sweeping automation (e.g., "Cancel all orders that have
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MechanicShop.Infrastructure.BackgroundJobs;
+namespace Taxi.Infrastructure.BackgroundJobs;
 
 public class AbandonedCartCleanupService(
     IServiceScopeFactory scopeFactory,
@@ -440,10 +447,10 @@ The Infrastructure layer provides an `ApplicationDbContextInitialiser` class. It
 ```csharp
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
-using MechanicShop.Domain.Identity;
+using Taxi.Domain.Identity;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MechanicShop.Infrastructure.Data;
+namespace Taxi.Infrastructure.Data;
 
 public class ApplicationDbContextInitialiser(
     AppDbContext context,
@@ -501,9 +508,9 @@ Unlike JWTs, Refresh Tokens are completely opaque, mathematically random strings
 
 ```csharp
 using System.Security.Cryptography;
-using MechanicShop.Domain.Identity;
+using Taxi.Domain.Identity;
 
-namespace MechanicShop.Infrastructure.Identity;
+namespace Taxi.Infrastructure.Identity;
 
 public class TokenProvider : ITokenProvider
 {
@@ -548,9 +555,9 @@ By injecting an `ISqlConnectionFactory` interface, the Application layer can wri
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using MechanicShop.Application.Common.Interfaces;
+using Taxi.Application.Common.Interfaces;
 
-namespace MechanicShop.Infrastructure.Data;
+namespace Taxi.Infrastructure.Data;
 
 // Fulfills the Application Layer's need to execute raw, high-speed queries
 public class SqlConnectionFactory(IConfiguration configuration) : ISqlConnectionFactory

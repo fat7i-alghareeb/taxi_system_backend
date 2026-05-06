@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+
 using Taxi.Domain.Drivers;
 using Taxi.Domain.Users;
 using Taxi.Domain.Vehicles;
@@ -9,7 +10,6 @@ namespace Taxi.Infrastructure.Data;
 
 public class ApplicationDbContextInitialiser(
     AppDbContext context,
-    UserManager<AppUser> userManager,
     RoleManager<IdentityRole> roleManager)
 {
     public async Task InitialiseAsync()
@@ -25,7 +25,7 @@ public class ApplicationDbContextInitialiser(
         {
             await TrySeedAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // Log error in a real app
             throw;
@@ -49,9 +49,9 @@ public class ApplicationDbContextInitialiser(
         {
             var types = new List<VehicleType>
             {
-                VehicleType.Create(Guid.NewGuid(), "standard", "Standard", "عادي", "Standaard", 4, 1.2m, 0.2m, 5.0m).Value,
-                VehicleType.Create(Guid.NewGuid(), "xl", "XL", "كبير", "XL", 6, 1.8m, 0.3m, 8.0m).Value,
-                VehicleType.Create(Guid.NewGuid(), "wheelchair", "Wheelchair", "كرسي متحرك", "Rolstoel", 3, 1.5m, 0.25m, 6.0m).Value
+                VehicleType.Create(Guid.NewGuid(), "standard", "Standard", "عادي", "Standaard", 4, 2.8m, 0.20m, 5.0m).Value,
+                VehicleType.Create(Guid.NewGuid(), "xl", "XL Van", "فان كبير", "XL Van", 8, 3.20m, 0.25m, 8.0m).Value,
+                VehicleType.Create(Guid.NewGuid(), "wheelchair", "Wheelchair Taxi", "تاكسي ذوي الاحتياجات الخاصة", "Rolstoel Taxi", 4, 3.50m, 0.25m, 10.0m).Value
             };
 
             context.VehicleTypes.AddRange(types);

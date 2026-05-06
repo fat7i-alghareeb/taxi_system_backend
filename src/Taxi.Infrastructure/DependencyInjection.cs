@@ -1,22 +1,20 @@
-using System.Text;
+namespace Microsoft.Extensions.DependencyInjection;
 
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-
 using Taxi.Application.Common.Interfaces;
+using Taxi.Infrastructure.Auth;
 using Taxi.Infrastructure.Data;
 using Taxi.Infrastructure.Data.Interceptors;
 using Taxi.Infrastructure.Identity;
-using Taxi.Infrastructure.Settings;
-using Taxi.Infrastructure.Auth;
-using Taxi.Infrastructure.Sms;
 using Taxi.Infrastructure.Maps;
-
-namespace Microsoft.Extensions.DependencyInjection;
+using Taxi.Infrastructure.Settings;
+using Taxi.Infrastructure.Sms;
 
 public static class DependencyInjection
 {
@@ -24,12 +22,14 @@ public static class DependencyInjection
     {
         services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
         services.AddSingleton(TimeProvider.System);
+        services.AddSignalR();
 
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
         ArgumentNullException.ThrowIfNull(connectionString);
 
         services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
+        services.AddScoped<ISaveChangesInterceptor, AuditLogInterceptor>();
 
         services.AddDbContext<AppDbContext>((sp, options) =>
         {

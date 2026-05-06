@@ -40,8 +40,7 @@ public class GetVehicleTypeByCodeQueryHandler(
                 t.RatePerKm,
                 t.RatePerMin,
                 t.MinimumFare,
-                t.CurrencyCode
-            ))
+                t.CurrencyCode))
             .FirstOrDefaultAsync(ct);
 
         if (vehicleType is null)

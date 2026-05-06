@@ -51,7 +51,7 @@ Because the Contracts Layer defines the communication vocabulary, other layers m
 The Contracts directory structure directly aligns with the features or conceptual Aggregates of the system.
 
 ```text
-src/MechanicShop.Contracts/
+src/Taxi.Contracts/
 ├── Common/
 │   ├── LocalizationKeys.cs  <-- Strongly-Typed Error/UI Keys
 │   ├── Languages.cs         <-- Canonical Language Codes (en, ar, nl)
@@ -110,7 +110,8 @@ The Contracts layer hosts the `LocalizationKeys` class. This is the **Supreme Di
 - **Languages Registry**: The `Languages` class defines the supported culture codes (`En`, `Ar`, `Nl`). All layers must use `Languages.Ar` / `Languages.En` / `Languages.Nl` instead of raw "ar" / "en" / "nl" strings.
 - **Cross-Layer Parity**: Because the Blazor Client and the API both reference the Contracts layer, they use the exact same keys and language constants.
 - **Shared Resources**: Every key in `LocalizationKeys` MUST have a matching entry in `SharedResource.en.json`, `SharedResource.ar.json`, and `SharedResource.nl.json`.
-- **DataAnnotation Integration**: Validation attributes such as `[Required(ErrorMessage = LocalizationKeys.Validation.EnglishNameRequired)]` are picked up at runtime by the API's `InvalidModelStateResponseFactory` (registered in `MechanicShop.Api/DependencyInjection.cs` `AddValidation()`) and translated through the same `IStringLocalizer<SharedResource>` used by FluentValidation and domain errors. The `ErrorMessage` value IS the localization key — never a raw English string.
+- **RESTful Naming**: Always use plural nouns and kebab-case for URIs.
+- **DataAnnotation Integration**: Validation attributes such as `[Required(ErrorMessage = LocalizationKeys.Validation.EnglishNameRequired)]` are picked up at runtime by the API's `InvalidModelStateResponseFactory` (registered in `Taxi.Api/DependencyInjection.cs` `AddValidation()`) and translated through the same `IStringLocalizer<SharedResource>` used by FluentValidation and domain errors. The `ErrorMessage` value IS the localization key — never a raw English string.
 
 ---
 
@@ -129,11 +130,11 @@ namespace ECommerce.Contracts.Requests.Orders;
 // Note: A simple class with primitive properties and embedded objects.
 public class CreateOrderRequest
 {
-    [Required(ErrorMessage = "The CustomerId parameter is mandatory.")]
+    [Required(ErrorMessage = LocalizationKeys.Validation.RequiredField)]
     public Guid CustomerId { get; set; }
 
-    [Required(ErrorMessage = "At least one item must be submitted for the order.")]
-    [MinLength(1, ErrorMessage = "At least one item must be submitted for the order.")]
+    [Required(ErrorMessage = LocalizationKeys.Validation.RequiredField)]
+    [MinLength(1, ErrorMessage = LocalizationKeys.Validation.InvalidFormat)]
     [ValidateComplexType] // Ensures nested objects run their own DataAnnotations
     public List<CreateOrderLineItemRequest> LineItems { get; set; } = [];
 

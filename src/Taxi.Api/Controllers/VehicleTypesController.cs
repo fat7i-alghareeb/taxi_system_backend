@@ -28,7 +28,7 @@ public class VehicleTypesController(ISender sender) : ApiController
     public async Task<IActionResult> GetCatalog(CancellationToken ct)
     {
         var result = await sender.Send(new GetVehicleCatalogQuery(), ct);
-        
+
         return result.Match(
             Ok,
             Problem);
@@ -43,7 +43,7 @@ public class VehicleTypesController(ISender sender) : ApiController
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
         var result = await sender.Send(new GetVehicleTypeByIdQuery(id), ct);
-        
+
         return result.Match(
             Ok,
             Problem);
@@ -58,7 +58,7 @@ public class VehicleTypesController(ISender sender) : ApiController
     public async Task<IActionResult> GetByCode(string code, CancellationToken ct)
     {
         var result = await sender.Send(new GetVehicleTypeByCodeQuery(code), ct);
-        
+
         return result.Match(
             Ok,
             Problem);
@@ -85,7 +85,7 @@ public class VehicleTypesController(ISender sender) : ApiController
             request.SortOrder);
 
         var result = await sender.Send(command, ct);
-        
+
         return result.Match(
             response => CreatedAtRoute(
                 routeName: "GetVehicleTypeById",
@@ -110,7 +110,7 @@ public class VehicleTypesController(ISender sender) : ApiController
             request.IsActive);
 
         var result = await sender.Send(command, ct);
-        
+
         return result.Match(
             Ok,
             Problem);
@@ -125,7 +125,7 @@ public class VehicleTypesController(ISender sender) : ApiController
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var result = await sender.Send(new RemoveVehicleTypeCommand(id), ct);
-        
+
         return result.Match(
             _ => NoContent(),
             Problem);

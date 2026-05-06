@@ -3,6 +3,7 @@ using Scalar.AspNetCore;
 using Serilog;
 
 using Taxi.Infrastructure.Data;
+using Taxi.Infrastructure.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,5 +43,6 @@ else
 app.UseCoreMiddlewares(builder.Configuration);
 
 app.MapControllers();
+app.MapHub<TripHub>("/hubs/trips");
 
 app.Run();

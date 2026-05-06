@@ -29,6 +29,7 @@ public sealed class User : AuditableEntity
     public string? ProfilePhotoUrl { get; private set; }
     public UserRole Role { get; private set; }
     public bool IsActive { get; private set; }
+    public Guid? ActiveVehicleId { get; private set; }
     public DateTimeOffset? DeletedAtUtc { get; private set; }
 
     public static Result<User> Create(
@@ -40,12 +41,25 @@ public sealed class User : AuditableEntity
         string? email,
         UserRole role)
     {
-        if (string.IsNullOrWhiteSpace(nameEn)) return AuthErrors.NameEnRequired;
-        if (string.IsNullOrWhiteSpace(nameAr)) return AuthErrors.NameArRequired;
-        if (string.IsNullOrWhiteSpace(nameNl)) return AuthErrors.NameNlRequired;
-        
-        if (string.IsNullOrWhiteSpace(phone) || !Regex.IsMatch(phone, @"^\+?\d{7,15}$")) 
+        if (string.IsNullOrWhiteSpace(nameEn))
+        {
+            return AuthErrors.NameEnRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(nameAr))
+        {
+            return AuthErrors.NameArRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(nameNl))
+        {
+            return AuthErrors.NameNlRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(phone) || !Regex.IsMatch(phone, @"^\+?\d{7,15}$"))
+        {
             return AuthErrors.PhoneRequired;
+        }
 
         var localizedName = new LocalizedText(nameEn.Trim(), nameAr.Trim(), nameNl.Trim());
 
@@ -55,4 +69,17 @@ public sealed class User : AuditableEntity
     public void Deactivate() => IsActive = false;
     public void Activate() => IsActive = true;
     public void SoftDelete() => DeletedAtUtc = DateTimeOffset.UtcNow;
+
+    public Result<Success> AssignVehicle(Guid vehicleId)
+    {
+        if (Role != UserRole.Driver)
+        {
+            return Error.Validation("User.NotADriver", "Only users with the Driver role can be assigned a vehicle.");
+        }
+
+        ActiveVehicleId = vehicleId;
+        return Result.Success;
+    }
+
+    public void UnassignVehicle() => ActiveVehicleId = null;
 }

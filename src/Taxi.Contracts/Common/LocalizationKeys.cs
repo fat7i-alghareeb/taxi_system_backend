@@ -77,4 +77,36 @@ public static class LocalizationKeys
         public const string ModelRequired = "Vehicle.Model.Required";
         public const string LicensePlateRequired = "Vehicle.LicensePlate.Required";
     }
+
+    public static class Driver
+    {
+        public const string UserIdRequired = "Driver.UserId.Required";
+        public const string LicenseRequired = "Driver.License.Required";
+        public const string NotFound = "Driver.NotFound";
+    }
+
+    public static class Payment
+    {
+        public const string InvalidAmount = "Payment.Amount.Invalid";
+        public const string NotFound = "Payment.NotFound";
+    }
+
+    public static class Trip
+    {
+        public const string QuoteExpired = "Trip.Quote.Expired";
+        public const string InvalidStops = "Trip.Stops.Invalid";
+        public const string InvalidStatus = "Trip.Status.Invalid";
+        public const string NotFound = "Trip.NotFound";
+    }
+
+    public static class Audit
+    {
+        public const string NotFound = "Audit.NotFound";
+    }
+
+    public static class Promo
+    {
+        public const string CodeRequired = "Promo.Code.Required";
+        public const string NotFound = "Promo.NotFound";
+    }
 }

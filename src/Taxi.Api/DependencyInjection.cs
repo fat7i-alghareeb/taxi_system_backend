@@ -1,16 +1,14 @@
+namespace Microsoft.Extensions.DependencyInjection;
+
 using System.Globalization;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
-
 using Asp.Versioning;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Localization;
-
 using Serilog;
-
 using Taxi.Api;
 using Taxi.Api.Infrastructure;
 using Taxi.Api.OpenApi.Transformers;
@@ -18,8 +16,6 @@ using Taxi.Api.Services;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Contracts.Common;
 using Taxi.Infrastructure.Settings;
-
-namespace Microsoft.Extensions.DependencyInjection;
 
 public static class DependencyInjection
 {

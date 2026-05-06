@@ -16,7 +16,7 @@ public class SendOtpCommandHandler(
         // 2. Send the OTP via SMS
         var message = $"Your Fat7i Taxi code is: {code}. Valid for 5 minutes.";
         await smsProvider.SendSmsAsync(request.Phone, message, cancellationToken);
-        
+
         return sessionToken;
     }
 }

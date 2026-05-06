@@ -22,7 +22,7 @@ The Application Layer dictates the flow of control. It implements the CQRS (Comm
 - **Infrastructure Leakage:** Using `Microsoft.EntityFrameworkCore.SqlServer` or knowing anything about SQL dialects or Dapper configurations.
 - **HTTP / Presentation Leakage:** Returning `IActionResult`, `HttpResponseMessage`, or checking `HttpContext`. The Application Layer does not know it is hosted in a Web API or a Console App.
 - **Business Rules:** Containing logic like `if (balance < 0) return Error`. All decisions involving object states belong strictly inside the Domain Entities.
-- **Handlers must be kept "slim".** If a mapping takes more than 5 lines, extract it to a dedicated Mapper class.
+- **Handlers must be kept "slim".** If a mapping takes more than 5 lines, extract it to a dedicated Mapper class. Use C# 12 **Primary Constructors** for all handlers.
 - **Trilingual Mapping**: Mapper methods (`ToDto()`) should be minimized. Prefer switch-based projections in Handlers to ensure SQL-side JSONB extraction. If a mapper is used, it must resolve correctly based on the current culture from `ILanguageContext`.
 
 ---
@@ -32,7 +32,7 @@ The Application Layer dictates the flow of control. It implements the CQRS (Comm
 Our Application Layer completely shuns the traditional "layered" folder structure (e.g., throwing all commands into a `Commands` folder and all queries into a `Queries` folder). We utilize **Vertical Slice Architecture** mapped by Domain Aggregates. This ensures high cohesion—when a developer works on "Orders," all related commands, queries, validators, and mappers are physically grouped together.
 
 ```text
-src/MechanicShop.Application/
+src/Taxi.Application/
 ├── Common/
 │   ├── Behaviours/
 │   │   ├── CachingBehavior.cs

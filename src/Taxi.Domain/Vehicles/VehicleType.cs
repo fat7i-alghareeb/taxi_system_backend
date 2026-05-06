@@ -53,10 +53,25 @@ public sealed class VehicleType : AuditableEntity
         string currencyCode = "EUR",
         int sortOrder = 0)
     {
-        if (string.IsNullOrWhiteSpace(code)) return VehicleErrors.CodeRequired;
-        if (string.IsNullOrWhiteSpace(nameEn)) return VehicleErrors.NameEnRequired;
-        if (string.IsNullOrWhiteSpace(nameAr)) return VehicleErrors.NameArRequired;
-        if (string.IsNullOrWhiteSpace(nameNl)) return VehicleErrors.NameNlRequired;
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return VehicleErrors.CodeRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(nameEn))
+        {
+            return VehicleErrors.NameEnRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(nameAr))
+        {
+            return VehicleErrors.NameArRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(nameNl))
+        {
+            return VehicleErrors.NameNlRequired;
+        }
 
         var name = new LocalizedText(nameEn, nameAr, nameNl);
         return new VehicleType(id, code, name, passengerCapacity, ratePerKm, ratePerMin, minimumFare, currencyCode, sortOrder);

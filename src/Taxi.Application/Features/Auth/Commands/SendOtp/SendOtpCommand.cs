@@ -1,5 +1,5 @@
-using Taxi.Domain.Common.Results;
 using MediatR;
+using Taxi.Domain.Common.Results;
 
 namespace Taxi.Application.Features.Auth.Commands.SendOtp;
 

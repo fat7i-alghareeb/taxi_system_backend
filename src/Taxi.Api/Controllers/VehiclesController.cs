@@ -13,18 +13,18 @@ using Taxi.Domain.Common.Results;
 namespace Taxi.Api.Controllers;
 
 [ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/cars")]
-public class CarsController(ISender sender) : ApiController
+[Route("api/v{version:apiVersion}/vehicles")]
+public class VehiclesController(ISender sender) : ApiController
 {
     [HttpGet]
     [ProducesResponseType(typeof(List<VehicleDto>), StatusCodes.Status200OK)]
-    [EndpointSummary("Retrieves a list of all vehicles (cars).")]
+    [EndpointSummary("Retrieves a list of all vehicles.")]
     [EndpointName("GetVehicles")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> Get(CancellationToken ct)
     {
         var result = await sender.Send(new GetVehiclesQuery(), ct);
-        
+
         return result.Match(
             Ok,
             Problem);
@@ -39,7 +39,7 @@ public class CarsController(ISender sender) : ApiController
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
         var result = await sender.Send(new GetVehicleByIdQuery(id), ct);
-        
+
         return result.Match(
             Ok,
             Problem);
@@ -48,7 +48,7 @@ public class CarsController(ISender sender) : ApiController
     [HttpPost]
     [ProducesResponseType(typeof(VehicleDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [EndpointSummary("Creates a new vehicle (car).")]
+    [EndpointSummary("Creates a new vehicle.")]
     [EndpointName("CreateVehicle")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> Create([FromBody] CreateVehicleRequest request, CancellationToken ct)
@@ -63,7 +63,7 @@ public class CarsController(ISender sender) : ApiController
             request.LicensePlate);
 
         var result = await sender.Send(command, ct);
-        
+
         return result.Match(
             response => CreatedAtRoute(
                 routeName: "GetVehicleById",
@@ -87,7 +87,7 @@ public class CarsController(ISender sender) : ApiController
             request.IsActive);
 
         var result = await sender.Send(command, ct);
-        
+
         return result.Match(
             Ok,
             Problem);
@@ -102,7 +102,7 @@ public class CarsController(ISender sender) : ApiController
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var result = await sender.Send(new RemoveVehicleCommand(id), ct);
-        
+
         return result.Match(
             _ => NoContent(),
             Problem);

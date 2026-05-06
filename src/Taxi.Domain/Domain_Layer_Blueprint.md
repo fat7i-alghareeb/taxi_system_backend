@@ -58,7 +58,7 @@ For instance, if a domain rule requires checking if a unique product SKU already
 To ensure high cohesion, clarity, and ease of navigation for developers, the Domain Layer enforces a disciplined directory anatomy. The directory tree serves as the Table of Contents for your business.
 
 ```text
-src/MechanicShop.Domain/
+src/Taxi.Domain/
 ├── Common/
 │   ├── AuditableEntity.cs
 │   ├── DomainEvent.cs
@@ -156,9 +156,9 @@ public abstract class AuditableEntity : Entity
     protected AuditableEntity() { }
     protected AuditableEntity(Guid id) : base(id) { }
 
-    public DateTimeOffset CreatedAtUtc { get; set; } // Must always be UTC (TimeSpan.Zero)
+    public DateTimeOffset CreatedAtUtc { get; set; } // Must always be DateTimeOffset
     public string? CreatedBy { get; set; }
-    public DateTimeOffset LastModifiedUtc { get; set; } // Must always be UTC (TimeSpan.Zero)
+    public DateTimeOffset LastModifiedUtc { get; set; } // Must always be DateTimeOffset
     public string? LastModifiedBy { get; set; }
 }
 ```
@@ -180,12 +180,12 @@ Developing within the Domain Layer requires strict adherence to encapsulation. P
 The following abstract `Order` entity from an E-Commerce domain portrays the gold standard of architectural compliance. Observe how it uses `Result<T>` instead of exceptions, private constructors for the ORM, static factories, encapculated lists, and pure behavior-driven methods.
 
 ```csharp
-using MechanicShop.Domain.Common;
-using MechanicShop.Domain.Common.Results;
-using MechanicShop.Domain.Orders.Enums;
-using MechanicShop.Domain.Orders.Events;
+using Taxi.Domain.Common;
+using Taxi.Domain.Common.Results;
+using Taxi.Domain.Orders.Enums;
+using Taxi.Domain.Orders.Events;
 
-namespace MechanicShop.Domain.Orders;
+namespace Taxi.Domain.Orders;
 
 // 1. Inherit from AuditableEntity for automated metadata tracking
 public sealed class Order : AuditableEntity
@@ -420,7 +420,7 @@ Relying on standard primitives (`string`, `decimal`, `int`) to represent complex
 The `LocalizedText` Value Object is the mandated carrier for all translatable fields (Names, Descriptions). It ensures English, Arabic, and Dutch versions are always coupled and stored atomically in JSONB.
 
 ```csharp
-namespace MechanicShop.Domain.Common;
+namespace Taxi.Domain.Common;
 
 public sealed class LocalizedText : ValueObject
 {
@@ -452,17 +452,17 @@ public sealed class LocalizedText : ValueObject
 }
 ```
 
-**Trilingual Rule**: All translatable string fields on entities MUST use `LocalizedText`. Raw `string` properties for trilingual text (e.g., `NameEn`) are a PR rejection criterion.
+**Trilingual Rule**: All translatable string fields on entities MUST use `LocalizedText`. Raw `string` properties for trilingual text (e.g., `NameEn`) are a PR rejection criterion. Ensure `En`, `Ar`, and `Nl` (Dutch) are supported.
 
 ---
 
 #### The "Right Way" Example: Address Value Object
 
 ```csharp
-using MechanicShop.Domain.Common;
-using MechanicShop.Domain.Common.Results;
+using Taxi.Domain.Common;
+using Taxi.Domain.Common.Results;
 
-namespace MechanicShop.Domain.Orders.ValueObjects;
+namespace Taxi.Domain.Orders.ValueObjects;
 
 // Inherits from a foundational base class that overrides Equality Operators (==, !=, Equals, GetHashCode)
 public sealed class Address : ValueObject
@@ -518,11 +518,11 @@ An _Application Service_ (or MediatR Command Handler) is responsible for infrast
 #### The "Right Way" Example: Cross-Entity Discount Calculation
 
 ```csharp
-using MechanicShop.Domain.Orders;
-using MechanicShop.Domain.Customers;
-using MechanicShop.Domain.Common.Results;
+using Taxi.Domain.Orders;
+using Taxi.Domain.Customers;
+using Taxi.Domain.Common.Results;
 
-namespace MechanicShop.Domain.Services;
+namespace Taxi.Domain.Services;
 
 // Notice there is no interface injection (no IRepository) in the constructor.
 // This is pure, in-memory domain mathematics.
@@ -580,10 +580,10 @@ Since Domain Entities are just pure C# objects, you simply instantiate them usin
 ```csharp
 using Xunit;
 using FluentAssertions;
-using MechanicShop.Domain.Orders;
-using MechanicShop.Domain.Orders.Enums;
+using Taxi.Domain.Orders;
+using Taxi.Domain.Orders.Enums;
 
-namespace MechanicShop.Domain.UnitTests.Orders;
+namespace Taxi.Domain.UnitTests.Orders;
 
 public class OrderTests
 {

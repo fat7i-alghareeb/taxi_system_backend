@@ -21,6 +21,10 @@ public class DriverConfiguration : IEntityTypeConfiguration<Driver>
             .WithMany()
             .HasForeignKey(d => d.ActiveVehicleId);
 
+        builder.Property(d => d.LicenseNumber)
+            .HasMaxLength(50)
+            .IsRequired();
+
         builder.Property(d => d.Status)
             .HasConversion<string>()
             .HasMaxLength(20);

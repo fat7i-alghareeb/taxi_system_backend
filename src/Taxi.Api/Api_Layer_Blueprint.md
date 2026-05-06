@@ -29,7 +29,7 @@ The API Layer depends on exactly three internal rings, adhering strictly to the 
 Through Forensic Analysis of the codebase, the Presentation layer maintains a complex, highly-segregated directory structure supporting both native UI and dual-HTTP protocols.
 
 ```text
-src/MechanicShop.Api/
+src/Taxi.Api/
 ├── Components/         # Blazor Server/WebAssembly UI shell implementations (App.razor)
 ├── Controllers/        # Domain-driven REST Controllers (Primary Routing)
 │   ├── ApiController.cs
@@ -45,7 +45,7 @@ src/MechanicShop.Api/
 ├── Services/           # Context resolution (CurrentUser.cs)
 ├── wwwroot/            # Static Web Assets (CSS, JS)
 ├── appsettings.json    # Application configuration (Serilog, Caching, JWT Params)
-├── MechanicShop.Api.http # Native IDE REST testing endpoints
+├── Taxi.Api.http # Native IDE REST testing endpoints
 ├── DependencyInjection.cs
 └── Program.cs          # The Absolute Composition Root
 ```
@@ -73,7 +73,7 @@ And in the pipeline mapping, it mounts the root application component:
 ```csharp
 app.MapRazorComponents<App>().AllowAnonymous()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(ECommerce.Client._Imports).Assembly);
+    .AddAdditionalAssemblies(typeof(Taxi.Client._Imports).Assembly);
 ```
 
 By inspecting `Components/App.razor`, we observe the `Routes` component utilizing the `InteractiveWebAssemblyRenderMode`. This architectural decision allows the application to directly serve a highly interactive frontend from the exact same server that holds the API, maintaining shared Domain logic (via the `Contracts` project) while eliminating cross-origin configuration overhead and connection latency during initial loads.
@@ -101,6 +101,8 @@ To ensure a professional, predictable, and scalable API surface, all developers 
 1. **Dumb Envelopes**: Controllers MUST NOT contain business logic. They should simply unwrap HTTP requests, dispatch a MediatR command/query, and wrap the `Result` into an `ActionResult`.
 2. **Versioned Routes**: Every controller must be decorated with `[ApiVersion("1.0")]` and `[Route("api/v{version:apiVersion}/[controller]")]`.
 3. **Action Specificity**: Use precise HTTP Verbs (`[HttpGet]`, `[HttpPost]`, etc.) and provide `Produces` attributes for Swagger clarity.
+4. **Primary Constructors**: Use C# 12 Primary Constructors for all controllers.
+5. **Standardized Responses**: Use `result.Match` to translate `Result<T>` into HTTP responses.
 
 ### 4.3. Deep OpenAPI Customization (Transformers)
 
@@ -133,7 +135,7 @@ The API layer fulfills this crucial contract by implementing a proxy `CurrentUse
 using System.Security.Claims;
 using ECommerce.Application.Common.Interfaces;
 
-namespace ECommerce.Api.Services;
+namespace Taxi.Api.Services;
 
 // This service is registered as Scoped in DependencyInjection.cs
 public class CurrentUser(IHttpContextAccessor httpContextAccessor) : IUser
@@ -239,8 +241,8 @@ The API utilizes `My.Extensions.Localization.Json` as the runtime engine, with r
 
 - **LanguageContext**: A scoped service (`ILanguageContext`) implemented in [`Services/LanguageContext.cs`](Services/LanguageContext.cs). It is a **read-only** accessor that returns `IRequestCultureFeature.RequestCulture.UICulture.TwoLetterISOLanguageName`. It NEVER mutates `Thread.CurrentUICulture` — culture flow is entirely owned by the framework's async-execution context. It uses `Languages.Default` as its internal fallback.
 - **Culture Synchronization**: `UseRequestLocalization` is registered as the very first middleware (see §4.11) so every later component — including `UseExceptionHandler` — sees the correct `CultureInfo.CurrentUICulture`. Supported cultures are defined by `Languages.All`.
-- **SharedResource marker class**: Lives at the project's root namespace `MechanicShop.Api` (file: [`SharedResource.cs`](SharedResource.cs)), **not** inside a `Resources` sub-namespace. This keeps the path computation in `My.Extensions.Localization.Json` clean.
-- **JSON Resources**: Stored at [`Resources/SharedResource.en.json`](Resources/SharedResource.en.json) and [`Resources/SharedResource.ar.json`](Resources/SharedResource.ar.json). Explicitly deployed to `bin/.../Resources/` by an entry in [`MechanicShop.Api.csproj`](MechanicShop.Api.csproj).
+- **SharedResource marker class**: Lives at the project's root namespace `Taxi.Api` (file: [`SharedResource.cs`](SharedResource.cs)), **not** inside a `Resources` sub-namespace. This keeps the path computation in `My.Extensions.Localization.Json` clean.
+- **JSON Resources**: Stored at [`Resources/SharedResource.en.json`](Resources/SharedResource.en.json) and [`Resources/SharedResource.ar.json`](Resources/SharedResource.ar.json). Explicitly deployed to `bin/.../Resources/` by an entry in [`Taxi.Api.csproj`](Taxi.Api.csproj).
 - **Swagger Integration**: All API endpoints in Swagger include an `Accept-Language` header parameter with a dropdown for `en`, `ar`, and `nl` via [`AcceptLanguageOperationTransformer`](OpenApi/Transformers/AcceptLanguageOperationTransformer.cs).
 - **ModelState Localization**: `InvalidModelStateResponseFactory` (registered in [`DependencyInjection.AddValidation()`](DependencyInjection.cs)) translates DataAnnotation errors through the same `SharedResource` dictionary used by FluentValidation and domain errors. Contracts request DTOs declare `[Required(ErrorMessage = LocalizationKeys.Validation.X)]` and the factory looks the key up at runtime.
 
@@ -335,7 +337,7 @@ app.MapControllers(); // Wires up MVC
 // Mounts Blazor Components natively into the DOM
 app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(MechanicShop.Client._Imports).Assembly);
+    .AddAdditionalAssemblies(typeof(Taxi.Client._Imports).Assembly);
 
 // Maps native SignalR Websocket pipelines
 app.MapHub<WorkOrderHub>("/hubs/workorders");

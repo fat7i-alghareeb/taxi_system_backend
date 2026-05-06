@@ -1,4 +1,4 @@
-# 🏛️ Architecture Master Blueprint
+# 🏛️ Fat7i Taxi - Architecture Master Blueprint
 
 ## 1. System Overview & Philosophy
 
@@ -57,12 +57,12 @@ The solution is divided into highly specific boundary rings. You must consult th
 ### Ring 1: The Core
 
 1. **Domain Layer:** The heart of the business. Contains Aggregates, Entities, Value Objects (including the mandated `LocalizedText` for bilingual fields), Domain Events, and the foundational `Result<T>` pattern. It has zero external dependencies.
-   👉 Refer to the core rules here: [`Domain_Layer_Blueprint.md`](src/MechanicShop.Domain/Domain_Layer_Blueprint.md)
+   👉 Refer to the core rules here: [`Domain_Layer_Blueprint.md`](src/Taxi.Domain/Domain_Layer_Blueprint.md)
 
 ### Ring 2: The Vocabulary
 
 1. **Contracts Layer:** The external vocabulary. Contains the "Dumb DTOs" (Data Transfer Objects), Requests, and Responses. It bridges the gap between the public API and the Application layer without leaking internal Domain logic. Hosts the centralized `LocalizationKeys` registry for system-wide translation parity.
-   👉 Refer to the rigid boundary rules here: [`Contracts_Layer_Blueprint.md`](src/MechanicShop.Contracts/Contracts_Layer_Blueprint.md)
+   👉 Refer to the rigid boundary rules here: [`Contracts_Layer_Blueprint.md`](src/Taxi.Contracts/Contracts_Layer_Blueprint.md)
 
 ### Ring 3: The Use Cases
 
@@ -114,7 +114,7 @@ Because requests cross massive internal layers, traceability is paramount. The s
 
 **Culture-Aware Caching**: The `CachingBehavior` automatically partitions the cache by culture code (e.g., `query-key_ar`) using `ILanguageContext.Language` for queries that implement `ICachedQuery` with `IsCultureAware = true`.
 
-**The Languages Registry**: To eliminate magic strings, all language-based logic must utilize the `MechanicShop.Contracts.Common.Languages` static class, which defines canonical constants for `En`, `Ar`, and the `Default` language.
+**The Languages Registry**: To eliminate magic strings, all language-based logic must utilize the `Taxi.Contracts.Common.Languages` static class, which defines canonical constants for `En`, `Ar`, and `Nl`.
 
 ---
 
@@ -159,10 +159,15 @@ Navigate to the **API Layer**. Within the specific `Controllers/` directory, exp
 The action should be microscopically minimal, absolutely devoid of loops, logging logic, or SQL calls, simply matching the unified Application `Result<T>`:
 
 ```csharp
-var result = await sender.Send(command, cancellationToken);
-return result.Match(
-    response => Ok(response),
-    Problem); // inherited from ApiController; delegates to ProblemExtensions.ToProblem(this)
+[HttpPost]
+public async Task<IActionResult> Create([FromBody] CreateRequest request, CancellationToken ct)
+{
+    var command = new CreateCommand(request.Name);
+    var result = await sender.Send(command, ct);
+    return result.Match(
+        response => CreatedAtRoute("GetById", new { id = response.Id }, response),
+        Problem);
+}
 ```
 
 **The feature is now fully implemented following flawless Enterprise Clean Architecture execution.**

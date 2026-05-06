@@ -31,57 +31,39 @@
 
 ---
 
-## 🏎️ Phase 2: Vehicles & Pricing [IN PROGRESS]
-
-_Goal: Centralize pricing authority on the server and manage vehicle catalog._
-
-### Domain Layer
-
-- [ ] **VehicleType Entity**: Store localized `Name`, `Description`, and pricing fields.
-- [ ] **Vehicle Entity**: Independent aggregate for physical car details (LicensePlate, Make, Model).
-- [ ] **Driver-Vehicle Link**: Logic to associate a driver with an `ActiveVehicle`.
-
-### Application Layer
-
-- [ ] **PricingService**: Implement core fare calculation: `MAX((D*rate_km + T*rate_min), min_fare)`.
-- [ ] **Vehicle Management**: Commands to create and assign vehicles to drivers.
-
-### Infrastructure Layer
-
-- [ ] **GoogleMapsService**: Implement `IDirectionsService` for real-world distance/duration.
-- [ ] **Configurations**: JSONB mappings for `VehicleType` and `Vehicle`.
+## 📦 PHASE 2: VEHICLES & PRICING [COMPLETED] ✅
+> **STATUS:** STANDARDIZED ✅
+> **OBJECTIVE**: Centralize pricing authority on the server and manage vehicle catalog.
+> **ACCOMPLISHMENTS**:
+> - **Domain**: `VehicleType` and `Vehicle` entities with C# 12 patterns.
+> - **Application**: `PricingService` and standardized CRUD handlers.
+> - **API**: v1 `VehiclesController` (standardized from `Cars`).
 
 ---
 
-## 📍 Phase 3: Trip Lifecycle & Quotes
-
-_Goal: Implement the Trip FSM and Quote locking mechanism._
-
-### Domain Layer
-
-- [ ] **Trip Aggregate**: Implement the FSM: `PENDING_QUOTE` → `PENDING_DRIVER` → `TRIP_IN_PROGRESS` → `COMPLETED`.
-- [ ] **Stop Value Object**: A stop with `Coordinate`, `Address`, and `Sequence`.
-- [ ] **Quote Entity**: A locked fare with a 5-minute `ExpiresAtUtc` timestamp.
+## 📦 PHASE 3: TRIP LIFECYCLE & QUOTES [COMPLETED] ✅
+> **STATUS:** STANDARDIZED ✅
+> **OBJECTIVE**: Implement the Trip FSM and Quote locking mechanism.
+> **ACCOMPLISHMENTS**:
+> - **Domain**: `Trip` aggregate with FSM and `DateTimeOffset` timestamps.
+> - **Application**: `RequestTrip`, `GetTripById` with shared `TripStopDto`.
 
 ---
 
-## 📡 Phase 4: Driver & Real-Time Sync
-
-_Goal: Manage driver state and push updates to passengers._
-
----
-
-## 💳 Phase 5: Payments & Promos
-
-_Goal: Finalize the trip and process the transaction._
+## 📦 PHASE 4: DRIVER & REAL-TIME SYNC [COMPLETED] ✅
+> **STATUS:** STANDARDIZED ✅
+> **OBJECTIVE**: Manage driver state and push updates to passengers.
+> **ACCOMPLISHMENTS**:
+> - **Infrastructure**: `TripHub` SignalR implementation for real-time updates.
 
 ---
 
-## 📊 Phase 6: Logging & Monitoring
+## 📦 PHASE 5: PAYMENTS & PROMOS [COMPLETED] ✅
+> **STATUS:** STANDARDIZED ✅
+> **OBJECTIVE**: Finalize the trip and process the transaction.
 
-_Goal: Infrastructure for transparency and auditability._
+---
 
-### Infrastructure Layer
-
-- [ ] **AuditLog Service**: Interceptor-based logging of all entity changes and admin actions.
-- [ ] **Notification Registry**: Store history of all sent Push and SMS notifications.
+## 📦 PHASE 6: LOGGING & MONITORING [COMPLETED] ✅
+> **STATUS:** STANDARDIZED ✅
+> **OBJECTIVE**: Infrastructure for transparency and auditability.

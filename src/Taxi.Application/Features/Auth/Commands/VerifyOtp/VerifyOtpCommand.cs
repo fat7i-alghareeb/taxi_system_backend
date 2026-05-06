@@ -1,6 +1,6 @@
+using MediatR;
 using Taxi.Application.Features.Auth.Dtos;
 using Taxi.Domain.Common.Results;
-using MediatR;
 
 namespace Taxi.Application.Features.Auth.Commands.VerifyOtp;
 

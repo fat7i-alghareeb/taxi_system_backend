@@ -23,8 +23,14 @@ public class UpdateVehicleCommandHandler(
 
         vehicle.UpdateDetails(request.Color, request.LicensePlate);
 
-        if (request.IsActive) vehicle.Activate();
-        else vehicle.Deactivate();
+        if (request.IsActive)
+        {
+            vehicle.Activate();
+        }
+        else
+        {
+            vehicle.Deactivate();
+        }
 
         await _context.SaveChangesAsync(ct);
 

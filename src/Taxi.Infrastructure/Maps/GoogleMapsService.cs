@@ -11,7 +11,6 @@ public class GoogleMapsService : IDirectionsService
 
         return Task.FromResult(new DirectionResponse(
             DistanceMeters: 5000, // 5km
-            DurationSeconds: 600  // 10 minutes
-        ));
+            DurationSeconds: 600)); // 10 minutes
     }
 }

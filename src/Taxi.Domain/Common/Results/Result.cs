@@ -79,6 +79,10 @@ public sealed class Result<TValue> : IResult<TValue>
 
     public bool IsError => !this.IsSuccess;
 
+    public bool IsFailure => !this.IsSuccess;
+
+    public Error Error => (this.errors?.Count > 0) ? this.errors[0] : default;
+
     public List<Error> Errors => this.IsError ? this.errors! : [];
 
     public TValue Value => this.IsSuccess ? this.value! : default!;

@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary & Layer Purpose
 
-The WebAssembly Client Layer (`MechanicShop.Client`) serves as the active UI consumption frontier of our Clean Architecture. Operating as an isolated Single-Page Application (SPA) executed entirely within the end user's browser sandbox, it possesses absolutely no awareness of databases, external third-party SDKs, or inner business rules.
+The WebAssembly Client Layer (`Taxi.Client`) serves as the active UI consumption frontier of our Clean Architecture. Operating as an isolated Single-Page Application (SPA) executed entirely within the end user's browser sandbox, it possesses absolutely no awareness of databases, external third-party SDKs, or inner business rules.
 
 Its singular responsibility is to communicate securely and efficiently with the API Layer utilizing asynchronous HTTP/REST queries and real-time SignalR WebSockets, subsequently mapping Server-sent DTOs and `ProblemDetails` into reactive visual states utilizing Blazor WebAssembly.
 
@@ -30,7 +30,7 @@ The Client Layer explicitly depends on ONLY one external project:
 Forensic extraction of the Client directory reveals a strict segregation of networking, authentication, and presentation logic:
 
 ```text
-src/MechanicShop.Client/
+src/Taxi.Client/
 ├── Components/         # Reusable atomic Blazor UI fragments (Cards, Buttons, Modals)
 ├── Extensions/         # Client-side helpers (e.g., timezone data conversions)
 ├── Hubs/               # SignalR WebSocket connection managers (WorkOrderHubClient.cs)
@@ -181,7 +181,7 @@ builder.Services.AddTransient<BearerTokenHandler>();
 
 // Binds the heavily decorated HttpClient into the service loop natively spanning the base URI
 builder.Services.AddHttpClient(
-    "MechanicShopClient",
+    "TaxiClient",
     client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
     .AddHttpMessageHandler<BearerTokenHandler>();
 
