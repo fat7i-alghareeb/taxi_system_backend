@@ -84,7 +84,11 @@ public static class DependencyInjection
         services.AddMemoryCache();
         services.AddSingleton<IOtpService, OtpService>();
         services.AddSingleton<ISmsProvider, ConsoleSmsProvider>();
-        services.AddTransient<IDirectionsService, GoogleMapsService>();
+        services.AddHttpClient<IDirectionsService, GoogleMapsService>(client =>
+        {
+            client.BaseAddress = new Uri("https://maps.googleapis.com/");
+            client.Timeout = TimeSpan.FromSeconds(10);
+        });
         services.AddScoped<ITripNotifier, SignalRTripNotifier>();
 
         services.AddHybridCache(options => options.DefaultEntryOptions = new Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions

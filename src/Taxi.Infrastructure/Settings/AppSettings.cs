@@ -13,4 +13,6 @@ public class AppSettings
     /// Supported values: "en" (English), "ar" (Arabic). Defaults to "en".
     /// </summary>
     public string DefaultLanguage { get; set; } = Languages.Default;
+
+    public string GoogleMapsApiKey { get; set; } = default!;
 }

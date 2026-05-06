@@ -6,6 +6,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:80
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=TaxiDb_Dev;Username=postgres;Password=YourStrong@Password1
+      AppSettings__GoogleMapsApiKey: YOUR_DEV_GOOGLE_MAPS_API_KEY_HERE
       OTEL_EXPORTER_OTLP_ENDPOINT: http://seq:5341/ingest/otlp/v1/traces
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
     restart: on-failure
