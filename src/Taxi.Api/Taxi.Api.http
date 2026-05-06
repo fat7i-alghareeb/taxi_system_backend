@@ -1,12 +1,19 @@
 @baseUrl = https://localhost:7007/api
 @token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YzdhNmQ0Yi01YTFjLTQ2MDctYjVlMS00ZWJkZTk1ZDY3NGIiLCJlbWFpbCI6ImFkbWluQHRheGkuY29tIiwicm9sZSI6Ik1hbmFnZXIiLCJuYmYiOjE3Nzc4MTM5MDIsImV4cCI6MTc3NzgxNzUwMiwiaWF0IjoxNzc3ODEzOTAyLCJpc3MiOiJUYXhpU2VydmVyIiwiYXVkIjoiVGF4aUNsaWVudCJ9.i5h1bfF8DmjaaRLJZJVLdY7KoYObP-EbwTvX8YSMFro
-@carId = 0e7f555e-fd64-47fc-aaa4-a1b7c6f93018
+@sessionToken = <paste-session-token-from-send-otp-response>
+@driverId = 00000000-0000-0000-0000-000000000001
+@vehicleTypeId = 00000000-0000-0000-0000-000000000002
+@vehicleId = 00000000-0000-0000-0000-000000000003
+@tripId = 00000000-0000-0000-0000-000000000004
+@passengerId = 00000000-0000-0000-0000-000000000005
+@quoteId = 00000000-0000-0000-0000-000000000006
+
 
 ###############################################################################
-# IDENTITY API
+# IDENTITY (ASP.NET Core Identity — no versioning)
 ###############################################################################
 
-### Login As Admin
+### Login as Admin (get JWT)
 # @name login
 POST {{baseUrl}}/token/generate
 Content-Type: application/json
@@ -16,115 +23,393 @@ Content-Type: application/json
     "password": "Admin123!"
 }
 
-### Refresh Token
+###
+
+### Refresh Access Token
 POST {{baseUrl}}/token/refresh-token
 Content-Type: application/json
 
 {
     "ExpiredAccessToken": "{{token}}",
-    "refreshToken": "..."
+    "refreshToken": "<paste-refresh-token-here>"
 }
 
-### Get User Info
+###
+
+### Get Current User Info
 GET {{baseUrl}}/token/user-info
 Authorization: Bearer {{token}}
 
 
 ###############################################################################
-# CARS API
+# AUTH — OTP Flow  (POST /api/v1/auth/...)
 ###############################################################################
 
-### Get OpenAPI document
-GET https://localhost:7007/openapi/v1.json
+### Step 1 — Send OTP to phone
+# @name sendOtp
+POST {{baseUrl}}/v1/auth/send-otp
+Content-Type: application/json
 
-### Get all cars (English)
-GET {{baseUrl}}/v1/cars
+{
+    "phone": "+31612345678"
+}
+
+###
+
+### Step 2 — Verify OTP & receive tokens (registers user automatically if new)
+POST {{baseUrl}}/v1/auth/verify-otp
+Content-Type: application/json
+
+{
+    "phone": "+31612345678",
+    "sessionToken": "{{sessionToken}}",
+    "code": "1234"
+}
+
+
+###############################################################################
+# DRIVERS  (GET|POST|PUT|DELETE /api/v1/drivers/...)
+###############################################################################
+
+### Get all drivers
+GET {{baseUrl}}/v1/drivers
 Authorization: Bearer {{token}}
-Accept-Language: en
 
-### Get all cars (Arabic)
-GET {{baseUrl}}/v1/cars
+###
+
+### Get driver by ID
+GET {{baseUrl}}/v1/drivers/{{driverId}}
 Authorization: Bearer {{token}}
-Accept-Language: ar
 
-### Get all cars (Dutch)
-GET {{baseUrl}}/v1/cars
-Authorization: Bearer {{token}}
-Accept-Language: nl
+###
 
-### Get car by Id
-GET {{baseUrl}}/v1/cars/{{carId}}
-Authorization: Bearer {{token}}
-Accept-Language: en
-
-### Create a new car
-POST {{baseUrl}}/v1/cars
+### Create a driver
+POST {{baseUrl}}/v1/drivers
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
+    "phone": "+31698765432",
+    "nameEn": "Ahmed Al-Rashid",
+    "nameAr": "أحمد الراشد",
+    "licenseNumber": "DL-2024-00123"
+}
+
+###
+
+### Update a driver's license number
+PUT {{baseUrl}}/v1/drivers/{{driverId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "licenseNumber": "DL-2025-99999"
+}
+
+###
+
+### Delete a driver
+DELETE {{baseUrl}}/v1/drivers/{{driverId}}
+Authorization: Bearer {{token}}
+
+###
+
+### Assign a vehicle to a driver
+POST {{baseUrl}}/v1/drivers/{{driverId}}/vehicle
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+"{{vehicleId}}"
+
+
+###############################################################################
+# VEHICLE TYPES  (GET|POST|PUT|DELETE /api/v1/vehicle-types/...)
+###############################################################################
+
+### Get vehicle type catalog (cached 60s)
+GET {{baseUrl}}/v1/vehicle-types
+Authorization: Bearer {{token}}
+Accept-Language: en
+
+###
+
+### Get vehicle type catalog — Arabic
+GET {{baseUrl}}/v1/vehicle-types
+Authorization: Bearer {{token}}
+Accept-Language: ar
+
+###
+
+### Get vehicle type catalog — Dutch
+GET {{baseUrl}}/v1/vehicle-types
+Authorization: Bearer {{token}}
+Accept-Language: nl
+
+###
+
+### Get vehicle type by ID
+GET {{baseUrl}}/v1/vehicle-types/{{vehicleTypeId}}
+Authorization: Bearer {{token}}
+
+###
+
+### Get vehicle type by code
+GET {{baseUrl}}/v1/vehicle-types/code/ECONOMY
+Authorization: Bearer {{token}}
+
+###
+
+### Create a vehicle type
+POST {{baseUrl}}/v1/vehicle-types
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "code": "ECONOMY",
+    "nameEn": "Economy",
+    "nameAr": "اقتصادي",
+    "nameNl": "Economie",
+    "capacity": 4,
+    "ratePerKm": 1.20,
+    "ratePerMin": 0.25,
+    "minFare": 5.00,
+    "currency": "USD",
+    "sortOrder": 1
+}
+
+###
+
+### Update a vehicle type (pricing + active flag)
+PUT {{baseUrl}}/v1/vehicle-types/{{vehicleTypeId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "ratePerKm": 1.50,
+    "ratePerMin": 0.30,
+    "minFare": 6.00,
+    "isActive": true
+}
+
+###
+
+### Delete a vehicle type
+DELETE {{baseUrl}}/v1/vehicle-types/{{vehicleTypeId}}
+Authorization: Bearer {{token}}
+
+
+###############################################################################
+# VEHICLES  (GET|POST|PUT|DELETE /api/v1/vehicles/...)
+###############################################################################
+
+### Get all vehicles
+GET {{baseUrl}}/v1/vehicles
+Authorization: Bearer {{token}}
+
+###
+
+### Get vehicle by ID
+GET {{baseUrl}}/v1/vehicles/{{vehicleId}}
+Authorization: Bearer {{token}}
+
+###
+
+### Create a vehicle
+POST {{baseUrl}}/v1/vehicles
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "vehicleTypeId": "{{vehicleTypeId}}",
+    "driverId": "{{driverId}}",
     "make": "Toyota",
     "model": "Camry",
-    "year": 2024,
-    "descriptionEn": "Reliable and fuel-efficient sedan.",
-    "descriptionAr": "سيارة سيدان موثوقة وموفرة للوقود.",
-    "descriptionNl": "Betrouwbare en zuinige sedan."
+    "year": "2024",
+    "color": "White",
+    "licensePlate": "NL-123-AB"
 }
 
-### Update an existing car
-PUT {{baseUrl}}/v1/cars/{{carId}}
+###
+
+### Update a vehicle (color, plate, active flag)
+PUT {{baseUrl}}/v1/vehicles/{{vehicleId}}
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-    "id": "{{carId}}",
-    "make": "Toyota",
-    "model": "Camry SE",
-    "year": 2025,
-    "descriptionEn": "Enhanced sport edition with premium features.",
-    "descriptionAr": "نسخة رياضية مطورة بميزات فاخرة.",
-    "descriptionNl": "Verbeterde sporteditie met premium functies."
+    "color": "Silver",
+    "licensePlate": "NL-456-CD",
+    "isActive": true
 }
 
-### Remove a car
-DELETE {{baseUrl}}/v1/cars/{{carId}}
-Authorization: Bearer {{token}}
+###
 
-
-###############################################################################
-# LOCALIZATION TEST PLAN — verify en/ar translation pipeline end to end
-###############################################################################
-
-### [LOC 1] Car NotFound, English
-# Expect: 404, body.title = "Car not found."
-GET {{baseUrl}}/v1/cars/00000000-0000-0000-0000-000000000000
-Accept-Language: en
-Authorization: Bearer {{token}}
-
-### [LOC 2] Car NotFound, Arabic
-# Expect: 404, body.title = "السيارة غير موجودة."
-GET {{baseUrl}}/v1/cars/00000000-0000-0000-0000-000000000000
-Accept-Language: ar
-Authorization: Bearer {{token}}
-
-### [LOC 5] Car NotFound, Dutch
-# Expect: 404, body.title = "Auto niet gevonden."
-GET {{baseUrl}}/v1/cars/00000000-0000-0000-0000-000000000000
-Accept-Language: nl
-Authorization: Bearer {{token}}
-
-### [LOC 6] Domain Validation failure (Missing Description), Dutch
-# Expect: 400, description required message in Dutch
-POST {{baseUrl}}/v1/cars
-Accept-Language: nl
+### Deactivate a vehicle (isActive = false)
+PUT {{baseUrl}}/v1/vehicles/{{vehicleId}}
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-    "make": "Tesla",
-    "model": "Model 3",
-    "year": 2024,
-    "descriptionEn": "",
-    "descriptionAr": "",
-    "descriptionNl": ""
+    "color": "Silver",
+    "licensePlate": "NL-456-CD",
+    "isActive": false
+}
+
+###
+
+### Delete a vehicle
+DELETE {{baseUrl}}/v1/vehicles/{{vehicleId}}
+Authorization: Bearer {{token}}
+
+
+###############################################################################
+# TRIPS  (GET|POST /api/v1/trips/...)
+###############################################################################
+
+### Get trip by ID
+GET {{baseUrl}}/v1/trips/{{tripId}}
+Authorization: Bearer {{token}}
+
+###
+
+### Request a new trip (minimum 2 stops)
+POST {{baseUrl}}/v1/trips/request
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "passengerId": "{{passengerId}}",
+    "vehicleTypeId": "{{vehicleTypeId}}",
+    "quoteId": "{{quoteId}}",
+    "stops": [
+        {
+            "latitude": 52.3676,
+            "longitude": 4.9041,
+            "label": "Amsterdam Centraal"
+        },
+        {
+            "latitude": 52.3702,
+            "longitude": 4.8952,
+            "label": "Leidseplein"
+        }
+    ]
+}
+
+###
+
+### Request a multi-stop trip (3 stops)
+POST {{baseUrl}}/v1/trips/request
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "passengerId": "{{passengerId}}",
+    "vehicleTypeId": "{{vehicleTypeId}}",
+    "quoteId": "{{quoteId}}",
+    "stops": [
+        {
+            "latitude": 52.3676,
+            "longitude": 4.9041,
+            "label": "Amsterdam Centraal"
+        },
+        {
+            "latitude": 52.3588,
+            "longitude": 4.9080,
+            "label": "Rijksmuseum"
+        },
+        {
+            "latitude": 52.3702,
+            "longitude": 4.8952,
+            "label": "Leidseplein"
+        }
+    ]
+}
+
+
+###############################################################################
+# OPENAPI
+###############################################################################
+
+### OpenAPI document
+GET https://localhost:7007/openapi/v1.json
+
+
+###############################################################################
+# ERROR / EDGE CASES
+###############################################################################
+
+### 404 — Driver not found
+GET {{baseUrl}}/v1/drivers/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{token}}
+
+###
+
+### 404 — Vehicle not found
+GET {{baseUrl}}/v1/vehicles/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{token}}
+
+###
+
+### 404 — Vehicle type not found
+GET {{baseUrl}}/v1/vehicle-types/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{token}}
+
+###
+
+### 404 — Trip not found
+GET {{baseUrl}}/v1/trips/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{token}}
+
+###
+
+### 400 — Create driver with missing fields
+POST {{baseUrl}}/v1/drivers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "phone": "",
+    "nameEn": "",
+    "nameAr": "",
+    "licenseNumber": ""
+}
+
+###
+
+### 400 — Request trip with only 1 stop (invalid — min 2 required)
+POST {{baseUrl}}/v1/trips/request
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "passengerId": "{{passengerId}}",
+    "vehicleTypeId": "{{vehicleTypeId}}",
+    "quoteId": "{{quoteId}}",
+    "stops": [
+        {
+            "latitude": 52.3676,
+            "longitude": 4.9041,
+            "label": "Amsterdam Centraal"
+        }
+    ]
+}
+
+###
+
+### 400 — Create vehicle type with invalid capacity (0)
+POST {{baseUrl}}/v1/vehicle-types
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "code": "BAD",
+    "nameEn": "Bad Type",
+    "nameAr": "نوع سيء",
+    "nameNl": "Slecht type",
+    "capacity": 0,
+    "ratePerKm": 1.00,
+    "ratePerMin": 0.10,
+    "minFare": 3.00,
+    "currency": "USD",
+    "sortOrder": 99
 }

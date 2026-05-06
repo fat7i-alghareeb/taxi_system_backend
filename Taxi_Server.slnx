@@ -23,4 +23,11 @@
     <Project Path="src/Taxi.Domain/Taxi.Domain.csproj" />
     <Project Path="src/Taxi.Infrastructure/Taxi.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Taxi.Testing/Taxi.Testing.csproj" />
+    <Project Path="tests/Taxi.Domain.UnitTests/Taxi.Domain.UnitTests.csproj" />
+    <Project Path="tests/Taxi.Application.UnitTests/Taxi.Application.UnitTests.csproj" />
+    <Project Path="tests/Taxi.Api.IntegrationTests/Taxi.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Taxi.Api.EndToEndTests/Taxi.Api.EndToEndTests.csproj" />
+  </Folder>
 </Solution>
