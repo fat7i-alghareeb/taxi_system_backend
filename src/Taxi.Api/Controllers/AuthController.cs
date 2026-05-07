@@ -2,6 +2,7 @@ using Asp.Versioning;
 
 using MediatR;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Taxi.Application.Features.Auth.Commands.SendOtp;
@@ -10,6 +11,7 @@ using Taxi.Application.Features.Auth.Dtos;
 
 namespace Taxi.Api.Controllers;
 
+[AllowAnonymous]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/auth")]
 public sealed class AuthController(ISender sender) : ApiController

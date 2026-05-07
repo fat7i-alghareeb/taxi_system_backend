@@ -1,3 +1,4 @@
+using Taxi.Contracts.Common;
 using Taxi.Domain.Common;
 using Taxi.Domain.Common.Results;
 
@@ -39,6 +40,36 @@ public sealed class PricingQuote : Entity
         string currencyCode,
         DateTime validUntil)
     {
+        if (passengerId == Guid.Empty)
+        {
+            return Error.Validation(LocalizationKeys.Trip.PassengerNotFound, "Passenger ID is required.");
+        }
+
+        if (vehicleTypeId == Guid.Empty)
+        {
+            return Error.Validation(LocalizationKeys.Trip.VehicleTypeNotFound, "Vehicle type ID is required.");
+        }
+
+        if (totalDistanceKm < 0)
+        {
+            return Error.Validation(LocalizationKeys.Validation.InvalidFormat, "Total distance cannot be negative.");
+        }
+
+        if (totalDurationMin < 0)
+        {
+            return Error.Validation(LocalizationKeys.Validation.InvalidFormat, "Total duration cannot be negative.");
+        }
+
+        if (finalFare < 0)
+        {
+            return Error.Validation(LocalizationKeys.Payment.InvalidAmount, "Final fare cannot be negative.");
+        }
+
+        if (string.IsNullOrWhiteSpace(currencyCode))
+        {
+            return Error.Validation(LocalizationKeys.Validation.RequiredField, "Currency code is required.");
+        }
+
         return new PricingQuote(
             id,
             passengerId,

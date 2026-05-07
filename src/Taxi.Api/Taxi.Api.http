@@ -1,6 +1,6 @@
 @baseUrl = https://localhost:7007/api
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YzdhNmQ0Yi01YTFjLTQ2MDctYjVlMS00ZWJkZTk1ZDY3NGIiLCJlbWFpbCI6ImFkbWluQHRheGkuY29tIiwicm9sZSI6Ik1hbmFnZXIiLCJuYmYiOjE3Nzc4MTM5MDIsImV4cCI6MTc3NzgxNzUwMiwiaWF0IjoxNzc3ODEzOTAyLCJpc3MiOiJUYXhpU2VydmVyIiwiYXVkIjoiVGF4aUNsaWVudCJ9.i5h1bfF8DmjaaRLJZJVLdY7KoYObP-EbwTvX8YSMFro
-@sessionToken = <paste-session-token-from-send-otp-response>
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5ZDc5ZjI4My0wN2VhLTRkNzUtYTQwZS02NGQ4ZTUzZDUxM2IiLCJlbWFpbCI6IiszMTYxMjM0NTY3OEBob21zaS50YXhpIiwicm9sZSI6IlBhc3NlbmdlciIsIm5iZiI6MTc3ODA5NjE0MiwiZXhwIjoxNzc4MDk5NzQyLCJpYXQiOjE3NzgwOTYxNDIsImlzcyI6IlRheGlTZXJ2ZXIiLCJhdWQiOiJUYXhpQ2xpZW50In0.B80XHZwf05ew_dj-_T2PqP17ulz8YXjXxdCcJXK-p0M
+@sessionToken = be717fd885ec45cd9147481404e5f597
 @driverId = 00000000-0000-0000-0000-000000000001
 @vehicleTypeId = 00000000-0000-0000-0000-000000000002
 @vehicleId = 00000000-0000-0000-0000-000000000003
@@ -274,8 +274,10 @@ Authorization: Bearer {{token}}
 
 ### Request a new trip (minimum 2 stops)
 POST {{baseUrl}}/v1/trips/request
+Accept-Language: ar
 Authorization: Bearer {{token}}
 Content-Type: application/json
+
 
 {
     "passengerId": "{{passengerId}}",
@@ -341,12 +343,14 @@ GET https://localhost:7007/openapi/v1.json
 ### 404 — Driver not found
 GET {{baseUrl}}/v1/drivers/00000000-0000-0000-0000-000000000000
 Authorization: Bearer {{token}}
+Accept-Language: ar
 
 ###
 
 ### 404 — Vehicle not found
 GET {{baseUrl}}/v1/vehicles/00000000-0000-0000-0000-000000000000
 Authorization: Bearer {{token}}
+Accept-Language: ar
 
 ###
 
@@ -366,6 +370,8 @@ Authorization: Bearer {{token}}
 POST {{baseUrl}}/v1/drivers
 Authorization: Bearer {{token}}
 Content-Type: application/json
+Accept-Language: ar
+
 
 {
     "phone": "",

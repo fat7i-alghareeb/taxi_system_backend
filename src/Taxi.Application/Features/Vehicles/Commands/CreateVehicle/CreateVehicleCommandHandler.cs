@@ -1,7 +1,10 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Vehicles.Dtos;
 using Taxi.Domain.Common.Results;
+using Taxi.Domain.Trips;
+using Taxi.Domain.Users;
 using Taxi.Domain.Vehicles;
 
 namespace Taxi.Application.Features.Vehicles.Commands.CreateVehicle;
@@ -13,6 +16,22 @@ public class CreateVehicleCommandHandler(
 
     public async Task<Result<VehicleDto>> Handle(CreateVehicleCommand request, CancellationToken ct)
     {
+        var vehicleTypeExists = await _context.VehicleTypes
+            .AnyAsync(vt => vt.Id == request.VehicleTypeId && vt.IsActive, ct);
+
+        if (!vehicleTypeExists)
+        {
+            return TripErrors.VehicleTypeNotFound;
+        }
+
+        var driverExists = await _context.DomainUsers
+            .AnyAsync(u => u.Id == request.DriverId && u.Role == UserRole.Driver, ct);
+
+        if (!driverExists)
+        {
+            return VehicleErrors.DriverNotFound;
+        }
+
         var vehicleResult = Vehicle.Create(
             Guid.NewGuid(),
             request.VehicleTypeId,

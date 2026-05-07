@@ -59,5 +59,21 @@
   "Vehicle.TypeId.Required": "نوع المركبة مطلوب",
   "Vehicle.Make.Required": "نوع السيارة مطلوب",
   "Vehicle.Model.Required": "طراز السيارة مطلوب",
-  "Vehicle.LicensePlate.Required": "رقم اللوحة مطلوب"
+  "Vehicle.LicensePlate.Required": "رقم اللوحة مطلوب",
+  "Trip.Quote.Expired": "انتهت صلاحية العرض. يرجى طلب عرض جديد.",
+  "Trip.Quote.NotFound": "العرض المحدد غير موجود.",
+  "Trip.Stops.Invalid": "يجب أن تحتوي الرحلة على نقطة انطلاق ووجهة على الأقل.",
+  "Trip.Status.Invalid": "لا يمكن تنفيذ هذا الإجراء في الحالة الحالية للرحلة.",
+  "Trip.NotFound": "الرحلة غير موجودة.",
+  "Trip.PassengerId.Invalid": "الراكب غير موجود أو ليس راكباً.",
+  "Trip.VehicleType.NotFound": "نوع المركبة المحدد غير موجود أو غير نشط.",
+  "Vehicle.DriverId.Invalid": "السائق غير موجود أو ليس سائقاً.",
+  "User.NotADriver": "يمكن تعيين مركبة فقط للمستخدمين الذين لديهم دور سائق.",
+  "Driver.UserId.Required": "معرف المستخدم مطلوب.",
+  "Driver.License.Required": "رقم الرخصة مطلوب.",
+  "Payment.Amount.Invalid": "يجب أن يكون مبلغ الدفع أكبر من الصفر.",
+  "Payment.NotFound": "الدفعة غير موجودة.",
+  "Audit.NotFound": "سجل التدقيق غير موجود.",
+  "Promo.Code.Required": "رمز العرض الترويجي مطلوب.",
+  "Promo.NotFound": "رمز العرض الترويجي غير موجود."
 }

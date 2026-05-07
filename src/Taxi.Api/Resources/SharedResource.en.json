@@ -59,5 +59,21 @@
   "Vehicle.TypeId.Required": "Vehicle type is required",
   "Vehicle.Make.Required": "Vehicle make is required",
   "Vehicle.Model.Required": "Vehicle model is required",
-  "Vehicle.LicensePlate.Required": "License plate is required"
+  "Vehicle.LicensePlate.Required": "License plate is required",
+  "Trip.Quote.Expired": "The quote has expired. Please request a new one.",
+  "Trip.Quote.NotFound": "The specified quote was not found.",
+  "Trip.Stops.Invalid": "A trip must have at least an origin and a destination.",
+  "Trip.Status.Invalid": "Cannot perform this action when the trip is in this status.",
+  "Trip.NotFound": "Trip not found.",
+  "Trip.PassengerId.Invalid": "Passenger not found or is not a passenger.",
+  "Trip.VehicleType.NotFound": "The specified vehicle type was not found or is inactive.",
+  "Vehicle.DriverId.Invalid": "Driver not found or is not a driver.",
+  "User.NotADriver": "Only users with the Driver role can be assigned a vehicle.",
+  "Driver.UserId.Required": "User ID is required.",
+  "Driver.License.Required": "License number is required.",
+  "Payment.Amount.Invalid": "Payment amount must be greater than zero.",
+  "Payment.NotFound": "Payment not found.",
+  "Audit.NotFound": "Audit log not found.",
+  "Promo.Code.Required": "Promo code is required.",
+  "Promo.NotFound": "Promo code not found."
 }

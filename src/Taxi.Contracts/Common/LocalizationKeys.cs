@@ -41,6 +41,7 @@ public static class LocalizationKeys
         public const string PhoneRequired = "User.PhoneRequired";
         public const string Inactive = "User.Inactive";
         public const string NotFound = "User.NotFound";
+        public const string NotADriver = "User.NotADriver";
     }
 
     public static class Validation
@@ -76,6 +77,7 @@ public static class LocalizationKeys
         public const string MakeRequired = "Vehicle.Make.Required";
         public const string ModelRequired = "Vehicle.Model.Required";
         public const string LicensePlateRequired = "Vehicle.LicensePlate.Required";
+        public const string DriverNotFound = "Vehicle.DriverId.Invalid";
     }
 
     public static class Driver
@@ -94,9 +96,12 @@ public static class LocalizationKeys
     public static class Trip
     {
         public const string QuoteExpired = "Trip.Quote.Expired";
+        public const string QuoteNotFound = "Trip.Quote.NotFound";
         public const string InvalidStops = "Trip.Stops.Invalid";
         public const string InvalidStatus = "Trip.Status.Invalid";
         public const string NotFound = "Trip.NotFound";
+        public const string PassengerNotFound = "Trip.PassengerId.Invalid";
+        public const string VehicleTypeNotFound = "Trip.VehicleType.NotFound";
     }
 
     public static class Audit

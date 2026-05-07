@@ -18,6 +18,8 @@ builder.Host.UseSerilog((context, loggerConfig) =>
 
 var app = builder.Build();
 
+await app.ApplyMigrationsWithRetryAsync();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -29,11 +31,10 @@ if (app.Environment.IsDevelopment())
         options.EnableDeepLinking();
         options.DisplayRequestDuration();
         options.EnableFilter();
+        options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
     });
 
     app.MapScalarApiReference();
-
-    await app.InitialiseDatabaseAsync();
 }
 else
 {

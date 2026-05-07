@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Domain.Common.Results;
+using Taxi.Domain.Trips;
 
 namespace Taxi.Application.Features.Trips.Queries.GetTripById;
 
@@ -18,7 +19,7 @@ public class GetTripByIdQueryHandler(
 
         if (trip is null)
         {
-            return Error.NotFound("Trip.NotFound", "Trip not found.");
+            return TripErrors.NotFound;
         }
 
         var quote = await _context.PricingQuotes

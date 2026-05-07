@@ -37,7 +37,6 @@ public class TripsController(ISender sender) : ApiController
     public async Task<IActionResult> RequestTrip([FromBody] RequestTripRequest request, CancellationToken ct)
     {
         var command = new RequestTripCommand(
-            request.PassengerId,
             request.VehicleTypeId,
             request.QuoteId,
             request.Stops.Select(s => new TripStopDto(s.Latitude, s.Longitude, s.Label)).ToList());

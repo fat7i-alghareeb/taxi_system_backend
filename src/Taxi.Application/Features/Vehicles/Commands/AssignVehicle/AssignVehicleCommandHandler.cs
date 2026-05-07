@@ -19,7 +19,7 @@ public class AssignVehicleCommandHandler(
 
         if (driverUser is null)
         {
-            return Error.NotFound("User.NotFound", "Driver not found.");
+            return AuthErrors.UserNotFound;
         }
 
         var vehicle = await _context.Vehicles
@@ -27,7 +27,7 @@ public class AssignVehicleCommandHandler(
 
         if (vehicle is null)
         {
-            return Error.NotFound("Vehicle.NotFound", "Vehicle not found.");
+            return VehicleErrors.NotFound;
         }
 
         var result = driverUser.AssignVehicle(vehicle.Id);

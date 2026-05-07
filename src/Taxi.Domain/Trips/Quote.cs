@@ -1,3 +1,4 @@
+using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
 
 namespace Taxi.Domain.Trips;
@@ -21,6 +22,16 @@ public sealed class Quote
 
     public static Result<Quote> Create(decimal amount, string currency, DateTime expiresAtUtc)
     {
+        if (amount < 0)
+        {
+            return Error.Validation(LocalizationKeys.Payment.InvalidAmount, "Quote amount cannot be negative.");
+        }
+
+        if (string.IsNullOrWhiteSpace(currency))
+        {
+            return Error.Validation(LocalizationKeys.Validation.RequiredField, "Currency is required.");
+        }
+
         return new Quote(amount, currency, expiresAtUtc);
     }
 }

@@ -3,18 +3,25 @@ namespace Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
+
 using Asp.Versioning;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
+
 using Serilog;
+
 using Taxi.Api;
 using Taxi.Api.Infrastructure;
 using Taxi.Api.OpenApi.Transformers;
 using Taxi.Api.Services;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Contracts.Common;
+using Taxi.Infrastructure.Data;
 using Taxi.Infrastructure.Settings;
 
 public static class DependencyInjection
@@ -213,6 +220,40 @@ public static class DependencyInjection
                 .AllowCredentials()));
 
         return services;
+    }
+
+    public static async Task ApplyMigrationsWithRetryAsync(this WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var initialiser = scope.ServiceProvider.GetRequiredService<ApplicationDbContextInitialiser>();
+
+        const int maxAttempts = 5;
+        var delay = TimeSpan.FromSeconds(3);
+
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                logger.LogInformation("Applying database migrations (attempt {Attempt}/{MaxAttempts}).", attempt, maxAttempts);
+                await context.Database.MigrateAsync();
+                await initialiser.SeedAsync();
+                logger.LogInformation("Database migrations completed successfully.");
+                return;
+            }
+            catch (Exception ex) when (attempt < maxAttempts)
+            {
+                logger.LogWarning(ex, "Database migration attempt {Attempt} failed. Retrying in {DelaySeconds}s.", attempt, delay.TotalSeconds);
+                await Task.Delay(delay);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Database migration failed after {MaxAttempts} attempts.", maxAttempts);
+                throw;
+            }
+        }
     }
 
     public static IApplicationBuilder UseCoreMiddlewares(this IApplicationBuilder app, IConfiguration configuration)

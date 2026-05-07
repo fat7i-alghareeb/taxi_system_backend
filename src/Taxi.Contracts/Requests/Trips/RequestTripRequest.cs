@@ -6,9 +6,6 @@ namespace Taxi.Contracts.Requests.Trips;
 public class RequestTripRequest
 {
     [Required(ErrorMessage = LocalizationKeys.Validation.RequiredField)]
-    public Guid PassengerId { get; set; }
-
-    [Required(ErrorMessage = LocalizationKeys.Validation.RequiredField)]
     public Guid VehicleTypeId { get; set; }
 
     [Required(ErrorMessage = LocalizationKeys.Validation.RequiredField)]

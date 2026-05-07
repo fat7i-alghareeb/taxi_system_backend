@@ -14,7 +14,6 @@ public class RequestTripCommandValidatorTests
         var command = new RequestTripCommand(
             Guid.NewGuid(),
             Guid.NewGuid(),
-            Guid.NewGuid(),
             [new TripStopDto(1, 2, "Start")]);
 
         var result = validator.Validate(command);
@@ -27,7 +26,6 @@ public class RequestTripCommandValidatorTests
     {
         var validator = new RequestTripCommandValidator();
         var command = new RequestTripCommand(
-            Guid.NewGuid(),
             Guid.NewGuid(),
             Guid.NewGuid(),
             [

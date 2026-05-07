@@ -20,4 +20,16 @@ public static class TripErrors
     public static readonly Error NotFound = Error.NotFound(
         code: LocalizationKeys.Trip.NotFound,
         description: "Trip not found.");
+
+    public static readonly Error QuoteNotFound = Error.NotFound(
+        code: LocalizationKeys.Trip.QuoteNotFound,
+        description: "The specified quote was not found.");
+
+    public static readonly Error PassengerNotFound = Error.NotFound(
+        code: LocalizationKeys.Trip.PassengerNotFound,
+        description: "Passenger not found or is not a passenger.");
+
+    public static readonly Error VehicleTypeNotFound = Error.NotFound(
+        code: LocalizationKeys.Trip.VehicleTypeNotFound,
+        description: "The specified vehicle type was not found or is inactive.");
 }

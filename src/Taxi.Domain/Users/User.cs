@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Taxi.Contracts.Common;
 using Taxi.Domain.Common;
 using Taxi.Domain.Common.Results;
 
@@ -74,7 +75,7 @@ public sealed class User : AuditableEntity
     {
         if (Role != UserRole.Driver)
         {
-            return Error.Validation("User.NotADriver", "Only users with the Driver role can be assigned a vehicle.");
+            return Error.Validation(LocalizationKeys.User.NotADriver, "Only users with the Driver role can be assigned a vehicle.");
         }
 
         ActiveVehicleId = vehicleId;

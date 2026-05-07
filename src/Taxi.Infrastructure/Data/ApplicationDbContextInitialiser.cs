@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 
 using Taxi.Domain.Drivers;
 using Taxi.Domain.Users;
@@ -10,7 +11,8 @@ namespace Taxi.Infrastructure.Data;
 
 public class ApplicationDbContextInitialiser(
     AppDbContext context,
-    RoleManager<IdentityRole> roleManager)
+    RoleManager<IdentityRole> roleManager,
+    IHostEnvironment environment)
 {
     public async Task InitialiseAsync()
     {
@@ -40,22 +42,55 @@ public class ApplicationDbContextInitialiser(
         {
             if (!await roleManager.RoleExistsAsync(roleName))
             {
-                await roleManager.CreateAsync(new IdentityRole(roleName));
+                var result = await roleManager.CreateAsync(new IdentityRole(roleName));
+                if (!result.Succeeded)
+                {
+                    var errors = string.Join(", ", result.Errors.Select(error => error.Description));
+                    throw new InvalidOperationException($"Failed to create role '{roleName}': {errors}");
+                }
             }
         }
 
         // 2. Seed Vehicle Types
-        if (!await context.VehicleTypes.AnyAsync())
-        {
-            var types = new List<VehicleType>
-            {
-                VehicleType.Create(Guid.NewGuid(), "standard", "Standard", "عادي", "Standaard", 4, 2.8m, 0.20m, 5.0m).Value,
-                VehicleType.Create(Guid.NewGuid(), "xl", "XL Van", "فان كبير", "XL Van", 8, 3.20m, 0.25m, 8.0m).Value,
-                VehicleType.Create(Guid.NewGuid(), "wheelchair", "Wheelchair Taxi", "تاكسي ذوي الاحتياجات الخاصة", "Rolstoel Taxi", 4, 3.50m, 0.25m, 10.0m).Value
-            };
+        var existingCodes = await context.VehicleTypes
+            .Select(v => v.Code)
+            .ToListAsync();
 
-            context.VehicleTypes.AddRange(types);
+        var existingCodeSet = new HashSet<string>(existingCodes);
+        var addedAny = false;
+
+        var types = new List<VehicleType>
+        {
+            VehicleType.Create(Guid.NewGuid(), "standard", "Standard", "عادي", "Standaard", 4, 2.8m, 0.20m, 5.0m).Value,
+            VehicleType.Create(Guid.NewGuid(), "xl", "XL Van", "فان كبير", "XL Van", 8, 3.20m, 0.25m, 8.0m).Value,
+            VehicleType.Create(Guid.NewGuid(), "wheelchair", "Wheelchair Taxi", "تاكسي ذوي الاحتياجات الخاصة", "Rolstoel Taxi", 4, 3.50m, 0.25m, 10.0m).Value
+        };
+
+        foreach (var type in types)
+        {
+            if (existingCodeSet.Contains(type.Code))
+            {
+                continue;
+            }
+
+            context.VehicleTypes.Add(type);
+            addedAny = true;
+        }
+
+        if (addedAny)
+        {
             await context.SaveChangesAsync();
         }
+
+        if (environment.IsDevelopment())
+        {
+            await SeedDevelopmentOnlyAsync();
+        }
+    }
+
+    private Task SeedDevelopmentOnlyAsync()
+    {
+        // TODO: Add development-only seed data here.
+        return Task.CompletedTask;
     }
 }

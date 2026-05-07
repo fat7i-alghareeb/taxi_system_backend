@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Vehicles.Dtos;
 using Taxi.Domain.Common.Results;
+using Taxi.Domain.Vehicles;
 
 namespace Taxi.Application.Features.Vehicles.Queries.GetVehicleById;
 
@@ -19,7 +20,7 @@ public class GetVehicleByIdQueryHandler(
 
         if (vehicle is null)
         {
-            return Error.NotFound("Vehicle.NotFound", $"Vehicle with ID '{request.Id}' was not found.");
+            return VehicleErrors.NotFound;
         }
 
         return new VehicleDto(

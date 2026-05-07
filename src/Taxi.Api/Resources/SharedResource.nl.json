@@ -59,5 +59,21 @@
   "Vehicle.TypeId.Required": "Voertuigtype is vereist",
   "Vehicle.Make.Required": "Automerk is vereist",
   "Vehicle.Model.Required": "Automodel is vereist",
-  "Vehicle.LicensePlate.Required": "Kenteken is vereist"
+  "Vehicle.LicensePlate.Required": "Kenteken is vereist",
+  "Trip.Quote.Expired": "De offerte is verlopen. Vraag een nieuwe aan.",
+  "Trip.Quote.NotFound": "De opgegeven offerte is niet gevonden.",
+  "Trip.Stops.Invalid": "Een rit moet minimaal een vertrekpunt en een bestemming hebben.",
+  "Trip.Status.Invalid": "Deze actie kan niet worden uitgevoerd bij de huidige ritstatus.",
+  "Trip.NotFound": "Rit niet gevonden.",
+  "Trip.PassengerId.Invalid": "Passagier niet gevonden of is geen passagier.",
+  "Trip.VehicleType.NotFound": "Het opgegeven voertuigtype is niet gevonden of is inactief.",
+  "Vehicle.DriverId.Invalid": "Bestuurder niet gevonden of is geen bestuurder.",
+  "User.NotADriver": "Alleen gebruikers met de rol Bestuurder kunnen een voertuig worden toegewezen.",
+  "Driver.UserId.Required": "Gebruikers-ID is vereist.",
+  "Driver.License.Required": "Rijbewijsnummer is vereist.",
+  "Payment.Amount.Invalid": "Het betalingsbedrag moet groter zijn dan nul.",
+  "Payment.NotFound": "Betaling niet gevonden.",
+  "Audit.NotFound": "Auditlog niet gevonden.",
+  "Promo.Code.Required": "Promotiecode is vereist.",
+  "Promo.NotFound": "Promotiecode niet gevonden."
 }
