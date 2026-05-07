@@ -6,6 +6,8 @@ namespace Taxi.Domain.Trips;
 
 public sealed class PricingQuote : Entity
 {
+    private readonly List<Coordinate> _stops = [];
+
     private PricingQuote() { }
 
     private PricingQuote(
@@ -16,7 +18,8 @@ public sealed class PricingQuote : Entity
         decimal totalDurationMin,
         decimal finalFare,
         string currencyCode,
-        DateTime validUntil)
+        DateTime validUntil,
+        IEnumerable<Coordinate> stops)
         : base(id)
     {
         PassengerId = passengerId;
@@ -28,6 +31,7 @@ public sealed class PricingQuote : Entity
         ValidUntil = validUntil;
         Used = false;
         CreatedAtUtc = DateTime.UtcNow;
+        _stops.AddRange(stops);
     }
 
     public static Result<PricingQuote> Create(
@@ -38,7 +42,8 @@ public sealed class PricingQuote : Entity
         decimal totalDurationMin,
         decimal finalFare,
         string currencyCode,
-        DateTime validUntil)
+        DateTime validUntil,
+        IEnumerable<Coordinate> stops)
     {
         if (passengerId == Guid.Empty)
         {
@@ -78,7 +83,8 @@ public sealed class PricingQuote : Entity
             totalDurationMin,
             finalFare,
             currencyCode,
-            validUntil);
+            validUntil,
+            stops);
     }
 
     public Guid PassengerId { get; private set; }
@@ -90,6 +96,7 @@ public sealed class PricingQuote : Entity
     public DateTime ValidUntil { get; private set; }
     public bool Used { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
+    public IReadOnlyCollection<Coordinate> Stops => _stops.AsReadOnly();
 
     public bool IsExpired() => DateTime.UtcNow > ValidUntil;
     public void MarkAsUsed() => Used = true;

@@ -22,5 +22,12 @@ public class PricingQuoteConfiguration : IEntityTypeConfiguration<PricingQuote>
 
         builder.Property(q => q.FinalFare)
             .HasPrecision(10, 2);
+
+        builder.OwnsMany(q => q.Stops, stops =>
+        {
+            stops.ToJson();
+            stops.Property(c => c.Latitude).HasPrecision(18, 10);
+            stops.Property(c => c.Longitude).HasPrecision(18, 10);
+        });
     }
 }

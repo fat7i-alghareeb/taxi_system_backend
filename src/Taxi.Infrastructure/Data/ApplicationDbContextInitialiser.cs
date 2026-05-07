@@ -12,12 +12,15 @@ namespace Taxi.Infrastructure.Data;
 public class ApplicationDbContextInitialiser(
     AppDbContext context,
     RoleManager<IdentityRole> roleManager,
+    UserManager<AppUser> userManager,
     IHostEnvironment environment)
 {
+    private static readonly Guid AdminDriverUserId = new("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid AdminDriverId = new("22222222-2222-2222-2222-222222222222");
+
     public async Task InitialiseAsync()
     {
-        // For development/reset
-        // await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureDeletedAsync();
         await context.Database.MigrateAsync();
     }
 
@@ -29,7 +32,6 @@ public class ApplicationDbContextInitialiser(
         }
         catch (Exception)
         {
-            // Log error in a real app
             throw;
         }
     }
@@ -45,7 +47,7 @@ public class ApplicationDbContextInitialiser(
                 var result = await roleManager.CreateAsync(new IdentityRole(roleName));
                 if (!result.Succeeded)
                 {
-                    var errors = string.Join(", ", result.Errors.Select(error => error.Description));
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
                     throw new InvalidOperationException($"Failed to create role '{roleName}': {errors}");
                 }
             }
@@ -82,15 +84,66 @@ public class ApplicationDbContextInitialiser(
             await context.SaveChangesAsync();
         }
 
+        // 3. Seed admin driver (fixed GUID so idempotent)
+        await SeedAdminDriverAsync();
+
         if (environment.IsDevelopment())
         {
             await SeedDevelopmentOnlyAsync();
         }
     }
 
+    private async Task SeedAdminDriverAsync()
+    {
+        var driverExists = await context.Drivers.AnyAsync(d => d.Id == AdminDriverId);
+        if (driverExists)
+        {
+            return;
+        }
+
+        // Create Identity user for the admin driver
+        var phone = "+10000000000";
+        var identityUser = new AppUser { UserName = phone, PhoneNumber = phone };
+        var identityResult = await userManager.CreateAsync(identityUser, "Driver@123!");
+        if (!identityResult.Succeeded)
+        {
+            var errors = string.Join(", ", identityResult.Errors.Select(e => e.Description));
+            throw new InvalidOperationException($"Failed to create admin driver identity user: {errors}");
+        }
+
+        await userManager.AddToRoleAsync(identityUser, "Driver");
+
+        // Create domain User
+        var domainUserResult = User.Create(
+            AdminDriverUserId,
+            "Admin Driver", "السائق الإداري", "Admin Chauffeur",
+            phone,
+            null,
+            UserRole.Driver);
+
+        if (domainUserResult.IsFailure)
+        {
+            throw new InvalidOperationException($"Failed to create admin driver domain user: {domainUserResult.Error.Description}");
+        }
+
+        context.DomainUsers.Add(domainUserResult.Value);
+        await context.SaveChangesAsync();
+
+        // Create Driver profile
+        var driverResult = Driver.Create(AdminDriverId, AdminDriverUserId, "ADMIN-LIC-0001");
+
+        if (driverResult.IsFailure)
+        {
+            throw new InvalidOperationException($"Failed to create admin driver profile: {driverResult.Error.Description}");
+        }
+
+        driverResult.Value.Activate();
+        context.Drivers.Add(driverResult.Value);
+        await context.SaveChangesAsync();
+    }
+
     private Task SeedDevelopmentOnlyAsync()
     {
-        // TODO: Add development-only seed data here.
         return Task.CompletedTask;
     }
 }

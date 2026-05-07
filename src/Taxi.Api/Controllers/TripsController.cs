@@ -1,11 +1,11 @@
 using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Taxi.Application.Features.Trips.Commands.GetPricingQuotes;
 using Taxi.Application.Features.Trips.Commands.RequestTrip;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Application.Features.Trips.Queries.GetTripById;
 using Taxi.Contracts.Requests.Trips;
-using Taxi.Domain.Common.Results;
 
 namespace Taxi.Api.Controllers;
 
@@ -28,18 +28,38 @@ public class TripsController(ISender sender) : ApiController
             Problem);
     }
 
+    [HttpPost("quotes")]
+    [ProducesResponseType(typeof(List<PricingQuoteDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [EndpointSummary("Returns pricing quotes for all active vehicle types.")]
+    [EndpointDescription("Calculates route distance and duration via Google Maps, then returns one quote per vehicle type. Each quote is valid for 15 minutes.")]
+    [EndpointName("GetPricingQuotes")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetPricingQuotes([FromBody] GetPricingQuotesRequest request, CancellationToken ct)
+    {
+        var command = new GetPricingQuotesCommand(
+            request.Stops.Select(s => new CoordinateDto(s.Latitude, s.Longitude)).ToList());
+
+        var result = await sender.Send(command, ct);
+
+        return result.Match(
+            Ok,
+            Problem);
+    }
+
     [HttpPost("request")]
     [ProducesResponseType(typeof(TripDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [EndpointSummary("Requests a new trip.")]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Confirms a trip using a previously obtained pricing quote.")]
+    [EndpointDescription("Creates the trip, marks the quote as used, and synchronously assigns the admin driver.")]
     [EndpointName("RequestTrip")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> RequestTrip([FromBody] RequestTripRequest request, CancellationToken ct)
     {
         var command = new RequestTripCommand(
-            request.VehicleTypeId,
             request.QuoteId,
-            request.Stops.Select(s => new TripStopDto(s.Latitude, s.Longitude, s.Label)).ToList());
+            request.Stops.Select(s => new CoordinateDto(s.Latitude, s.Longitude)).ToList());
 
         var result = await sender.Send(command, ct);
 

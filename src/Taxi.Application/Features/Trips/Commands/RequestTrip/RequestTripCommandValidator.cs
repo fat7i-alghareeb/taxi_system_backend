@@ -7,7 +7,6 @@ public class RequestTripCommandValidator : AbstractValidator<RequestTripCommand>
 {
     public RequestTripCommandValidator()
     {
-        RuleFor(v => v.VehicleTypeId).NotEmpty();
         RuleFor(v => v.QuoteId).NotEmpty();
         RuleFor(v => v.Stops).NotEmpty().Must(s => s.Count >= 2);
     }

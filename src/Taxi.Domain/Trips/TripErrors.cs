@@ -32,4 +32,12 @@ public static class TripErrors
     public static readonly Error VehicleTypeNotFound = Error.NotFound(
         code: LocalizationKeys.Trip.VehicleTypeNotFound,
         description: "The specified vehicle type was not found or is inactive.");
+
+    public static readonly Error QuoteAlreadyUsed = Error.Conflict(
+        code: LocalizationKeys.Trip.QuoteAlreadyUsed,
+        description: "This quote has already been used.");
+
+    public static readonly Error DriverNotFound = Error.NotFound(
+        code: LocalizationKeys.Trip.DriverNotFound,
+        description: "No available driver found to assign to this trip.");
 }

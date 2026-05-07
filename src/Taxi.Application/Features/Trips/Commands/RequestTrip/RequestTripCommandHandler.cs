@@ -1,7 +1,5 @@
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Domain.Common.Results;
@@ -31,25 +29,26 @@ public class RequestTripCommandHandler(
             return TripErrors.PassengerNotFound;
         }
 
-        var vehicleTypeExists = await _context.VehicleTypes
-            .AnyAsync(vt => vt.Id == request.VehicleTypeId && vt.IsActive, ct);
-
-        if (!vehicleTypeExists)
-        {
-            return TripErrors.VehicleTypeNotFound;
-        }
-
         var quote = await _context.PricingQuotes
-            .FirstOrDefaultAsync(q => q.Id == request.QuoteId, ct);
+            .FirstOrDefaultAsync(q => q.Id == request.QuoteId && q.PassengerId == passengerId, ct);
 
         if (quote is null)
         {
             return TripErrors.QuoteNotFound;
         }
 
+        if (quote.IsExpired())
+        {
+            return TripErrors.QuoteExpired;
+        }
+
+        if (quote.Used)
+        {
+            return TripErrors.QuoteAlreadyUsed;
+        }
+
         var stopResults = request.Stops.Select((s, index) => TripStop.Create(
             new Coordinate(s.Latitude, s.Longitude),
-            s.Label,
             index)).ToList();
 
         if (stopResults.Any(r => r.IsFailure))
@@ -62,7 +61,6 @@ public class RequestTripCommandHandler(
         var tripResult = Trip.Request(
             Guid.NewGuid(),
             passengerId,
-            request.VehicleTypeId,
             quote,
             stops);
 
@@ -73,6 +71,22 @@ public class RequestTripCommandHandler(
 
         var trip = tripResult.Value;
 
+        var adminDriver = await _context.Drivers
+            .FirstOrDefaultAsync(d => d.IsActive, ct);
+
+        if (adminDriver is null)
+        {
+            return TripErrors.DriverNotFound;
+        }
+
+        var assignResult = trip.AssignDriver(adminDriver.Id);
+
+        if (assignResult.IsFailure)
+        {
+            return assignResult.Error;
+        }
+
+        quote.MarkAsUsed();
         _context.Trips.Add(trip);
         await _context.SaveChangesAsync(ct);
 

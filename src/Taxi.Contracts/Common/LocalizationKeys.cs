@@ -97,11 +97,14 @@ public static class LocalizationKeys
     {
         public const string QuoteExpired = "Trip.Quote.Expired";
         public const string QuoteNotFound = "Trip.Quote.NotFound";
+        public const string QuoteAlreadyUsed = "Trip.Quote.AlreadyUsed";
         public const string InvalidStops = "Trip.Stops.Invalid";
+        public const string InvalidCoordinate = "Trip.Coordinate.Invalid";
         public const string InvalidStatus = "Trip.Status.Invalid";
         public const string NotFound = "Trip.NotFound";
         public const string PassengerNotFound = "Trip.PassengerId.Invalid";
         public const string VehicleTypeNotFound = "Trip.VehicleType.NotFound";
+        public const string DriverNotFound = "Trip.Driver.NotFound";
     }
 
     public static class Audit

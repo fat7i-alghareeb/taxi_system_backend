@@ -42,7 +42,6 @@ public sealed class Trip : AuditableEntity
     public static Result<Trip> Request(
         Guid id,
         Guid passengerId,
-        Guid vehicleTypeId,
         PricingQuote quote,
         IEnumerable<TripStop> stops)
     {
@@ -58,12 +57,12 @@ public sealed class Trip : AuditableEntity
 
         var referenceCode = $"TRP-{new Random().Next(1000, 9999)}";
 
-        var trip = new Trip(id, referenceCode, passengerId, vehicleTypeId, quote.Id, stops);
+        var trip = new Trip(id, referenceCode, passengerId, quote.VehicleTypeId, quote.Id, stops);
 
         trip.AddDomainEvent(new TripRequested
         {
             TripId = trip.Id,
-            VehicleTypeId = vehicleTypeId,
+            VehicleTypeId = quote.VehicleTypeId,
             PassengerId = passengerId,
         });
 
