@@ -5,6 +5,8 @@ using FluentValidation;
 using Taxi.Application.Common.Behaviours;
 using Taxi.Application.Common.Services;
 
+using Taxi.Application.Common.Interfaces;
+
 public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
@@ -20,7 +22,7 @@ public static class DependencyInjection
             cfg.AddOpenBehavior(typeof(CachingBehavior<,>));
         });
 
-        services.AddScoped<PricingService>();
+        services.AddScoped<IPricingService, PricingService>();
 
         return services;
     }

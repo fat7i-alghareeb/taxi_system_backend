@@ -18,7 +18,7 @@ namespace Taxi.Infrastructure.Data.Migrations
                 {
                     Key = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Value = table.Column<string>(type: "text", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: true),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -92,12 +92,12 @@ namespace Taxi.Infrastructure.Data.Migrations
                     Email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: true),
                     ProfilePhotoUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     Role = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     ActiveVehicleId = table.Column<Guid>(type: "uuid", nullable: true),
                     DeletedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true),
                     Name = table.Column<string>(type: "jsonb", nullable: false)
                 },
@@ -156,7 +156,7 @@ namespace Taxi.Infrastructure.Data.Migrations
                     DeletedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -178,7 +178,7 @@ namespace Taxi.Infrastructure.Data.Migrations
                     TransactionReference = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -198,8 +198,9 @@ namespace Taxi.Infrastructure.Data.Migrations
                     FinalFare = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: false),
                     CurrencyCode = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
                     ValidUntil = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Used = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    Used = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Stops = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -216,11 +217,11 @@ namespace Taxi.Infrastructure.Data.Migrations
                     DiscountPercentage = table.Column<decimal>(type: "numeric(5,2)", precision: 5, scale: 2, nullable: true),
                     ExpiresAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     MaxUsageCount = table.Column<int>(type: "integer", nullable: true),
-                    UsageCount = table.Column<int>(type: "integer", nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    UsageCount = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -237,7 +238,7 @@ namespace Taxi.Infrastructure.Data.Migrations
                     UserId = table.Column<string>(type: "text", nullable: false),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -269,15 +270,15 @@ namespace Taxi.Infrastructure.Data.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     PassengerCapacity = table.Column<int>(type: "integer", nullable: false),
-                    RatePerKm = table.Column<decimal>(type: "numeric", nullable: false),
-                    RatePerMin = table.Column<decimal>(type: "numeric", nullable: false),
-                    MinimumFare = table.Column<decimal>(type: "numeric", nullable: false),
+                    RatePerKm = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: false),
+                    RatePerMin = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: false),
+                    MinimumFare = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: false),
                     CurrencyCode = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false, defaultValue: "EUR"),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    SortOrder = table.Column<int>(type: "integer", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    SortOrder = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true),
                     Name = table.Column<string>(type: "jsonb", nullable: false)
                 },
@@ -398,17 +399,18 @@ namespace Taxi.Infrastructure.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     PassengerId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ReferenceCode = table.Column<string>(type: "text", nullable: false),
+                    ReferenceCode = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     DriverId = table.Column<Guid>(type: "uuid", nullable: true),
                     VehicleTypeId = table.Column<Guid>(type: "uuid", nullable: false),
                     Status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     QuoteId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ScheduledAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     StartedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     CompletedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -449,25 +451,31 @@ namespace Taxi.Infrastructure.Data.Migrations
                     DriverId = table.Column<Guid>(type: "uuid", nullable: false),
                     Make = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Model = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Year = table.Column<string>(type: "text", nullable: false),
-                    Color = table.Column<string>(type: "text", nullable: false),
+                    Year = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: false),
+                    Color = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     LicensePlate = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     DeletedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Vehicles", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_Vehicles_DomainUsers_DriverId",
+                        column: x => x.DriverId,
+                        principalTable: "DomainUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_Vehicles_VehicleTypes_VehicleTypeId",
                         column: x => x.VehicleTypeId,
                         principalTable: "VehicleTypes",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -477,7 +485,6 @@ namespace Taxi.Infrastructure.Data.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Coordinate_Latitude = table.Column<decimal>(type: "numeric(18,10)", precision: 18, scale: 10, nullable: false),
                     Coordinate_Longitude = table.Column<decimal>(type: "numeric(18,10)", precision: 18, scale: 10, nullable: false),
-                    Address = table.Column<string>(type: "text", nullable: false),
                     Sequence = table.Column<int>(type: "integer", nullable: false),
                     TripId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
@@ -504,14 +511,14 @@ namespace Taxi.Infrastructure.Data.Migrations
                     CurrentLat = table.Column<decimal>(type: "numeric(18,10)", precision: 18, scale: 10, nullable: true),
                     CurrentLng = table.Column<decimal>(type: "numeric(18,10)", precision: 18, scale: 10, nullable: true),
                     LocationUpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    AcceptanceRate = table.Column<decimal>(type: "numeric", nullable: false),
-                    CompletionRate = table.Column<decimal>(type: "numeric", nullable: false),
-                    TotalTripsCompleted = table.Column<int>(type: "integer", nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    AcceptanceRate = table.Column<decimal>(type: "numeric(5,2)", precision: 5, scale: 2, nullable: false, defaultValue: 1m),
+                    CompletionRate = table.Column<decimal>(type: "numeric(5,2)", precision: 5, scale: 2, nullable: false, defaultValue: 1m),
+                    TotalTripsCompleted = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     DeletedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -619,6 +626,11 @@ namespace Taxi.Infrastructure.Data.Migrations
                 name: "IX_TripStops_TripId",
                 table: "TripStops",
                 column: "TripId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Vehicles_DriverId",
+                table: "Vehicles",
+                column: "DriverId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Vehicles_LicensePlate",

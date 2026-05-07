@@ -27,5 +27,17 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
 
         builder.Property(x => x.TransactionReference)
             .HasMaxLength(100);
+
+        builder.Property(x => x.TripId)
+            .IsRequired();
+
+        builder.Property(x => x.ProcessedAtUtc)
+            .IsRequired(false);
+
+        builder.Property(x => x.CreatedAtUtc)
+            .IsRequired();
+
+        builder.Property(x => x.LastModifiedUtc)
+            .IsRequired(false);
     }
 }

@@ -34,5 +34,30 @@ public class DriverConfiguration : IEntityTypeConfiguration<Driver>
 
         builder.Property(d => d.CurrentLng)
             .HasPrecision(18, 10);
+
+        builder.Property(d => d.AcceptanceRate)
+            .HasPrecision(5, 2)
+            .HasDefaultValue(1.0);
+
+        builder.Property(d => d.CompletionRate)
+            .HasPrecision(5, 2)
+            .HasDefaultValue(1.0);
+
+        builder.Property(d => d.TotalTripsCompleted)
+            .HasDefaultValue(0);
+
+        builder.Property(d => d.IsActive)
+            .HasDefaultValue(true);
+
+        builder.Property(d => d.DeletedAtUtc)
+            .IsRequired(false);
+
+        builder.Property(d => d.CreatedAtUtc)
+            .IsRequired();
+
+        builder.Property(d => d.LastModifiedUtc)
+            .IsRequired(false);
+
+        builder.HasQueryFilter(d => d.DeletedAtUtc == null);
     }
 }

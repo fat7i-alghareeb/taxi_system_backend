@@ -227,7 +227,8 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -248,13 +249,19 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("AcceptanceRate")
-                        .HasColumnType("numeric");
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)")
+                        .HasDefaultValue(1m);
 
                     b.Property<Guid?>("ActiveVehicleId")
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("CompletionRate")
-                        .HasColumnType("numeric");
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)")
+                        .HasDefaultValue(1m);
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -274,12 +281,14 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("LastModifiedUtc")
+                    b.Property<DateTimeOffset?>("LastModifiedUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LicenseNumber")
@@ -296,7 +305,9 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(20)");
 
                     b.Property<int>("TotalTripsCompleted")
-                        .HasColumnType("integer");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -325,7 +336,7 @@ namespace Taxi.Infrastructure.Data.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("LastModifiedUtc")
+                    b.Property<DateTimeOffset?>("LastModifiedUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Token")
@@ -426,7 +437,7 @@ namespace Taxi.Infrastructure.Data.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("LastModifiedUtc")
+                    b.Property<DateTimeOffset?>("LastModifiedUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("PassengerId")
@@ -461,7 +472,7 @@ namespace Taxi.Infrastructure.Data.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("LastModifiedUtc")
+                    b.Property<DateTimeOffset?>("LastModifiedUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Method")
@@ -518,19 +529,23 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("LastModifiedUtc")
+                    b.Property<DateTimeOffset?>("LastModifiedUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("MaxUsageCount")
                         .HasColumnType("integer");
 
                     b.Property<int>("UsageCount")
-                        .HasColumnType("integer");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.HasKey("Id");
 
@@ -570,7 +585,9 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasColumnType("numeric(10,2)");
 
                     b.Property<bool>("Used")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime>("ValidUntil")
                         .HasColumnType("timestamp with time zone");
@@ -607,7 +624,7 @@ namespace Taxi.Infrastructure.Data.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("LastModifiedUtc")
+                    b.Property<DateTimeOffset?>("LastModifiedUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("PassengerId")
@@ -618,7 +635,11 @@ namespace Taxi.Infrastructure.Data.Migrations
 
                     b.Property<string>("ReferenceCode")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset?>("ScheduledAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset?>("StartedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -701,12 +722,14 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(150)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("LastModifiedUtc")
+                    b.Property<DateTimeOffset?>("LastModifiedUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Phone")
@@ -739,7 +762,8 @@ namespace Taxi.Infrastructure.Data.Migrations
 
                     b.Property<string>("Color")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -754,12 +778,14 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("LastModifiedUtc")
+                    b.Property<DateTimeOffset?>("LastModifiedUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LicensePlate")
@@ -782,9 +808,12 @@ namespace Taxi.Infrastructure.Data.Migrations
 
                     b.Property<string>("Year")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DriverId");
 
                     b.HasIndex("LicensePlate")
                         .IsUnique();
@@ -819,28 +848,35 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasDefaultValue("EUR");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("LastModifiedUtc")
+                    b.Property<DateTimeOffset?>("LastModifiedUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("MinimumFare")
-                        .HasColumnType("numeric");
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<int>("PassengerCapacity")
                         .HasColumnType("integer");
 
                     b.Property<decimal>("RatePerKm")
-                        .HasColumnType("numeric");
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<decimal>("RatePerMin")
-                        .HasColumnType("numeric");
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<int>("SortOrder")
-                        .HasColumnType("integer");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.HasKey("Id");
 
@@ -978,6 +1014,36 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Taxi.Domain.Trips.PricingQuote", b =>
+                {
+                    b.OwnsMany("Taxi.Domain.Trips.Coordinate", "Stops", b1 =>
+                        {
+                            b1.Property<Guid>("PricingQuoteId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<decimal>("Latitude")
+                                .HasPrecision(18, 10);
+
+                            b1.Property<decimal>("Longitude")
+                                .HasPrecision(18, 10);
+
+                            b1.HasKey("PricingQuoteId", "__synthesizedOrdinal");
+
+                            b1.ToTable("PricingQuotes");
+
+                            b1
+                                .ToJson("Stops")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PricingQuoteId");
+                        });
+
+                    b.Navigation("Stops");
+                });
+
             modelBuilder.Entity("Taxi.Domain.Trips.Trip", b =>
                 {
                     b.HasOne("Taxi.Domain.Users.User", null)
@@ -1008,10 +1074,6 @@ namespace Taxi.Infrastructure.Data.Migrations
                             b1.Property<Guid>("Id")
                                 .ValueGeneratedOnAdd()
                                 .HasColumnType("uuid");
-
-                            b1.Property<string>("Address")
-                                .IsRequired()
-                                .HasColumnType("text");
 
                             b1.Property<int>("Sequence")
                                 .HasColumnType("integer");
@@ -1089,10 +1151,16 @@ namespace Taxi.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Taxi.Domain.Vehicles.Vehicle", b =>
                 {
+                    b.HasOne("Taxi.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("DriverId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Taxi.Domain.Vehicles.VehicleType", null)
                         .WithMany()
                         .HasForeignKey("VehicleTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

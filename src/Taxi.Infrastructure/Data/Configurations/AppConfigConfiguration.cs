@@ -15,5 +15,11 @@ public class AppConfigConfiguration : IEntityTypeConfiguration<AppConfig>
 
         builder.Property(c => c.Value)
             .IsRequired();
+
+        builder.Property(c => c.Description)
+            .HasMaxLength(500);
+
+        builder.Property(c => c.UpdatedAtUtc)
+            .IsRequired();
     }
 }

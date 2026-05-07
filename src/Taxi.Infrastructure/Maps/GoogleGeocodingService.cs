@@ -94,14 +94,14 @@ public class GoogleGeocodingService(
         var apiKey = options.Value.GoogleMapsApiKey;
         var ic = CultureInfo.InvariantCulture;
 
-        var url = $"maps/api/place/textsearch/json?query={Uri.EscapeDataString(query)}&key={apiKey}";
-
-        if (biasLat.HasValue && biasLng.HasValue)
+        if (!biasLat.HasValue || !biasLng.HasValue)
         {
-            url += $"&location={biasLat.Value.ToString(ic)},{biasLng.Value.ToString(ic)}&radius=50000";
+            throw new ArgumentException("Latitude and Longitude are required for search biasing.");
         }
 
-        logger.LogInformation("Calling Google Places Text Search API: {Query}", query);
+        var url = $"maps/api/place/textsearch/json?query={Uri.EscapeDataString(query)}&key={apiKey}&location={biasLat.Value.ToString(ic)},{biasLng.Value.ToString(ic)}&radius=15000";
+
+        logger.LogInformation("Calling Google Places Text Search API: {Query} with bias: {Lat},{Lng}", query, biasLat, biasLng);
 
         var httpResponse = await httpClient.GetAsync(url);
         httpResponse.EnsureSuccessStatusCode();

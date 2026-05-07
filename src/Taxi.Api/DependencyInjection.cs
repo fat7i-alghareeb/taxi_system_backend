@@ -1,12 +1,14 @@
 namespace Microsoft.Extensions.DependencyInjection;
 
 using System.Globalization;
+using System.Net;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 
 using Asp.Versioning;
 
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +28,7 @@ using Taxi.Infrastructure.Settings;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddPresentation(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddPresentation(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
         services.AddCustomProblemDetails()
                 .AddCustomApiVersioning()
@@ -38,7 +40,67 @@ public static class DependencyInjection
                 .AddAppLocalization()
                 .AddConfiguredCors(configuration)
                 .AddAppRateLimiting()
+                .AddAppForwardedHeaders(configuration, environment)
                 .AddApiDocumentation();
+
+        return services;
+    }
+
+    public static IServiceCollection AddAppForwardedHeaders(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
+    {
+        var settings = configuration.GetSection("ForwardedHeaders").Get<ForwardedHeadersSettings>()
+            ?? new ForwardedHeadersSettings();
+
+        services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = settings.ForwardedHeaders;
+
+            if (settings.ForwardLimit.HasValue)
+            {
+                options.ForwardLimit = settings.ForwardLimit;
+            }
+
+            if (settings.KnownProxies is { Length: > 0 })
+            {
+                foreach (var proxy in settings.KnownProxies)
+                {
+                    try
+                    {
+                        options.KnownProxies.Add(IPAddress.Parse(proxy));
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidOperationException(
+                            $"Invalid ForwardedHeaders:KnownProxies value '{proxy}'.",
+                            ex);
+                    }
+                }
+            }
+
+            if (settings.KnownIPNetworks is { Length: > 0 })
+            {
+                foreach (var network in settings.KnownIPNetworks)
+                {
+                    try
+                    {
+                        options.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(network));
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidOperationException(
+                            $"Invalid ForwardedHeaders:KnownIPNetworks value '{network}'.",
+                            ex);
+                    }
+                }
+            }
+
+            if (environment.IsDevelopment() && settings.AllowAllInDevelopment)
+            {
+                options.KnownIPNetworks.Clear();
+                options.KnownProxies.Clear();
+                options.ForwardLimit = null;
+            }
+        });
 
         return services;
     }

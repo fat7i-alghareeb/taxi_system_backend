@@ -25,5 +25,29 @@ public class VehicleTypeConfiguration : IEntityTypeConfiguration<VehicleType>
         builder.Property(t => t.CurrencyCode)
             .HasMaxLength(3)
             .HasDefaultValue("EUR");
+
+        builder.Property(t => t.PassengerCapacity)
+            .IsRequired();
+
+        builder.Property(t => t.RatePerKm)
+            .HasPrecision(10, 2);
+
+        builder.Property(t => t.RatePerMin)
+            .HasPrecision(10, 2);
+
+        builder.Property(t => t.MinimumFare)
+            .HasPrecision(10, 2);
+
+        builder.Property(t => t.IsActive)
+            .HasDefaultValue(true);
+
+        builder.Property(t => t.SortOrder)
+            .HasDefaultValue(0);
+
+        builder.Property(t => t.CreatedAtUtc)
+            .IsRequired();
+
+        builder.Property(t => t.LastModifiedUtc)
+            .IsRequired(false);
     }
 }

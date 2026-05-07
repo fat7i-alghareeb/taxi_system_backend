@@ -85,6 +85,7 @@
   "Trip.CannotCancel": "لا يمكن إلغاء هذه الرحلة في حالتها الحالية.",
   "Trip.NotOwnedByPassenger": "هذه الرحلة لا تنتمي إليك.",
   "Maps.Search.QueryRequired": "عبارة البحث مطلوبة.",
+  "Maps.Search.LocationRequired": "موقع البحث (الإحداثيات) مطلوب.",
   "Maps.Geocode.CoordinateInvalid": "الإحداثيات المقدمة غير صالحة.",
   "Maps.Directions.InsufficientStops": "مطلوب محطتان على الأقل لحساب الاتجاهات."
 }

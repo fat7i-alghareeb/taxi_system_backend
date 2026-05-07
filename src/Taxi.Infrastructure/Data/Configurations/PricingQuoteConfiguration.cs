@@ -23,6 +23,21 @@ public class PricingQuoteConfiguration : IEntityTypeConfiguration<PricingQuote>
         builder.Property(q => q.FinalFare)
             .HasPrecision(10, 2);
 
+        builder.Property(q => q.ValidUntil)
+            .IsRequired();
+
+        builder.Property(q => q.Used)
+            .HasDefaultValue(false);
+
+        builder.Property(q => q.CreatedAtUtc)
+            .IsRequired();
+
+        builder.Property(q => q.PassengerId)
+            .IsRequired();
+
+        builder.Property(q => q.VehicleTypeId)
+            .IsRequired();
+
         builder.OwnsMany(q => q.Stops, stops =>
         {
             stops.ToJson();

@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services
-    .AddPresentation(builder.Configuration)
+    .AddPresentation(builder.Configuration, builder.Environment)
     .AddApplication()
     .AddInfrastructure(builder.Configuration);
 
@@ -19,6 +19,8 @@ builder.Host.UseSerilog((context, loggerConfig) =>
 var app = builder.Build();
 
 await app.ApplyMigrationsWithRetryAsync();
+
+app.UseForwardedHeaders();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

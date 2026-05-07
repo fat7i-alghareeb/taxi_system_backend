@@ -22,5 +22,23 @@ public class PromoCodeConfiguration : IEntityTypeConfiguration<PromoCode>
 
         builder.HasIndex(x => x.Code)
             .IsUnique();
+
+        builder.Property(x => x.ExpiresAtUtc)
+            .IsRequired();
+
+        builder.Property(x => x.MaxUsageCount)
+            .IsRequired(false);
+
+        builder.Property(x => x.UsageCount)
+            .HasDefaultValue(0);
+
+        builder.Property(x => x.IsActive)
+            .HasDefaultValue(true);
+
+        builder.Property(x => x.CreatedAtUtc)
+            .IsRequired();
+
+        builder.Property(x => x.LastModifiedUtc)
+            .IsRequired(false);
     }
 }

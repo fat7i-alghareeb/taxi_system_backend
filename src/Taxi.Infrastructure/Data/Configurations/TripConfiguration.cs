@@ -48,10 +48,28 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
             });
         });
 
+        builder.Property(t => t.ReferenceCode)
+            .HasMaxLength(20)
+            .IsRequired();
+
         builder.Property(t => t.CreatedAtUtc)
             .IsRequired();
 
+        builder.Property(t => t.LastModifiedUtc)
+            .IsRequired(false);
+
         builder.Property(t => t.ScheduledAtUtc)
             .IsRequired(false);
+
+        builder.Property(t => t.StartedAtUtc)
+            .IsRequired(false);
+
+        builder.Property(t => t.CompletedAtUtc)
+            .IsRequired(false);
+
+        builder.Property(t => t.DeletedAtUtc)
+            .IsRequired(false);
+
+        builder.HasQueryFilter(t => t.DeletedAtUtc == null);
     }
 }

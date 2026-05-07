@@ -115,6 +115,7 @@ public static class LocalizationKeys
     public static class Maps
     {
         public const string QueryRequired = "Maps.Search.QueryRequired";
+        public const string LocationRequired = "Maps.Search.LocationRequired";
         public const string CoordinateInvalid = "Maps.Geocode.CoordinateInvalid";
         public const string InsufficientStops = "Maps.Directions.InsufficientStops";
     }

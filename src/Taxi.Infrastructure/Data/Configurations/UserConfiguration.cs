@@ -29,6 +29,18 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.ProfilePhotoUrl)
             .HasMaxLength(500);
 
+        builder.Property(x => x.IsActive)
+            .HasDefaultValue(true);
+
+        builder.Property(x => x.ActiveVehicleId)
+            .IsRequired(false);
+
+        builder.Property(x => x.CreatedAtUtc)
+            .IsRequired();
+
+        builder.Property(x => x.LastModifiedUtc)
+            .IsRequired(false);
+
         builder.Property(x => x.Role)
             .HasConversion<string>()
             .HasMaxLength(20);
