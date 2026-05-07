@@ -42,6 +42,8 @@ public static class LocalizationKeys
         public const string Inactive = "User.Inactive";
         public const string NotFound = "User.NotFound";
         public const string NotADriver = "User.NotADriver";
+        public const string ProfileNameRequired = "User.Profile.NameRequired";
+        public const string ProfilePhotoInvalid = "User.Profile.PhotoInvalid";
     }
 
     public static class Validation
@@ -105,6 +107,16 @@ public static class LocalizationKeys
         public const string PassengerNotFound = "Trip.PassengerId.Invalid";
         public const string VehicleTypeNotFound = "Trip.VehicleType.NotFound";
         public const string DriverNotFound = "Trip.Driver.NotFound";
+        public const string ScheduledAtTooSoon = "Trip.ScheduledAt.TooSoon";
+        public const string CannotCancel = "Trip.CannotCancel";
+        public const string NotOwnedByPassenger = "Trip.NotOwnedByPassenger";
+    }
+
+    public static class Maps
+    {
+        public const string QueryRequired = "Maps.Search.QueryRequired";
+        public const string CoordinateInvalid = "Maps.Geocode.CoordinateInvalid";
+        public const string InsufficientStops = "Maps.Directions.InsufficientStops";
     }
 
     public static class Audit

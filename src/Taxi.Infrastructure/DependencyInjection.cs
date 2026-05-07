@@ -16,6 +16,7 @@ using Taxi.Infrastructure.Maps;
 using Taxi.Infrastructure.RealTime;
 using Taxi.Infrastructure.Settings;
 using Taxi.Infrastructure.Sms;
+using Taxi.Infrastructure.Storage;
 
 public static class DependencyInjection
 {
@@ -89,7 +90,13 @@ public static class DependencyInjection
             client.BaseAddress = new Uri("https://maps.googleapis.com/");
             client.Timeout = TimeSpan.FromSeconds(10);
         });
+        services.AddHttpClient<IGeocodingService, GoogleGeocodingService>(client =>
+        {
+            client.BaseAddress = new Uri("https://maps.googleapis.com/");
+            client.Timeout = TimeSpan.FromSeconds(10);
+        });
         services.AddScoped<ITripNotifier, SignalRTripNotifier>();
+        services.AddScoped<IFileStorage, LocalFileStorage>();
 
         services.AddHybridCache(options => options.DefaultEntryOptions = new Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions
         {

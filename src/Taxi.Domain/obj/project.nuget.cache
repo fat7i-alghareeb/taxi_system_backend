@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "FMiJG0fs6g4=",
+  "dgSpecHash": "9EnFCvNaaG4=",
   "success": true,
-  "projectFilePath": "c:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Domain\\Taxi.Domain.csproj",
+  "projectFilePath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Domain\\Taxi.Domain.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Fat7i\\.nuget\\packages\\mediatr\\14.1.0\\mediatr.14.1.0.nupkg.sha512",
     "C:\\Users\\Fat7i\\.nuget\\packages\\mediatr.contracts\\2.0.1\\mediatr.contracts.2.0.1.nupkg.sha512",

@@ -25,6 +25,11 @@ public class GetTripByIdQueryHandler(
         var quote = await _context.PricingQuotes
             .FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
 
+        var stopDtos = trip.Stops
+            .OrderBy(s => s.Sequence)
+            .Select(s => new TripStopDto(s.Coordinate.Latitude, s.Coordinate.Longitude))
+            .ToList();
+
         return new TripDto(
             trip.Id,
             trip.ReferenceCode,
@@ -33,7 +38,9 @@ public class GetTripByIdQueryHandler(
             trip.VehicleTypeId,
             trip.Status.ToString(),
             quote?.FinalFare ?? 0,
-            quote?.CurrencyCode ?? "USD",
-            trip.CreatedAtUtc);
+            quote?.CurrencyCode ?? "EUR",
+            trip.CreatedAtUtc,
+            trip.ScheduledAtUtc,
+            stopDtos);
     }
 }

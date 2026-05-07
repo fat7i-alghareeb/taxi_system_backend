@@ -71,6 +71,24 @@ public sealed class User : AuditableEntity
     public void Activate() => IsActive = true;
     public void SoftDelete() => DeletedAtUtc = DateTimeOffset.UtcNow;
 
+    public Result<Success> UpdateProfile(string name, string? profilePhotoUrl = null)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return Error.Validation(LocalizationKeys.User.ProfileNameRequired, "Name is required.");
+        }
+
+        var trimmed = name.Trim();
+        Name = new LocalizedText(trimmed, trimmed, trimmed);
+
+        if (profilePhotoUrl is not null)
+        {
+            ProfilePhotoUrl = profilePhotoUrl;
+        }
+
+        return Result.Success;
+    }
+
     public Result<Success> AssignVehicle(Guid vehicleId)
     {
         if (Role != UserRole.Driver)

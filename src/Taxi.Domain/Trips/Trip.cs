@@ -16,14 +16,16 @@ public sealed class Trip : AuditableEntity
         Guid passengerId,
         Guid vehicleTypeId,
         Guid quoteId,
-        IEnumerable<TripStop> stops)
+        IEnumerable<TripStop> stops,
+        DateTimeOffset? scheduledAtUtc)
         : base(id)
     {
         PassengerId = passengerId;
         ReferenceCode = referenceCode;
         VehicleTypeId = vehicleTypeId;
         QuoteId = quoteId;
-        Status = TripStatus.PendingDriver;
+        ScheduledAtUtc = scheduledAtUtc;
+        Status = scheduledAtUtc.HasValue ? TripStatus.Scheduled : TripStatus.PendingDriver;
         _stops.AddRange(stops);
         CreatedAtUtc = DateTimeOffset.UtcNow;
     }
@@ -35,6 +37,7 @@ public sealed class Trip : AuditableEntity
     public TripStatus Status { get; private set; }
     public Guid QuoteId { get; private set; }
     public IReadOnlyCollection<TripStop> Stops => _stops.AsReadOnly();
+    public DateTimeOffset? ScheduledAtUtc { get; private set; }
     public DateTimeOffset? StartedAtUtc { get; private set; }
     public DateTimeOffset? CompletedAtUtc { get; private set; }
     public DateTimeOffset? DeletedAtUtc { get; private set; }
@@ -43,7 +46,8 @@ public sealed class Trip : AuditableEntity
         Guid id,
         Guid passengerId,
         PricingQuote quote,
-        IEnumerable<TripStop> stops)
+        IEnumerable<TripStop> stops,
+        DateTimeOffset? scheduledAtUtc = null)
     {
         if (quote.IsExpired())
         {
@@ -57,7 +61,7 @@ public sealed class Trip : AuditableEntity
 
         var referenceCode = $"TRP-{new Random().Next(1000, 9999)}";
 
-        var trip = new Trip(id, referenceCode, passengerId, quote.VehicleTypeId, quote.Id, stops);
+        var trip = new Trip(id, referenceCode, passengerId, quote.VehicleTypeId, quote.Id, stops, scheduledAtUtc);
 
         trip.AddDomainEvent(new TripRequested
         {
@@ -71,7 +75,7 @@ public sealed class Trip : AuditableEntity
 
     public Result<Success> AssignDriver(Guid driverId)
     {
-        if (Status != TripStatus.PendingDriver)
+        if (Status != TripStatus.PendingDriver && Status != TripStatus.Scheduled)
         {
             return TripErrors.InvalidStatus(Status);
         }

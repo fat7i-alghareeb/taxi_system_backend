@@ -78,5 +78,13 @@
   "Payment.NotFound": "Payment not found.",
   "Audit.NotFound": "Audit log not found.",
   "Promo.Code.Required": "Promo code is required.",
-  "Promo.NotFound": "Promo code not found."
+  "Promo.NotFound": "Promo code not found.",
+  "User.Profile.NameRequired": "Name is required.",
+  "User.Profile.PhotoInvalid": "Photo must be a JPEG or PNG image under 5MB.",
+  "Trip.ScheduledAt.TooSoon": "Scheduled time must be at least 15 minutes in the future.",
+  "Trip.CannotCancel": "This trip cannot be cancelled in its current status.",
+  "Trip.NotOwnedByPassenger": "This trip does not belong to you.",
+  "Maps.Search.QueryRequired": "Search query is required.",
+  "Maps.Geocode.CoordinateInvalid": "The provided coordinates are invalid.",
+  "Maps.Directions.InsufficientStops": "At least two stops are required to calculate directions."
 }

@@ -62,7 +62,8 @@ public class RequestTripCommandHandler(
             Guid.NewGuid(),
             passengerId,
             quote,
-            stops);
+            stops,
+            request.ScheduledAt);
 
         if (tripResult.IsFailure)
         {
@@ -90,6 +91,11 @@ public class RequestTripCommandHandler(
         _context.Trips.Add(trip);
         await _context.SaveChangesAsync(ct);
 
+        var stopDtos = trip.Stops
+            .OrderBy(s => s.Sequence)
+            .Select(s => new TripStopDto(s.Coordinate.Latitude, s.Coordinate.Longitude))
+            .ToList();
+
         return new TripDto(
             trip.Id,
             trip.ReferenceCode,
@@ -99,6 +105,8 @@ public class RequestTripCommandHandler(
             trip.Status.ToString(),
             quote.FinalFare,
             quote.CurrencyCode,
-            trip.CreatedAtUtc);
+            trip.CreatedAtUtc,
+            trip.ScheduledAtUtc,
+            stopDtos);
     }
 }

@@ -9,5 +9,9 @@ public class RequestTripCommandValidator : AbstractValidator<RequestTripCommand>
     {
         RuleFor(v => v.QuoteId).NotEmpty();
         RuleFor(v => v.Stops).NotEmpty().Must(s => s.Count >= 2);
+        RuleFor(v => v.ScheduledAt)
+            .Must(s => s == null || s > DateTimeOffset.UtcNow.AddMinutes(15))
+            .WithErrorCode(LocalizationKeys.Trip.ScheduledAtTooSoon)
+            .When(v => v.ScheduledAt.HasValue);
     }
 }

@@ -78,5 +78,13 @@
   "Payment.NotFound": "Betaling niet gevonden.",
   "Audit.NotFound": "Auditlog niet gevonden.",
   "Promo.Code.Required": "Promotiecode is vereist.",
-  "Promo.NotFound": "Promotiecode niet gevonden."
+  "Promo.NotFound": "Promotiecode niet gevonden.",
+  "User.Profile.NameRequired": "Naam is vereist.",
+  "User.Profile.PhotoInvalid": "Foto moet een JPEG- of PNG-afbeelding zijn van minder dan 5MB.",
+  "Trip.ScheduledAt.TooSoon": "De geplande tijd moet minimaal 15 minuten in de toekomst liggen.",
+  "Trip.CannotCancel": "Deze rit kan niet worden geannuleerd in de huidige status.",
+  "Trip.NotOwnedByPassenger": "Deze rit behoort niet aan u toe.",
+  "Maps.Search.QueryRequired": "Zoekopdracht is vereist.",
+  "Maps.Geocode.CoordinateInvalid": "De opgegeven coördinaten zijn ongeldig.",
+  "Maps.Directions.InsufficientStops": "Er zijn minimaal twee haltes nodig om de route te berekenen."
 }

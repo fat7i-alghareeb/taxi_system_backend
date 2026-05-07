@@ -11,4 +11,6 @@ public class RequestTripRequest
     [Required(ErrorMessage = LocalizationKeys.Trip.InvalidStops)]
     [MinLength(2, ErrorMessage = LocalizationKeys.Trip.InvalidStops)]
     public List<CoordinateRequest> Stops { get; set; } = [];
+
+    public DateTimeOffset? ScheduledAt { get; set; }
 }

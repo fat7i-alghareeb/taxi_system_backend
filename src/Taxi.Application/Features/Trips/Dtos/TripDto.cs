@@ -9,4 +9,6 @@ public record TripDto(
     string Status,
     decimal QuotedFare,
     string CurrencyCode,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    DateTimeOffset? ScheduledAtUtc,
+    List<TripStopDto> Stops);

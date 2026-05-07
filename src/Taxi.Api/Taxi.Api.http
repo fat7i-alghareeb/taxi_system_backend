@@ -5,40 +5,7 @@
 @vehicleTypeId = 00000000-0000-0000-0000-000000000002
 @vehicleId = 00000000-0000-0000-0000-000000000003
 @tripId = 00000000-0000-0000-0000-000000000004
-@passengerId = 00000000-0000-0000-0000-000000000005
 @quoteId = 00000000-0000-0000-0000-000000000006
-
-
-###############################################################################
-# IDENTITY (ASP.NET Core Identity — no versioning)
-###############################################################################
-
-### Login as Admin (get JWT)
-# @name login
-POST {{baseUrl}}/token/generate
-Content-Type: application/json
-
-{
-    "email": "admin@taxi.com",
-    "password": "Admin123!"
-}
-
-###
-
-### Refresh Access Token
-POST {{baseUrl}}/token/refresh-token
-Content-Type: application/json
-
-{
-    "ExpiredAccessToken": "{{token}}",
-    "refreshToken": "<paste-refresh-token-here>"
-}
-
-###
-
-### Get Current User Info
-GET {{baseUrl}}/token/user-info
-Authorization: Bearer {{token}}
 
 
 ###############################################################################
@@ -244,19 +211,6 @@ Content-Type: application/json
 
 ###
 
-### Deactivate a vehicle (isActive = false)
-PUT {{baseUrl}}/v1/vehicles/{{vehicleId}}
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-    "color": "Silver",
-    "licensePlate": "NL-456-CD",
-    "isActive": false
-}
-
-###
-
 ### Delete a vehicle
 DELETE {{baseUrl}}/v1/vehicles/{{vehicleId}}
 Authorization: Bearer {{token}}
@@ -272,27 +226,43 @@ Authorization: Bearer {{token}}
 
 ###
 
+### Get pricing quotes for a route
+# @name getQuotes
+POST {{baseUrl}}/v1/trips/quotes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+    
+{
+    "stops": [
+        {
+            "latitude": 52.3676,
+            "longitude": 4.9041
+        },
+        {
+            "latitude": 52.3702,
+            "longitude": 4.8952
+        }
+    ]
+}
+
+###
+
 ### Request a new trip (minimum 2 stops)
 POST {{baseUrl}}/v1/trips/request
 Accept-Language: ar
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-
 {
-    "passengerId": "{{passengerId}}",
-    "vehicleTypeId": "{{vehicleTypeId}}",
     "quoteId": "{{quoteId}}",
     "stops": [
         {
             "latitude": 52.3676,
-            "longitude": 4.9041,
-            "label": "Amsterdam Centraal"
+            "longitude": 4.9041
         },
         {
             "latitude": 52.3702,
-            "longitude": 4.8952,
-            "label": "Leidseplein"
+            "longitude": 4.8952
         }
     ]
 }
@@ -305,24 +275,19 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-    "passengerId": "{{passengerId}}",
-    "vehicleTypeId": "{{vehicleTypeId}}",
     "quoteId": "{{quoteId}}",
     "stops": [
         {
             "latitude": 52.3676,
-            "longitude": 4.9041,
-            "label": "Amsterdam Centraal"
+            "longitude": 4.9041
         },
         {
             "latitude": 52.3588,
-            "longitude": 4.9080,
-            "label": "Rijksmuseum"
+            "longitude": 4.9080
         },
         {
             "latitude": 52.3702,
-            "longitude": 4.8952,
-            "label": "Leidseplein"
+            "longitude": 4.8952
         }
     ]
 }
@@ -388,14 +353,11 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-    "passengerId": "{{passengerId}}",
-    "vehicleTypeId": "{{vehicleTypeId}}",
     "quoteId": "{{quoteId}}",
     "stops": [
         {
             "latitude": 52.3676,
-            "longitude": 4.9041,
-            "label": "Amsterdam Centraal"
+            "longitude": 4.9041
         }
     ]
 }

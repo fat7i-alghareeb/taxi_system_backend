@@ -75,6 +75,9 @@ public class VerifyOtpCommandHandler(
         }
 
         // 5. Prepare Response
+        var resolvedName = domainUser.Name.GetTranslation(languageContext.Language);
+        var isPlaceholder = resolvedName.StartsWith("Passenger ") || resolvedName.StartsWith("راكب ") || resolvedName.StartsWith("Passagier ");
+
         var userDto = new UserDto
         {
             Id = domainUser.Id,
@@ -82,7 +85,7 @@ public class VerifyOtpCommandHandler(
             Role = domainUser.Role.ToString(),
             Email = domainUser.Email,
             ProfilePhotoUrl = domainUser.ProfilePhotoUrl,
-            Name = domainUser.Name.GetTranslation(languageContext.Language)
+            Name = isPlaceholder ? null : resolvedName,
         };
 
         return new AuthResponse(

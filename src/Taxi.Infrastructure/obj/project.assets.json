@@ -4658,11 +4658,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Infrastructure\\Taxi.Infrastructure.csproj",
+      "projectUniqueName": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Infrastructure\\Taxi.Infrastructure.csproj",
       "projectName": "Taxi.Infrastructure",
-      "projectPath": "c:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Infrastructure\\Taxi.Infrastructure.csproj",
+      "projectPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Infrastructure\\Taxi.Infrastructure.csproj",
       "packagesPath": "C:\\Users\\Fat7i\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Infrastructure\\obj\\",
+      "outputPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Infrastructure\\obj\\",
       "projectStyle": "PackageReference",
       "centralPackageVersionsManagementEnabled": true,
       "fallbackFolders": [
@@ -4684,8 +4684,8 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "projectReferences": {
-            "c:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Application\\Taxi.Application.csproj": {
-              "projectPath": "c:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Application\\Taxi.Application.csproj"
+            "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Application\\Taxi.Application.csproj": {
+              "projectPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Application\\Taxi.Application.csproj"
             }
           }
         }

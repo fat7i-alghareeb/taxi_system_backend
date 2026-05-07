@@ -1,9 +1,11 @@
 using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Taxi.Application.Features.Trips.Commands.CancelTrip;
 using Taxi.Application.Features.Trips.Commands.GetPricingQuotes;
 using Taxi.Application.Features.Trips.Commands.RequestTrip;
 using Taxi.Application.Features.Trips.Dtos;
+using Taxi.Application.Features.Trips.Queries.GetPassengerTrips;
 using Taxi.Application.Features.Trips.Queries.GetTripById;
 using Taxi.Contracts.Requests.Trips;
 
@@ -13,6 +15,17 @@ namespace Taxi.Api.Controllers;
 [Route("api/v{version:apiVersion}/trips")]
 public class TripsController(ISender sender) : ApiController
 {
+    [HttpGet]
+    [ProducesResponseType(typeof(PagedResult<TripSummaryDto>), StatusCodes.Status200OK)]
+    [EndpointSummary("Returns the current passenger's trip history.")]
+    [EndpointName("GetPassengerTrips")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetPassengerTrips([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
+    {
+        var result = await sender.Send(new GetPassengerTripsQuery(page, pageSize), ct);
+        return result.Match(Ok, Problem);
+    }
+
     [HttpGet("{id:guid}", Name = "GetTripById")]
     [ProducesResponseType(typeof(TripDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -59,7 +72,8 @@ public class TripsController(ISender sender) : ApiController
     {
         var command = new RequestTripCommand(
             request.QuoteId,
-            request.Stops.Select(s => new CoordinateDto(s.Latitude, s.Longitude)).ToList());
+            request.Stops.Select(s => new CoordinateDto(s.Latitude, s.Longitude)).ToList(),
+            request.ScheduledAt);
 
         var result = await sender.Send(command, ct);
 
@@ -69,5 +83,19 @@ public class TripsController(ISender sender) : ApiController
                 routeValues: new { version = "1.0", id = response.Id },
                 value: response),
             Problem);
+    }
+
+    [HttpPost("{id:guid}/cancel")]
+    [ProducesResponseType(typeof(TripDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Cancels a trip.")]
+    [EndpointDescription("Allowed while trip is Scheduled, PendingDriver, or DriverAssigned. Not allowed once InProgress.")]
+    [EndpointName("CancelTrip")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> CancelTrip(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new CancelTripCommand(id), ct);
+        return result.Match(Ok, Problem);
     }
 }

@@ -40,4 +40,16 @@ public static class TripErrors
     public static readonly Error DriverNotFound = Error.NotFound(
         code: LocalizationKeys.Trip.DriverNotFound,
         description: "No available driver found to assign to this trip.");
+
+    public static readonly Error ScheduledAtTooSoon = Error.Validation(
+        code: LocalizationKeys.Trip.ScheduledAtTooSoon,
+        description: "Scheduled time must be at least 15 minutes in the future.");
+
+    public static readonly Error CannotCancel = Error.Validation(
+        code: LocalizationKeys.Trip.CannotCancel,
+        description: "This trip cannot be cancelled in its current status.");
+
+    public static readonly Error NotOwnedByPassenger = Error.Validation(
+        code: LocalizationKeys.Trip.NotOwnedByPassenger,
+        description: "This trip does not belong to the current passenger.");
 }

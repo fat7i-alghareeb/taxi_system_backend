@@ -727,11 +727,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Domain\\Taxi.Domain.csproj",
+      "projectUniqueName": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Domain\\Taxi.Domain.csproj",
       "projectName": "Taxi.Domain",
-      "projectPath": "c:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Domain\\Taxi.Domain.csproj",
+      "projectPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Domain\\Taxi.Domain.csproj",
       "packagesPath": "C:\\Users\\Fat7i\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Domain\\obj\\",
+      "outputPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Domain\\obj\\",
       "projectStyle": "PackageReference",
       "centralPackageVersionsManagementEnabled": true,
       "fallbackFolders": [
@@ -753,8 +753,8 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "projectReferences": {
-            "c:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj": {
-              "projectPath": "c:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj"
+            "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj": {
+              "projectPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj"
             }
           }
         }
