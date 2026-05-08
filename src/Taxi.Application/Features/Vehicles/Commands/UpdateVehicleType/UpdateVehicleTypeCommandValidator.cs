@@ -19,3 +19,4 @@ public class UpdateVehicleTypeCommandValidator : AbstractValidator<UpdateVehicle
             .GreaterThanOrEqualTo(0);
     }
 }
+

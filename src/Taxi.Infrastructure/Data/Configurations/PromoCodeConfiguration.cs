@@ -42,3 +42,4 @@ public class PromoCodeConfiguration : IEntityTypeConfiguration<PromoCode>
             .IsRequired(false);
     }
 }
+

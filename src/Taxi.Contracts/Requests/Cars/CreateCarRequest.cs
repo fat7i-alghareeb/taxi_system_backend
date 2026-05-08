@@ -28,3 +28,4 @@ public class CreateCarRequest
     [StringLength(1000)]
     public string DescriptionNl { get; set; } = string.Empty;
 }
+

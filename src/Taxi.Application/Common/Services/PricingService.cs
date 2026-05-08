@@ -15,3 +15,4 @@ public class PricingService : IPricingService
         return Math.Max(totalFare, vehicleType.MinimumFare);
     }
 }
+

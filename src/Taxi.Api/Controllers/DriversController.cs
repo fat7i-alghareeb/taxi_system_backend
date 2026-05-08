@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Taxi.Application.Features.Drivers.Commands.CreateDriver;
 using Taxi.Application.Features.Drivers.Commands.DeleteDriver;
@@ -15,6 +16,7 @@ namespace Taxi.Api.Controllers;
 
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/drivers")]
+[Authorize(Roles = "Admin")]
 public class DriversController(ISender sender) : ApiController
 {
     [HttpGet]
@@ -100,7 +102,7 @@ public class DriversController(ISender sender) : ApiController
             Problem);
     }
 
-    [HttpPost("{id:guid}/vehicle")]
+    [HttpPost("{id:guid}/vehicles")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Assigns an active vehicle to a driver.")]
@@ -115,3 +117,4 @@ public class DriversController(ISender sender) : ApiController
             Problem);
     }
 }
+

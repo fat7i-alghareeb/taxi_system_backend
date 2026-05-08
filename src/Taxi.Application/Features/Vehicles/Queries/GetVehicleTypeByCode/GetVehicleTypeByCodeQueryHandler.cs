@@ -1,11 +1,9 @@
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-
 using Taxi.Application.Common.Interfaces;
-using Taxi.Application.Features.Vehicles.Dtos;
 using Taxi.Contracts.Common;
+using Taxi.Contracts.Responses.Vehicles;
 using Taxi.Domain.Common.Results;
 
 namespace Taxi.Application.Features.Vehicles.Queries.GetVehicleTypeByCode;
@@ -55,3 +53,4 @@ public class GetVehicleTypeByCodeQueryHandler(
         return vehicleType;
     }
 }
+

@@ -12,6 +12,8 @@ public interface IIdentityService
     Task<Result<AppUserDto>> AuthenticateAsync(string email, string password);
 
     Task<Result<AppUserDto>> GetUserByIdAsync(string userId);
-    Task<Result<AppUserDto>> GetOrCreateUserByPhoneAsync(string phone, string role);
+    Task<Result<string>> GetOrCreateUserByPhoneAsync(string phone, string role);
+    Task<Result<string>> CreateUserAsync(string phone, string email, string password, string role);
     Task<string?> GetUserNameAsync(string userId);
 }
+

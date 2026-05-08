@@ -10,3 +10,4 @@ public record TripResponse(
     decimal QuotedFare,
     string CurrencyCode,
     DateTime CreatedAtUtc);
+

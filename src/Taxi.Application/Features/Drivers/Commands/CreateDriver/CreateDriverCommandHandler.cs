@@ -69,3 +69,4 @@ public class CreateDriverCommandHandler(
             driver.ActiveVehicleId);
     }
 }
+

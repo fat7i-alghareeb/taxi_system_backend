@@ -55,21 +55,48 @@ public sealed class Driver : AuditableEntity
         return new Driver(id, userId, licenseNumber);
     }
 
-    public void UpdateLocation(decimal lat, decimal lng)
+    public Result<Success> UpdateLocation(decimal lat, decimal lng)
     {
         CurrentLat = lat;
         CurrentLng = lng;
         LocationUpdatedAt = DateTimeOffset.UtcNow;
+        return Result.Success;
     }
 
-    public void UpdateDetails(string licenseNumber)
+    public Result<Success> UpdateDetails(string licenseNumber)
     {
         LicenseNumber = licenseNumber;
+        return Result.Success;
     }
 
-    public void SetStatus(DriverStatus status) => Status = status;
-    public void SetActiveVehicle(Guid vehicleId) => ActiveVehicleId = vehicleId;
-    public void Deactivate() => IsActive = false;
-    public void Activate() => IsActive = true;
-    public void SoftDelete() => DeletedAtUtc = DateTimeOffset.UtcNow;
+    public Result<Success> SetStatus(DriverStatus status)
+    {
+        Status = status;
+        return Result.Success;
+    }
+
+    public Result<Success> SetActiveVehicle(Guid vehicleId)
+    {
+        ActiveVehicleId = vehicleId;
+        return Result.Success;
+    }
+
+    public Result<Success> Deactivate()
+    {
+        IsActive = false;
+        return Result.Success;
+    }
+
+    public Result<Success> Activate()
+    {
+        IsActive = true;
+        return Result.Success;
+    }
+
+    public Result<Success> SoftDelete()
+    {
+        DeletedAtUtc = DateTimeOffset.UtcNow;
+        return Result.Success;
+    }
 }
+

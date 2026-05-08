@@ -73,3 +73,4 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
         builder.HasQueryFilter(t => t.DeletedAtUtc == null);
     }
 }
+

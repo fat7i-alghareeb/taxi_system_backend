@@ -51,3 +51,4 @@ public class VehicleTypeConfiguration : IEntityTypeConfiguration<VehicleType>
             .IsRequired(false);
     }
 }
+

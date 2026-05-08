@@ -61,7 +61,7 @@ public class IdentityService(
         return new AppUserDto(user.Id, user.Email!, await _userManager.GetRolesAsync(user), await _userManager.GetClaimsAsync(user));
     }
 
-    public async Task<Result<AppUserDto>> GetOrCreateUserByPhoneAsync(string phone, string role)
+    public async Task<Result<string>> GetOrCreateUserByPhoneAsync(string phone, string role)
     {
         var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == phone);
 
@@ -86,18 +86,40 @@ public class IdentityService(
             await _userManager.AddToRoleAsync(user, role);
         }
 
-        var roles = await _userManager.GetRolesAsync(user);
-        var claims = await _userManager.GetClaimsAsync(user);
+        return user.Id;
+    }
 
-        return new AppUserDto(user.Id, user.Email!, roles, claims);
+    public async Task<Result<string>> CreateUserAsync(string phone, string email, string password, string role)
+    {
+        var user = new AppUser
+        {
+            UserName = phone,
+            PhoneNumber = phone,
+            Email = email,
+            EmailConfirmed = true,
+            PhoneNumberConfirmed = true
+        };
+
+        var result = await _userManager.CreateAsync(user, password);
+        if (!result.Succeeded)
+        {
+            return Error.Failure("Identity.CreateFailed", string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
+
+        await _userManager.AddToRoleAsync(user, role);
+
+        return user.Id;
     }
 
     public async Task<Result<AppUserDto>> GetUserByIdAsync(string userId)
     {
-        var user = await _userManager.FindByIdAsync(userId) ?? throw new InvalidOperationException(nameof(userId));
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return Error.NotFound("User.NotFound", "User not found");
+        }
 
         var roles = await _userManager.GetRolesAsync(user);
-
         var claims = await _userManager.GetClaimsAsync(user);
 
         return new AppUserDto(user.Id, user.Email!, roles, claims);
@@ -110,3 +132,4 @@ public class IdentityService(
         return user?.UserName;
     }
 }
+

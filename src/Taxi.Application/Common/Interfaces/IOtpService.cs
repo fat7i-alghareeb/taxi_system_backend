@@ -8,3 +8,4 @@ public interface IOtpService
 
     Task<Result<string>> VerifyOtpAsync(string sessionToken, string otp, CancellationToken cancellationToken = default);
 }
+

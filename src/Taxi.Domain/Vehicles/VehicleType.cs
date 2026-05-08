@@ -77,13 +77,24 @@ public sealed class VehicleType : AuditableEntity
         return new VehicleType(id, code, name, passengerCapacity, ratePerKm, ratePerMin, minimumFare, currencyCode, sortOrder);
     }
 
-    public void UpdatePricing(decimal ratePerKm, decimal ratePerMin, decimal minimumFare)
+    public Result<Success> UpdatePricing(decimal ratePerKm, decimal ratePerMin, decimal minimumFare)
     {
         RatePerKm = ratePerKm;
         RatePerMin = ratePerMin;
         MinimumFare = minimumFare;
+        return Result.Success;
     }
 
-    public void Deactivate() => IsActive = false;
-    public void Activate() => IsActive = true;
+    public Result<Success> Deactivate()
+    {
+        IsActive = false;
+        return Result.Success;
+    }
+
+    public Result<Success> Activate()
+    {
+        IsActive = true;
+        return Result.Success;
+    }
 }
+

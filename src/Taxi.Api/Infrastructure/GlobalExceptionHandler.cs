@@ -25,3 +25,4 @@ public class GlobalExceptionHandler(IProblemDetailsService problemDetailsService
         });
     }
 }
+

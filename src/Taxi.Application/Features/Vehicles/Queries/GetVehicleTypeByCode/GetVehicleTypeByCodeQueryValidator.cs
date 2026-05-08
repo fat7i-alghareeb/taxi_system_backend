@@ -10,3 +10,4 @@ public class GetVehicleTypeByCodeQueryValidator : AbstractValidator<GetVehicleTy
             .NotEmpty();
     }
 }
+

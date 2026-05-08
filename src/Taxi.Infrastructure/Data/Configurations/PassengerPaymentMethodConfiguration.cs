@@ -22,3 +22,4 @@ public class PassengerPaymentMethodConfiguration : IEntityTypeConfiguration<Pass
             .IsFixedLength();
     }
 }
+

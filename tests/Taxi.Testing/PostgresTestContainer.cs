@@ -4,7 +4,7 @@ namespace Taxi.Testing;
 
 public sealed class PostgresTestContainer : IAsyncDisposable
 {
-    private readonly PostgreSqlContainer container = new PostgreSqlBuilder()
+    private readonly PostgreSqlContainer container = new PostgreSqlBuilder("postgres:16-alpine")
         .WithDatabase("taxi_tests")
         .WithUsername("postgres")
         .WithPassword("postgres")

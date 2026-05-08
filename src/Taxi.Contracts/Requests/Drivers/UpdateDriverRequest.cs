@@ -8,3 +8,4 @@ public class UpdateDriverRequest
     [Required(ErrorMessage = LocalizationKeys.Driver.LicenseRequired)]
     public string LicenseNumber { get; set; } = string.Empty;
 }
+

@@ -13,45 +13,33 @@ public class GetPricingQuotesCommandHandler(
     IDirectionsService directionsService,
     IPricingService pricingService,
     IUser currentUser,
-    ILanguageContext languageContext) : IRequestHandler<GetPricingQuotesCommand, Result<List<PricingQuoteDto>>>
+    ILanguageContext languageContext) : IRequestHandler<GetPricingQuotesCommand, Result<PricingQuotesListDto>>
 {
     private readonly IAppDbContext _context = context;
 
-    public async Task<Result<List<PricingQuoteDto>>> Handle(GetPricingQuotesCommand request, CancellationToken ct)
+    public async Task<Result<PricingQuotesListDto>> Handle(GetPricingQuotesCommand request, CancellationToken ct)
     {
         if (!Guid.TryParse(currentUser.Id, out var passengerId))
         {
             return TripErrors.PassengerNotFound;
         }
 
-        var totalDistanceMeters = 0;
-        var totalDurationSeconds = 0;
         var stops = request.Stops;
+        var serviceCoordinates = stops.Select(s => new Application.Common.Interfaces.Coordinate(s.Latitude, s.Longitude)).ToList();
 
-        for (var i = 0; i < stops.Count - 1; i++)
-        {
-            var origin = stops[i];
-            var destination = stops[i + 1];
+        var directionResponse = await directionsService.GetDirectionsAsync(serviceCoordinates);
 
-            var leg = await directionsService.GetDirectionsAsync(
-                origin.Latitude, origin.Longitude,
-                destination.Latitude, destination.Longitude);
-
-            totalDistanceMeters += leg.DistanceMeters;
-            totalDurationSeconds += leg.DurationSeconds;
-        }
-
-        var totalDistanceKm = Math.Round(totalDistanceMeters / 1000m, 3);
-        var totalDurationMin = Math.Round(totalDurationSeconds / 60m, 2);
+        var totalDistanceKm = Math.Round(directionResponse.TotalDistanceMeters / 1000m, 3);
+        var totalDurationMin = Math.Round(directionResponse.TotalDurationSeconds / 60m, 2);
 
         var vehicleTypes = await _context.VehicleTypes
             .Where(vt => vt.IsActive)
             .OrderBy(vt => vt.SortOrder)
             .ToListAsync(ct);
 
-        var coordinates = stops.Select(s => new Coordinate(s.Latitude, s.Longitude)).ToList();
         var validUntil = DateTime.UtcNow.AddMinutes(15);
         var quotes = new List<PricingQuote>();
+        var domainCoordinates = stops.Select(s => new Domain.Trips.Coordinate(s.Latitude, s.Longitude)).ToList();
 
         foreach (var vehicleType in vehicleTypes)
         {
@@ -69,7 +57,7 @@ public class GetPricingQuotesCommandHandler(
                 fare,
                 vehicleType.CurrencyCode,
                 validUntil,
-                coordinates);
+                domainCoordinates);
 
             if (quoteResult.IsFailure)
             {
@@ -84,16 +72,15 @@ public class GetPricingQuotesCommandHandler(
 
         var lang = languageContext.Language;
 
-        var result = quotes.Zip(vehicleTypes, (quote, vt) => new PricingQuoteDto(
+        var quoteDtos = quotes.Zip(vehicleTypes, (quote, vt) => new PricingQuoteDto(
             quote.Id,
             vt.Id,
             lang == Languages.Ar ? vt.Name.Ar : lang == Languages.Nl ? vt.Name.Nl : vt.Name.En,
-            quote.TotalDistanceKm,
-            quote.TotalDurationMin,
             quote.FinalFare,
             quote.CurrencyCode,
             quote.ValidUntil)).ToList();
 
-        return result;
+        return new PricingQuotesListDto(totalDistanceKm, totalDurationMin, quoteDtos);
     }
 }
+

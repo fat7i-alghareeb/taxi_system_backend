@@ -23,7 +23,7 @@ public sealed class TestWebApplicationFactory(string connectionString) : WebAppl
                 ["AppSettings:CorsPolicyName"] = "TaxiCorsPolicy",
                 ["AppSettings:AllowedOrigins:0"] = "http://localhost",
                 ["AppSettings:DefaultLanguage"] = "en",
-                ["AppSettings:GoogleMapsApiKey"] = "",
+                ["AppSettings:GoogleMapsApiKey"] = string.Empty,
             };
 
             config.AddInMemoryCollection(settings);

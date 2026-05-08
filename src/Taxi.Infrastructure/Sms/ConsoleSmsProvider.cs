@@ -15,3 +15,4 @@ public class ConsoleSmsProvider(ILogger<ConsoleSmsProvider> logger) : ISmsProvid
         return Task.CompletedTask;
     }
 }
+

@@ -1,4 +1,3 @@
-using Taxi.Contracts.Common;
 using Taxi.Domain.Common;
 using Taxi.Domain.Common.Results;
 
@@ -47,32 +46,32 @@ public sealed class PricingQuote : Entity
     {
         if (passengerId == Guid.Empty)
         {
-            return Error.Validation(LocalizationKeys.Trip.PassengerNotFound, "Passenger ID is required.");
+            return Error.Validation("Trip.PassengerNotFound", "Passenger ID is required.");
         }
 
         if (vehicleTypeId == Guid.Empty)
         {
-            return Error.Validation(LocalizationKeys.Trip.VehicleTypeNotFound, "Vehicle type ID is required.");
+            return Error.Validation("Trip.VehicleTypeNotFound", "Vehicle type ID is required.");
         }
 
         if (totalDistanceKm < 0)
         {
-            return Error.Validation(LocalizationKeys.Validation.InvalidFormat, "Total distance cannot be negative.");
+            return Error.Validation("Validation.InvalidFormat", "Total distance cannot be negative.");
         }
 
         if (totalDurationMin < 0)
         {
-            return Error.Validation(LocalizationKeys.Validation.InvalidFormat, "Total duration cannot be negative.");
+            return Error.Validation("Validation.InvalidFormat", "Total duration cannot be negative.");
         }
 
         if (finalFare < 0)
         {
-            return Error.Validation(LocalizationKeys.Payment.InvalidAmount, "Final fare cannot be negative.");
+            return Error.Validation("Payment.InvalidAmount", "Final fare cannot be negative.");
         }
 
         if (string.IsNullOrWhiteSpace(currencyCode))
         {
-            return Error.Validation(LocalizationKeys.Validation.RequiredField, "Currency code is required.");
+            return Error.Validation("Validation.RequiredField", "Currency code is required.");
         }
 
         return new PricingQuote(
@@ -101,3 +100,4 @@ public sealed class PricingQuote : Entity
     public bool IsExpired() => DateTime.UtcNow > ValidUntil;
     public void MarkAsUsed() => Used = true;
 }
+

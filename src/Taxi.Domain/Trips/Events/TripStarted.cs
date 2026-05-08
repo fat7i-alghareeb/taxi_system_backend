@@ -8,3 +8,4 @@ public sealed class TripStarted : DomainEvent
 
     public Guid PassengerId { get; init; }
 }
+

@@ -1,4 +1,3 @@
-using Taxi.Contracts.Common;
 using Taxi.Domain.Common;
 using Taxi.Domain.Common.Results;
 
@@ -51,22 +50,22 @@ public sealed class Vehicle : AuditableEntity
     {
         if (vehicleTypeId == Guid.Empty)
         {
-            return Error.Validation(LocalizationKeys.Vehicle.TypeIdRequired, "Vehicle type is required.");
+            return Error.Validation("Vehicle.TypeIdRequired", "Vehicle type is required.");
         }
 
         if (string.IsNullOrWhiteSpace(make))
         {
-            return Error.Validation(LocalizationKeys.Vehicle.MakeRequired, "Make is required.");
+            return Error.Validation("Vehicle.MakeRequired", "Make is required.");
         }
 
         if (string.IsNullOrWhiteSpace(model))
         {
-            return Error.Validation(LocalizationKeys.Vehicle.ModelRequired, "Model is required.");
+            return Error.Validation("Vehicle.ModelRequired", "Model is required.");
         }
 
         if (string.IsNullOrWhiteSpace(licensePlate))
         {
-            return Error.Validation(LocalizationKeys.Vehicle.LicensePlateRequired, "License plate is required.");
+            return Error.Validation("Vehicle.LicensePlateRequired", "License plate is required.");
         }
 
         return new Vehicle(id, vehicleTypeId, driverId, make, model, year, color, licensePlate);
@@ -82,3 +81,4 @@ public sealed class Vehicle : AuditableEntity
     public void Activate() => IsActive = true;
     public void SoftDelete() => DeletedAtUtc = DateTimeOffset.UtcNow;
 }
+

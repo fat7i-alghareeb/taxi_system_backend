@@ -15,3 +15,4 @@ public class CreateDriverCommandValidator : AbstractValidator<CreateDriverComman
             .MaximumLength(50);
     }
 }
+

@@ -15,6 +15,9 @@ public class ApplicationDbContextInitialiser(
     UserManager<AppUser> userManager,
     IHostEnvironment environment)
 {
+    private const string SuperAdminPhone = "+963900000000";
+    private const string SuperAdminPassword = "Admin@123!";
+    private static readonly Guid SuperAdminUserId = new("00000000-0000-0000-0000-000000000000");
     private static readonly Guid AdminDriverUserId = new("11111111-1111-1111-1111-111111111111");
     private static readonly Guid AdminDriverId = new("22222222-2222-2222-2222-222222222222");
 
@@ -84,13 +87,55 @@ public class ApplicationDbContextInitialiser(
             await context.SaveChangesAsync();
         }
 
-        // 3. Seed admin driver (fixed GUID so idempotent)
+        // 3. Seed super admin
+        await SeedSuperAdminAsync();
+
+        // 4. Seed admin driver (fixed GUID so idempotent)
         await SeedAdminDriverAsync();
 
         if (environment.IsDevelopment())
         {
             await SeedDevelopmentOnlyAsync();
         }
+    }
+
+    private async Task SeedSuperAdminAsync()
+    {
+        var adminUser = await userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == SuperAdminPhone);
+        if (adminUser != null)
+        {
+            return;
+        }
+
+        // 1. Create Identity user for Super Admin
+        adminUser = new AppUser { UserName = SuperAdminPhone, PhoneNumber = SuperAdminPhone, Email = "admin@fat7i.dev", EmailConfirmed = true, PhoneNumberConfirmed = true };
+        var identityResult = await userManager.CreateAsync(adminUser, SuperAdminPassword);
+        if (!identityResult.Succeeded)
+        {
+            var errors = string.Join(", ", identityResult.Errors.Select(e => e.Description));
+            throw new InvalidOperationException($"Failed to create super admin identity user: {errors}");
+        }
+
+        // 2. Assign roles: Admin, Driver, Passenger
+        await userManager.AddToRoleAsync(adminUser, "Admin");
+        await userManager.AddToRoleAsync(adminUser, "Driver");
+        await userManager.AddToRoleAsync(adminUser, "Passenger");
+
+        // 3. Create domain User
+        var domainUserResult = User.Create(
+            SuperAdminUserId,
+            "Super Admin", "مدير النظام", "Super Administrateur",
+            SuperAdminPhone,
+            adminUser.Email,
+            UserRole.Admin);
+
+        if (domainUserResult.IsFailure)
+        {
+            throw new InvalidOperationException($"Failed to create super admin domain user: {domainUserResult.Error.Description}");
+        }
+
+        context.DomainUsers.Add(domainUserResult.Value);
+        await context.SaveChangesAsync();
     }
 
     private async Task SeedAdminDriverAsync()
@@ -147,3 +192,4 @@ public class ApplicationDbContextInitialiser(
         return Task.CompletedTask;
     }
 }
+

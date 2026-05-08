@@ -29,3 +29,4 @@ public class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
             .HasColumnType("text");
     }
 }
+

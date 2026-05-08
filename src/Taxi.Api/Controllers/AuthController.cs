@@ -16,7 +16,7 @@ namespace Taxi.Api.Controllers;
 [Route("api/v{version:apiVersion}/auth")]
 public sealed class AuthController(ISender sender) : ApiController
 {
-    [HttpPost("send-otp")]
+    [HttpPost("otp-requests")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
@@ -32,7 +32,7 @@ public sealed class AuthController(ISender sender) : ApiController
             this.Problem);
     }
 
-    [HttpPost("verify-otp")]
+    [HttpPost("otp-verifications")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -49,3 +49,4 @@ public sealed class AuthController(ISender sender) : ApiController
             this.Problem);
     }
 }
+

@@ -16,3 +16,4 @@ public class AppSettings
 
     public string GoogleMapsApiKey { get; set; } = default!;
 }
+

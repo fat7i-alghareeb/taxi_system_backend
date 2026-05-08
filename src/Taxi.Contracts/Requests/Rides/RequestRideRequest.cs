@@ -21,3 +21,4 @@ public class RequestRideRequest
     [Required(ErrorMessage = LocalizationKeys.Validation.RequiredField)]
     public string DestinationAr { get; set; } = string.Empty;
 }
+

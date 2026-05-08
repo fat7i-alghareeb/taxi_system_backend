@@ -26,3 +26,4 @@ public class UnhandledExceptionBehaviour<TRequest, TResponse>(ILogger<TRequest> 
         }
     }
 }
+

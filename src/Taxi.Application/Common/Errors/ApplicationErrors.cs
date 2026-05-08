@@ -33,3 +33,4 @@ public static class ApplicationErrors
         code: LocalizationKeys.Auth.TokenGenerationFailed,
         description: "Failed to generate new JWT token.");
 }
+

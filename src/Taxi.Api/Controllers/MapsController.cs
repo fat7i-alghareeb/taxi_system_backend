@@ -28,7 +28,7 @@ public class MapsController(ISender sender) : ApiController
         return result.Match(Ok, Problem);
     }
 
-    [HttpPost("reverse-geocode")]
+    [HttpPost("reverse-geocodings")]
     [ProducesResponseType(typeof(ReverseGeocodeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Converts coordinates to a human-readable address.")]
@@ -56,3 +56,4 @@ public class MapsController(ISender sender) : ApiController
         return result.Match(Ok, Problem);
     }
 }
+

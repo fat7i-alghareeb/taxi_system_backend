@@ -67,3 +67,4 @@ public class CachingBehavior<TRequest, TResponse>(
         return result;
     }
 }
+

@@ -340,3 +340,4 @@ public static class DependencyInjection
         return app;
     }
 }
+

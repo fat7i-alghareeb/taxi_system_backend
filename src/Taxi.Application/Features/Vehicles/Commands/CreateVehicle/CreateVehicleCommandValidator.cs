@@ -14,3 +14,4 @@ public class CreateVehicleCommandValidator : AbstractValidator<CreateVehicleComm
         RuleFor(v => v.LicensePlate).NotEmpty();
     }
 }
+

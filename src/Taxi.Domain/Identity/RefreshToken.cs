@@ -48,3 +48,4 @@ public sealed class RefreshToken : AuditableEntity
         return new RefreshToken(id, token, userId, expiresOnUtc);
     }
 }
+

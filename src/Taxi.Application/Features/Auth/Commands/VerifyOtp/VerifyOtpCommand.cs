@@ -8,3 +8,4 @@ public sealed record VerifyOtpCommand(
     string Phone,
     string SessionToken,
     string Code) : IRequest<Result<AuthResponse>>;
+

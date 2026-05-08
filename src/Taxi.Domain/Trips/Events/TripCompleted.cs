@@ -10,3 +10,4 @@ public sealed class TripCompleted : DomainEvent
 
     public Guid? DriverId { get; init; }
 }
+

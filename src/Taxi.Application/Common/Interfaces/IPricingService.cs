@@ -6,3 +6,4 @@ public interface IPricingService
 {
     decimal CalculateFare(VehicleType vehicleType, double distanceKm, double durationMin);
 }
+

@@ -8,3 +8,4 @@ public record SavedLocationResponse(
     string? PrimaryName,
     string? SecondaryAddress,
     bool IsPinned);
+

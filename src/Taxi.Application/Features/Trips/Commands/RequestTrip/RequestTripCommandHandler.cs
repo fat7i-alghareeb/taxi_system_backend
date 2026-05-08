@@ -48,7 +48,7 @@ public class RequestTripCommandHandler(
         }
 
         var stopResults = request.Stops.Select((s, index) => TripStop.Create(
-            new Coordinate(s.Latitude, s.Longitude),
+            new Domain.Trips.Coordinate(s.Latitude, s.Longitude),
             index)).ToList();
 
         if (stopResults.Any(r => r.IsFailure))
@@ -110,3 +110,4 @@ public class RequestTripCommandHandler(
             stopDtos);
     }
 }
+

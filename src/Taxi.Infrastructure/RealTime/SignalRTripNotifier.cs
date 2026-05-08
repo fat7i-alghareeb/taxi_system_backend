@@ -42,3 +42,4 @@ public sealed class SignalRTripNotifier(IHubContext<TripHub> hubContext) : ITrip
             .Group($"Trip_{tripId}")
             .SendAsync("TripCancelled", new { tripId, passengerId }, ct);
 }
+

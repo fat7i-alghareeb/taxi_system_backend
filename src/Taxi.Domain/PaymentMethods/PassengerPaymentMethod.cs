@@ -64,3 +64,4 @@ public sealed class PassengerPaymentMethod : AuditableEntity
     public void UnsetAsDefault() => IsDefault = false;
     public void SoftDelete() => DeletedAtUtc = DateTimeOffset.UtcNow;
 }
+

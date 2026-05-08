@@ -17,3 +17,4 @@ public class TripRouteConfiguration : IEntityTypeConfiguration<TripRoute>
             .HasColumnType("jsonb");
     }
 }
+

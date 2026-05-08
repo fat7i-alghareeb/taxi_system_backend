@@ -41,3 +41,4 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .IsRequired(false);
     }
 }
+

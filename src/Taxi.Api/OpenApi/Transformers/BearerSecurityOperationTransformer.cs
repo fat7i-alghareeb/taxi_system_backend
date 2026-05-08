@@ -31,3 +31,4 @@ internal sealed class BearerSecurityOperationTransformer : IOpenApiOperationTran
         return Task.CompletedTask;
     }
 }
+

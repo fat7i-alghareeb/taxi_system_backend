@@ -29,3 +29,4 @@ internal sealed class BearerSecuritySchemeTransformer
         return Task.CompletedTask;
     }
 }
+

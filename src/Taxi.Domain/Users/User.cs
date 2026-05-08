@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using Taxi.Contracts.Common;
+
 using Taxi.Domain.Common;
 using Taxi.Domain.Common.Results;
 
@@ -67,15 +67,29 @@ public sealed class User : AuditableEntity
         return new User(id, localizedName, phone, email, role);
     }
 
-    public void Deactivate() => IsActive = false;
-    public void Activate() => IsActive = true;
-    public void SoftDelete() => DeletedAtUtc = DateTimeOffset.UtcNow;
+    public Result<Success> Deactivate()
+    {
+        IsActive = false;
+        return Result.Success;
+    }
+
+    public Result<Success> Activate()
+    {
+        IsActive = true;
+        return Result.Success;
+    }
+
+    public Result<Success> SoftDelete()
+    {
+        DeletedAtUtc = DateTimeOffset.UtcNow;
+        return Result.Success;
+    }
 
     public Result<Success> UpdateProfile(string name, string? profilePhotoUrl = null)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            return Error.Validation(LocalizationKeys.User.ProfileNameRequired, "Name is required.");
+            return Error.Validation("User.ProfileNameRequired", "Name is required.");
         }
 
         var trimmed = name.Trim();
@@ -93,12 +107,17 @@ public sealed class User : AuditableEntity
     {
         if (Role != UserRole.Driver)
         {
-            return Error.Validation(LocalizationKeys.User.NotADriver, "Only users with the Driver role can be assigned a vehicle.");
+            return Error.Validation("User.NotADriver", "Only users with the Driver role can be assigned a vehicle.");
         }
 
         ActiveVehicleId = vehicleId;
         return Result.Success;
     }
 
-    public void UnassignVehicle() => ActiveVehicleId = null;
+    public Result<Success> UnassignVehicle()
+    {
+        ActiveVehicleId = null;
+        return Result.Success;
+    }
 }
+

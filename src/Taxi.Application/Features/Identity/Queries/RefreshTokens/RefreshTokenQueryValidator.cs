@@ -14,3 +14,4 @@ public sealed class RefreshTokenQueryValidator : AbstractValidator<RefreshTokenQ
             .NotEmpty().WithMessage(LocalizationKeys.RefreshToken.TokenRequired);
     }
 }
+

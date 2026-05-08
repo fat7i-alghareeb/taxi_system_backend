@@ -1,4 +1,4 @@
-namespace Taxi.Application.Features.Vehicles.Dtos;
+namespace Taxi.Contracts.Responses.Vehicles;
 
 public record VehicleDto(
     Guid Id,
@@ -10,3 +10,4 @@ public record VehicleDto(
     string Color,
     string LicensePlate,
     bool IsActive);
+

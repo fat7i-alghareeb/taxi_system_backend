@@ -1,5 +1,5 @@
 using MediatR;
-using Taxi.Application.Features.Vehicles.Dtos;
+using Taxi.Contracts.Responses.Vehicles;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Vehicles;
 
@@ -13,3 +13,4 @@ public record CreateVehicleCommand(
     string Year,
     string Color,
     string LicensePlate) : IRequest<Result<VehicleDto>>;
+

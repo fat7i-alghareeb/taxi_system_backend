@@ -8,3 +8,4 @@ public record SearchPlacesQuery(
     string Query,
     decimal? Latitude,
     decimal? Longitude) : IRequest<Result<List<PlaceResultDto>>>;
+

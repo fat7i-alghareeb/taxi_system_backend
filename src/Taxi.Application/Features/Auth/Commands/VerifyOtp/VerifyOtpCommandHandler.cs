@@ -31,7 +31,7 @@ public class VerifyOtpCommandHandler(
             return identityResult.Errors;
         }
 
-        var appUser = identityResult.Value;
+        var identityId = identityResult.Value;
 
         // 3. Resolve or Create the Domain User
         var domainUser = await dbContext.DomainUsers
@@ -45,7 +45,7 @@ public class VerifyOtpCommandHandler(
             var placeholderNl = $"Passagier {request.Phone}";
 
             var createResult = User.Create(
-                Guid.Parse(appUser.UserId),
+                Guid.Parse(identityId),
                 placeholderEn,
                 placeholderAr,
                 placeholderNl,
@@ -67,8 +67,15 @@ public class VerifyOtpCommandHandler(
             return AuthErrors.UserInactive;
         }
 
-        // 4. Issue Tokens
-        var tokenResult = await tokenProvider.GenerateJwtTokenAsync(appUser, cancellationToken);
+        // 4. Resolve Identity DTO for token generation
+        var appUserResult = await identityService.GetUserByIdAsync(identityId);
+        if (appUserResult.IsError)
+        {
+            return appUserResult.Errors;
+        }
+
+        // 5. Issue Tokens
+        var tokenResult = await tokenProvider.GenerateJwtTokenAsync(appUserResult.Value, cancellationToken);
         if (tokenResult.IsError)
         {
             return tokenResult.Errors;
@@ -94,3 +101,4 @@ public class VerifyOtpCommandHandler(
             userDto);
     }
 }
+

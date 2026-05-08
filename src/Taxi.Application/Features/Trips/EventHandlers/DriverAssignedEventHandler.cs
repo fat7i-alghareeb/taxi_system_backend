@@ -17,3 +17,4 @@ public sealed class DriverAssignedEventHandler(ITripNotifier notifier)
             notification.DriverId,
             ct);
 }
+

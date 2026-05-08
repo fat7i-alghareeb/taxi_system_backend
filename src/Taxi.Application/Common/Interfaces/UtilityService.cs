@@ -13,3 +13,4 @@ public static class UtilityService
         return email[0] + "****" + email[atIndex - 1] + email[atIndex..];
     }
 }
+

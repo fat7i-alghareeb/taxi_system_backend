@@ -6,3 +6,4 @@ public record PlaceResultDto(
     string SecondaryAddress,
     decimal Latitude,
     decimal Longitude);
+

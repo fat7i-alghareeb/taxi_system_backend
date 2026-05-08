@@ -10,3 +10,4 @@ public class CurrentUser(IHttpContextAccessor httpContextAccessor) : IUser
 
     public string? Id => this.httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
 }
+

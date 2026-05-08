@@ -21,3 +21,4 @@ public sealed class VerifyOtpCommandValidator : AbstractValidator<VerifyOtpComma
             .Matches(@"^\d+$").WithMessage(LocalizationKeys.Auth.InvalidOtp);
     }
 }
+

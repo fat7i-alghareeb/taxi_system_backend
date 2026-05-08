@@ -25,3 +25,4 @@ public sealed class OtpSession
     public void Consume() => Consumed = true;
     public bool IsExpired() => DateTime.UtcNow > ExpiresAtUtc;
 }
+

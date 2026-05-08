@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
 		<ProjectReference Include="..\Taxi.Domain\Taxi.Domain.csproj" />
+		<ProjectReference Include="..\Taxi.Contracts\Taxi.Contracts.csproj" />
 	</ItemGroup>
 	<ItemGroup> 
 		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" />

@@ -6,3 +6,4 @@ using Taxi.Domain.Common.Results;
 namespace Taxi.Application.Features.Maps.Queries.GetDirections;
 
 public record GetDirectionsQuery(List<CoordinateDto> Stops) : IRequest<Result<DirectionsDto>>;
+

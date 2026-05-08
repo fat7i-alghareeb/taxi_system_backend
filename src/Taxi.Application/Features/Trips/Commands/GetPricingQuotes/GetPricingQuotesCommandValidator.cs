@@ -24,3 +24,4 @@ public class GetPricingQuotesCommandValidator : AbstractValidator<GetPricingQuot
         });
     }
 }
+

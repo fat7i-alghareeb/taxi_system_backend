@@ -33,3 +33,4 @@ public class CreateVehicleTypeCommandValidator : AbstractValidator<CreateVehicle
             .GreaterThanOrEqualTo(0);
     }
 }
+

@@ -59,3 +59,4 @@ public sealed class Payment : AuditableEntity
         ProcessedAtUtc = DateTime.UtcNow;
     }
 }
+

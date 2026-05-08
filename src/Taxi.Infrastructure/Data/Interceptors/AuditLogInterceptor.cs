@@ -63,3 +63,4 @@ public class AuditLogInterceptor(IUser user) : SaveChangesInterceptor
         }
     }
 }
+

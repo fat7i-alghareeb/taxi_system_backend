@@ -1,4 +1,3 @@
-using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
 
 namespace Taxi.Domain.Drivers;
@@ -6,14 +5,15 @@ namespace Taxi.Domain.Drivers;
 public static class DriverErrors
 {
     public static readonly Error UserIdRequired = Error.Validation(
-        code: LocalizationKeys.Driver.UserIdRequired,
+        code: "Driver.UserIdRequired",
         description: "User ID is required.");
 
     public static readonly Error LicenseRequired = Error.Validation(
-        code: LocalizationKeys.Driver.LicenseRequired,
+        code: "Driver.LicenseRequired",
         description: "License number is required.");
 
     public static readonly Error NotFound = Error.NotFound(
-        code: LocalizationKeys.Driver.NotFound,
+        code: "Driver.NotFound",
         description: "Driver not found.");
 }
+

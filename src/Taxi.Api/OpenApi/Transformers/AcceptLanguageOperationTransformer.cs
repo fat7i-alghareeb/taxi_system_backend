@@ -36,3 +36,4 @@ internal sealed class AcceptLanguageOperationTransformer : IOpenApiOperationTran
         return Task.CompletedTask;
     }
 }
+

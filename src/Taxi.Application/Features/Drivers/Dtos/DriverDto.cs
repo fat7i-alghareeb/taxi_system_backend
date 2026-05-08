@@ -7,3 +7,4 @@ public record DriverDto(
     string LicenseNumber,
     string Status,
     Guid? ActiveVehicleId);
+

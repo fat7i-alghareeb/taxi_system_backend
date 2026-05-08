@@ -7,3 +7,4 @@ public record RideResponse(
     decimal EstimatedFare,
     string Status,
     Guid? DriverId = null);
+

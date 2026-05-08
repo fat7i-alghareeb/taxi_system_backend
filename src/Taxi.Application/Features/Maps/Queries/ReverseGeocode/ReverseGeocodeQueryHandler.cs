@@ -25,3 +25,4 @@ public class ReverseGeocodeQueryHandler(IGeocodingService geocodingService)
             result.Longitude);
     }
 }
+

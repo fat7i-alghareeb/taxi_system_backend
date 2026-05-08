@@ -9,3 +9,4 @@ public record TripSummaryDto(
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset? ScheduledAtUtc,
     List<TripStopDto> Stops);
+

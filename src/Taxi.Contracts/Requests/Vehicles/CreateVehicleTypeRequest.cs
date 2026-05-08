@@ -34,3 +34,4 @@ public class CreateVehicleTypeRequest
 
     public int SortOrder { get; set; }
 }
+

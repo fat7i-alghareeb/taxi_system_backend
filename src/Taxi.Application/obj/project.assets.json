@@ -549,8 +549,7 @@
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
-          "MediatR": "14.1.0",
-          "Taxi.Contracts": "1.0.0"
+          "MediatR": "14.1.0"
         },
         "compile": {
           "bin/placeholder/Taxi.Domain.dll": {}
@@ -1324,6 +1323,7 @@
       "Microsoft.EntityFrameworkCore >= 10.0.7",
       "QuestPDF >= 2026.2.4",
       "StyleCop.Analyzers >= 1.2.0-beta.556",
+      "Taxi.Contracts >= 1.0.0",
       "Taxi.Domain >= 1.0.0"
     ]
   },
@@ -1360,6 +1360,9 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "projectReferences": {
+            "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj": {
+              "projectPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj"
+            },
             "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Domain\\Taxi.Domain.csproj": {
               "projectPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Domain\\Taxi.Domain.csproj"
             }

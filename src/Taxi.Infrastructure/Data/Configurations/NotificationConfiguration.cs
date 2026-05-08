@@ -23,3 +23,4 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
             .HasMaxLength(1000);
     }
 }
+

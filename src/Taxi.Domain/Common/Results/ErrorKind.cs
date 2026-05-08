@@ -10,3 +10,4 @@ public enum ErrorKind
     Unauthorized,
     Forbidden,
 }
+

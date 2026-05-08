@@ -17,3 +17,4 @@ public class CreateDriverRequest
     [Required(ErrorMessage = LocalizationKeys.Driver.LicenseRequired)]
     public string LicenseNumber { get; set; } = string.Empty;
 }
+

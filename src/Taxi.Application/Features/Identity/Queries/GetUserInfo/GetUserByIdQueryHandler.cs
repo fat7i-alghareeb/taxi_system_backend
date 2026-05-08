@@ -25,3 +25,4 @@ public class GetUserByIdQueryHandler(ILogger<GetUserByIdQueryHandler> logger, II
         return getUserByIdResult.Value;
     }
 }
+

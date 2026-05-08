@@ -27,7 +27,6 @@ public sealed class Trip : AuditableEntity
         ScheduledAtUtc = scheduledAtUtc;
         Status = scheduledAtUtc.HasValue ? TripStatus.Scheduled : TripStatus.PendingDriver;
         _stops.AddRange(stops);
-        CreatedAtUtc = DateTimeOffset.UtcNow;
     }
 
     public Guid PassengerId { get; private set; }
@@ -151,5 +150,10 @@ public sealed class Trip : AuditableEntity
         return Result.Success;
     }
 
-    public void SoftDelete() => DeletedAtUtc = DateTimeOffset.UtcNow;
+    public Result<Success> SoftDelete()
+    {
+        DeletedAtUtc = DateTimeOffset.UtcNow;
+        return Result.Success;
+    }
 }
+

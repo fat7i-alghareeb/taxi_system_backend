@@ -1,19 +1,21 @@
 using Asp.Versioning;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Taxi.Application.Features.Vehicles.Commands.CreateVehicle;
 using Taxi.Application.Features.Vehicles.Commands.RemoveVehicle;
 using Taxi.Application.Features.Vehicles.Commands.UpdateVehicle;
-using Taxi.Application.Features.Vehicles.Dtos;
 using Taxi.Application.Features.Vehicles.Queries.GetVehicleById;
 using Taxi.Application.Features.Vehicles.Queries.GetVehicles;
 using Taxi.Contracts.Requests.Vehicles;
+using Taxi.Contracts.Responses.Vehicles;
 using Taxi.Domain.Common.Results;
 
 namespace Taxi.Api.Controllers;
 
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/vehicles")]
+[Authorize(Roles = "Admin")]
 public class VehiclesController(ISender sender) : ApiController
 {
     [HttpGet]
@@ -108,3 +110,4 @@ public class VehiclesController(ISender sender) : ApiController
             Problem);
     }
 }
+

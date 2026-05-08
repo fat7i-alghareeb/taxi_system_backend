@@ -21,3 +21,4 @@ public class LocalFileStorage(IWebHostEnvironment environment) : IFileStorage
         return $"/{relativePath}";
     }
 }
+

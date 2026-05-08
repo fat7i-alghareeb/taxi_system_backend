@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Taxi.Domain.Vehicles;
 using Taxi.Domain.Users;
+using Taxi.Domain.Vehicles;
 
 namespace Taxi.Infrastructure.Data.Configurations;
 
@@ -59,3 +59,4 @@ public class VehicleConfiguration : IEntityTypeConfiguration<Vehicle>
         builder.HasQueryFilter(v => v.DeletedAtUtc == null);
     }
 }
+

@@ -15,3 +15,4 @@ public sealed class ForwardedHeadersSettings
 
     public string[]? KnownIPNetworks { get; set; }
 }
+

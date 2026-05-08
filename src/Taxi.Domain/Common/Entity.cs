@@ -35,3 +35,4 @@ public abstract class Entity
         this.domainEvents.Clear();
     }
 }
+

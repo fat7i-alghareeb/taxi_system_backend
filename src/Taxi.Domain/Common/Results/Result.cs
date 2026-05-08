@@ -109,3 +109,4 @@ public readonly record struct Created;
 public readonly record struct Deleted;
 
 public readonly record struct Updated;
+

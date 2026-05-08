@@ -49,3 +49,4 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasQueryFilter(x => x.DeletedAtUtc == null);
     }
 }
+

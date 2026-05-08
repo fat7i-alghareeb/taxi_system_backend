@@ -23,3 +23,4 @@ public interface ILanguageContext
     /// </summary>
     bool IsArabic => this.Language == Languages.Ar;
 }
+

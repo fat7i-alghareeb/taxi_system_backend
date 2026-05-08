@@ -17,3 +17,4 @@ public sealed class LanguageContext(IHttpContextAccessor accessor) : ILanguageCo
             ?.RequestCulture.UICulture.TwoLetterISOLanguageName
         ?? Languages.Default;
 }
+

@@ -1,4 +1,4 @@
-namespace Taxi.Application.Features.Vehicles.Dtos;
+namespace Taxi.Contracts.Responses.Vehicles;
 
 public record VehicleTypeDto(
     Guid Id,
@@ -9,3 +9,4 @@ public record VehicleTypeDto(
     decimal RatePerMin,
     decimal MinFare,
     string Currency);
+

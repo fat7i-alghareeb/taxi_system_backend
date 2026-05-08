@@ -19,3 +19,4 @@ public static class Languages
 
     public static readonly string[] All = [En, Ar, Nl];
 }
+

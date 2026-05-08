@@ -76,3 +76,4 @@ public sealed class PromoCode : AuditableEntity
 
     public void Deactivate() => IsActive = false;
 }
+

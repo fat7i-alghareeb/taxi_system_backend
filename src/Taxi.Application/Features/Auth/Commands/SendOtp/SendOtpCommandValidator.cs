@@ -13,3 +13,4 @@ public sealed class SendOtpCommandValidator : AbstractValidator<SendOtpCommand>
             .Matches(@"^\+?\d{7,15}$").WithMessage("Validation.PhoneNumber.Format");
     }
 }
+

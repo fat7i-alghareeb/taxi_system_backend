@@ -9,3 +9,4 @@ public record CreateDriverCommand(
     string NameEn,
     string NameAr,
     string LicenseNumber) : IRequest<Result<DriverDto>>;
+

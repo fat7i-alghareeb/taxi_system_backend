@@ -1,11 +1,10 @@
 using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Taxi.Api.Contracts;
 using Taxi.Application.Features.Auth.Dtos;
-using Taxi.Application.Features.Users.Commands.UpdateProfile;
-using Taxi.Application.Features.Users.Commands.UploadProfilePhoto;
+using Taxi.Application.Features.Users.Commands.UpdateUserProfile;
 using Taxi.Application.Features.Users.Queries.GetCurrentUser;
-using Taxi.Contracts.Requests.Users;
 
 namespace Taxi.Api.Controllers;
 
@@ -25,42 +24,23 @@ public class UsersController(ISender sender) : ApiController
         return result.Match(Ok, Problem);
     }
 
-    [HttpPatch("me")]
+    [HttpPost("me")]
+    [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [EndpointSummary("Updates the current user's display name.")]
-    [EndpointName("UpdateProfile")]
+    [EndpointSummary("Updates the current user's profile info and photo.")]
+    [EndpointDescription("Accepts multipart/form-data. Both name and photo are optional.")]
+    [EndpointName("UpdateUserProfile")]
     [MapToApiVersion("1.0")]
-    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request, CancellationToken ct)
+    public async Task<IActionResult> UpdateProfile([FromForm] UpdateUserProfileRequest request, CancellationToken ct)
     {
-        var command = new UpdateProfileCommand(request.Name);
+        var command = new UpdateUserProfileCommand(
+            request.Name,
+            request.Photo?.OpenReadStream(),
+            request.Photo?.ContentType);
+
         var result = await sender.Send(command, ct);
         return result.Match(Ok, Problem);
     }
-
-    [HttpPost("me/photo")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [EndpointSummary("Uploads or replaces the current user's profile photo.")]
-    [EndpointDescription("Accepts JPEG or PNG, max 5MB. Returns the URL of the stored photo.")]
-    [EndpointName("UploadProfilePhoto")]
-    [MapToApiVersion("1.0")]
-    public async Task<IActionResult> UploadProfilePhoto(IFormFile photo, CancellationToken ct)
-    {
-        if (photo is null || photo.Length == 0)
-        {
-            return BadRequest(new ProblemDetails { Title = "No file provided." });
-        }
-
-        var command = new UploadProfilePhotoCommand(
-            photo.OpenReadStream(),
-            photo.FileName,
-            photo.ContentType);
-
-        var result = await sender.Send(command, ct);
-
-        return result.Match(
-            url => Ok(new { profilePhotoUrl = url }),
-            Problem);
-    }
 }
+

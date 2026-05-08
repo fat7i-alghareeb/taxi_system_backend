@@ -21,3 +21,4 @@ public interface ITripNotifier
     /// <summary>Sends to the trip group that the ride has been cancelled.</summary>
     Task NotifyTripCancelledAsync(Guid tripId, Guid passengerId, CancellationToken ct = default);
 }
+

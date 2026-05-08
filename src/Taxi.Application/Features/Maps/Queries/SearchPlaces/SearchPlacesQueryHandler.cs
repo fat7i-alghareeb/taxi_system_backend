@@ -20,3 +20,4 @@ public class SearchPlacesQueryHandler(IGeocodingService geocodingService)
             r.Longitude)).ToList();
     }
 }
+

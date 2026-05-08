@@ -30,7 +30,7 @@ public class VehicleTypeTests
     {
         var result = VehicleType.Create(
             Guid.NewGuid(),
-            "",
+            string.Empty,
             "Standard",
             "Adi",
             "Standaard",

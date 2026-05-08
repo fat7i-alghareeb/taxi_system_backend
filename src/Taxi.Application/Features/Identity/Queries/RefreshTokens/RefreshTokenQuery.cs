@@ -6,3 +6,4 @@ using Taxi.Application.Features.Identity.Dtos;
 using Taxi.Domain.Common.Results;
 
 public record RefreshTokenQuery(string ExpiredAccessToken, string RefreshToken) : IRequest<Result<TokenResponse>>;
+

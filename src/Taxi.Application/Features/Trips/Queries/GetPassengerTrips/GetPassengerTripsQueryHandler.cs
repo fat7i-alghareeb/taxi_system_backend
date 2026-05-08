@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Contracts.Common;
@@ -8,6 +9,7 @@ using Taxi.Domain.Common.Results;
 namespace Taxi.Application.Features.Trips.Queries.GetPassengerTrips;
 
 public class GetPassengerTripsQueryHandler(
+    ILogger<GetPassengerTripsQueryHandler> logger,
     IAppDbContext context,
     IUser currentUser) : IRequestHandler<GetPassengerTripsQuery, Result<PagedResult<TripSummaryDto>>>
 {
@@ -18,41 +20,36 @@ public class GetPassengerTripsQueryHandler(
             return Error.Unauthorized(LocalizationKeys.Auth.UserIdClaimInvalid, "Invalid user ID claim.");
         }
 
+        logger.LogInformation(
+            "[Projection] {QueryName} — PassengerId='{PassengerId}'. Paging={Page}/{PageSize}.",
+            nameof(GetPassengerTripsQuery), passengerId, request.Page, request.PageSize);
+
         var query = context.Trips
-            .Where(t => t.PassengerId == passengerId)
-            .OrderByDescending(t => t.CreatedAtUtc);
+            .AsNoTracking()
+            .Where(t => t.PassengerId == passengerId);
 
         var totalCount = await query.CountAsync(ct);
 
-        var trips = await query
+        var items = await query
+            .OrderByDescending(t => t.CreatedAtUtc)
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
+            .Join(context.PricingQuotes, t => t.QuoteId, q => q.Id, (t, q) => new { t, q })
+            .Select(x => new TripSummaryDto(
+                x.t.Id,
+                x.t.ReferenceCode,
+                x.t.Status.ToString(),
+                x.q.FinalFare,
+                x.q.CurrencyCode,
+                x.t.CreatedAtUtc,
+                x.t.ScheduledAtUtc,
+                x.t.Stops
+                    .OrderBy(s => s.Sequence)
+                    .Select(s => new TripStopDto(s.Coordinate.Latitude, s.Coordinate.Longitude))
+                    .ToList()))
             .ToListAsync(ct);
-
-        var quoteIds = trips.Select(t => t.QuoteId).Distinct().ToList();
-        var quotes = await context.PricingQuotes
-            .Where(q => quoteIds.Contains(q.Id))
-            .ToDictionaryAsync(q => q.Id, ct);
-
-        var items = trips.Select(trip =>
-        {
-            quotes.TryGetValue(trip.QuoteId, out var quote);
-            var stopDtos = trip.Stops
-                .OrderBy(s => s.Sequence)
-                .Select(s => new TripStopDto(s.Coordinate.Latitude, s.Coordinate.Longitude))
-                .ToList();
-
-            return new TripSummaryDto(
-                trip.Id,
-                trip.ReferenceCode,
-                trip.Status.ToString(),
-                quote?.FinalFare ?? 0,
-                quote?.CurrencyCode ?? "EUR",
-                trip.CreatedAtUtc,
-                trip.ScheduledAtUtc,
-                stopDtos);
-        }).ToList();
 
         return new PagedResult<TripSummaryDto>(items, totalCount, request.Page, request.PageSize);
     }
 }
+

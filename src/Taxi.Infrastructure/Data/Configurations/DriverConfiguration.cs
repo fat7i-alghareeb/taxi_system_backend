@@ -61,3 +61,4 @@ public class DriverConfiguration : IEntityTypeConfiguration<Driver>
         builder.HasQueryFilter(d => d.DeletedAtUtc == null);
     }
 }
+

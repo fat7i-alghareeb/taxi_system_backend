@@ -19,3 +19,4 @@ public abstract class AuditableEntity : Entity
 
     public string? LastModifiedBy { get; set; }
 }
+

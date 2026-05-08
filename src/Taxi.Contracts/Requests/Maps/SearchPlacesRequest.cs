@@ -15,3 +15,4 @@ public class SearchPlacesRequest
     [Required(ErrorMessage = LocalizationKeys.Maps.LocationRequired)]
     public decimal? Longitude { get; set; }
 }
+

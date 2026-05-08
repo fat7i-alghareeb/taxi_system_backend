@@ -10,3 +10,4 @@ public sealed class TripCancelled : DomainEvent
 
     public Guid? DriverId { get; init; }
 }
+

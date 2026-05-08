@@ -16,3 +16,4 @@ public class RequestLogContextMiddleware(RequestDelegate next)
         }
     }
 }
+

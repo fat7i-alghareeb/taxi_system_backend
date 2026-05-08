@@ -16,30 +16,21 @@ public class GetDirectionsQueryHandler(IDirectionsService directionsService)
             return Error.Validation(LocalizationKeys.Maps.InsufficientStops, "At least two stops are required.");
         }
 
-        var legs = new List<LegDto>();
-        var totalDistanceMeters = 0;
-        var totalDurationSeconds = 0;
+        var stops = request.Stops.Select(s => new Coordinate(s.Latitude, s.Longitude)).ToList();
+        var directionResponse = await directionsService.GetDirectionsAsync(stops);
 
-        for (var i = 0; i < request.Stops.Count - 1; i++)
-        {
-            var origin = request.Stops[i];
-            var destination = request.Stops[i + 1];
+        var legs = directionResponse.Legs.Select(l => new LegDto(
+            l.DistanceMeters,
+            l.DurationSeconds,
+            l.EncodedPolyline,
+            l.StartLabel,
+            l.EndLabel)).ToList();
 
-            var leg = await directionsService.GetDirectionsAsync(
-                origin.Latitude, origin.Longitude,
-                destination.Latitude, destination.Longitude);
-
-            totalDistanceMeters += leg.DistanceMeters;
-            totalDurationSeconds += leg.DurationSeconds;
-            legs.Add(new LegDto(leg.DistanceMeters, leg.DurationSeconds, leg.EncodedPolyline));
-        }
-
-        // Use the polyline of the first leg as the overall polyline when there is only one,
-        // otherwise concatenate them (client merges for display).
-        var overallPolyline = legs.Count == 1
-            ? legs[0].EncodedPolyline
-            : string.Join("|", legs.Select(l => l.EncodedPolyline));
-
-        return new DirectionsDto(totalDistanceMeters, totalDurationSeconds, overallPolyline, legs);
+        return new DirectionsDto(
+            directionResponse.TotalDistanceMeters,
+            directionResponse.TotalDurationSeconds,
+            directionResponse.OverviewPolyline,
+            legs);
     }
 }
+

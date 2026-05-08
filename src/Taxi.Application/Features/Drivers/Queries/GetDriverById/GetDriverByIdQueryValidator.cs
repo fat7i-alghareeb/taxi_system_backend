@@ -11,3 +11,4 @@ public class GetDriverByIdQueryValidator : AbstractValidator<GetDriverByIdQuery>
             .NotEmpty().WithMessage(LocalizationKeys.Validation.RequiredField);
     }
 }
+

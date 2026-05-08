@@ -15,3 +15,4 @@ public sealed class GenerateTokenQueryValidator : AbstractValidator<GenerateToke
             .NotEmpty().WithMessage(LocalizationKeys.Validation.PasswordRequired);
     }
 }
+

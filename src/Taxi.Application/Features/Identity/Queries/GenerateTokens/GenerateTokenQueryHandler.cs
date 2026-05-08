@@ -37,3 +37,4 @@ public class GenerateTokenQueryHandler(
         return generateTokenResult.Value;
     }
 }
+

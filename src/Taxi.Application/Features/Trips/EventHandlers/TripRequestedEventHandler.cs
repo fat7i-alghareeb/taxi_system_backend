@@ -17,3 +17,4 @@ public sealed class TripRequestedEventHandler(ITripNotifier notifier)
             notification.PassengerId,
             ct);
 }
+

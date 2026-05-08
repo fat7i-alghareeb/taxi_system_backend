@@ -39,3 +39,4 @@ public class UpdateDriverCommandHandler(
             driver.ActiveVehicleId);
     }
 }
+

@@ -7,3 +7,4 @@ namespace Taxi.Application.Features.Maps.Queries.ReverseGeocode;
 public record ReverseGeocodeQuery(
     decimal Latitude,
     decimal Longitude) : IRequest<Result<ReverseGeocodeDto>>;
+

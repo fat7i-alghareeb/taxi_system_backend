@@ -51,3 +51,4 @@ app.MapHub<TripHub>(TripHub.HubUrl);
 app.Run();
 
 public partial class Program;
+

@@ -1,10 +1,12 @@
 using Asp.Versioning;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Taxi.Application.Features.Trips.Commands.CancelTrip;
 using Taxi.Application.Features.Trips.Commands.GetPricingQuotes;
 using Taxi.Application.Features.Trips.Commands.RequestTrip;
 using Taxi.Application.Features.Trips.Dtos;
+using Taxi.Application.Features.Trips.Queries.GetPassengerTripCount;
 using Taxi.Application.Features.Trips.Queries.GetPassengerTrips;
 using Taxi.Application.Features.Trips.Queries.GetTripById;
 using Taxi.Contracts.Requests.Trips;
@@ -16,6 +18,7 @@ namespace Taxi.Api.Controllers;
 public class TripsController(ISender sender) : ApiController
 {
     [HttpGet]
+    [Authorize(Roles = "Passenger,Admin")]
     [ProducesResponseType(typeof(PagedResult<TripSummaryDto>), StatusCodes.Status200OK)]
     [EndpointSummary("Returns the current passenger's trip history.")]
     [EndpointName("GetPassengerTrips")]
@@ -26,7 +29,20 @@ public class TripsController(ISender sender) : ApiController
         return result.Match(Ok, Problem);
     }
 
+    [HttpGet("count")]
+    [Authorize(Roles = "Passenger,Admin")]
+    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+    [EndpointSummary("Returns the total number of trips for the current passenger.")]
+    [EndpointName("GetPassengerTripCount")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetPassengerTripCount(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetPassengerTripCountQuery(), ct);
+        return result.Match(count => Ok(count), Problem);
+    }
+
     [HttpGet("{id:guid}", Name = "GetTripById")]
+    [Authorize(Roles = "Passenger,Driver,Admin")]
     [ProducesResponseType(typeof(TripDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Retrieves a trip by ID.")]
@@ -42,7 +58,8 @@ public class TripsController(ISender sender) : ApiController
     }
 
     [HttpPost("quotes")]
-    [ProducesResponseType(typeof(List<PricingQuoteDto>), StatusCodes.Status200OK)]
+    [Authorize(Roles = "Passenger,Admin")]
+    [ProducesResponseType(typeof(PricingQuotesListDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [EndpointSummary("Returns pricing quotes for all active vehicle types.")]
     [EndpointDescription("Calculates route distance and duration via Google Maps, then returns one quote per vehicle type. Each quote is valid for 15 minutes.")]
@@ -60,7 +77,8 @@ public class TripsController(ISender sender) : ApiController
             Problem);
     }
 
-    [HttpPost("request")]
+    [HttpPost]
+    [Authorize(Roles = "Passenger,Admin")]
     [ProducesResponseType(typeof(TripDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -85,7 +103,8 @@ public class TripsController(ISender sender) : ApiController
             Problem);
     }
 
-    [HttpPost("{id:guid}/cancel")]
+    [HttpPost("{id:guid}/cancellations")]
+    [Authorize(Roles = "Passenger,Admin")]
     [ProducesResponseType(typeof(TripDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -99,3 +118,4 @@ public class TripsController(ISender sender) : ApiController
         return result.Match(Ok, Problem);
     }
 }
+

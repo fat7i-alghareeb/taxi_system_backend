@@ -1,5 +1,5 @@
 using Taxi.Application.Common.Interfaces;
-using Taxi.Application.Features.Vehicles.Dtos;
+using Taxi.Contracts.Responses.Vehicles;
 using Taxi.Domain.Common.Results;
 
 namespace Taxi.Application.Features.Vehicles.Queries.GetVehicleCatalog;
@@ -11,3 +11,4 @@ public record GetVehicleCatalogQuery : ICachedQuery<Result<List<VehicleTypeDto>>
     public TimeSpan Expiration => TimeSpan.FromMinutes(30);
     public bool IsCultureAware => true;
 }
+

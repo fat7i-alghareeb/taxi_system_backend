@@ -5,3 +5,4 @@ public record ReverseGeocodeDto(
     string SecondaryAddress,
     decimal Latitude,
     decimal Longitude);
+

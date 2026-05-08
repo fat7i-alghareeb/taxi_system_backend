@@ -29,3 +29,4 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
         return new AppDbContext(optionsBuilder.Options, null!);
     }
 }
+

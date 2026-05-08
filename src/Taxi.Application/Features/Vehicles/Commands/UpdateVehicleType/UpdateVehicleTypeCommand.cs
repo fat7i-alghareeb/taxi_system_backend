@@ -1,5 +1,5 @@
 using MediatR;
-using Taxi.Application.Features.Vehicles.Dtos;
+using Taxi.Contracts.Responses.Vehicles;
 using Taxi.Domain.Common.Results;
 
 namespace Taxi.Application.Features.Vehicles.Commands.UpdateVehicleType;
@@ -10,3 +10,4 @@ public record UpdateVehicleTypeCommand(
     decimal RatePerMin,
     decimal MinFare,
     bool IsActive) : IRequest<Result<VehicleTypeDto>>;
+

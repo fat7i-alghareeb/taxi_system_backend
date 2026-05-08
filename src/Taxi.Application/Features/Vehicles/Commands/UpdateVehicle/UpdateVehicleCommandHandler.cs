@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
-using Taxi.Application.Features.Vehicles.Dtos;
+using Taxi.Contracts.Responses.Vehicles;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Vehicles;
 
@@ -47,3 +47,4 @@ public class UpdateVehicleCommandHandler(
             vehicle.IsActive);
     }
 }
+

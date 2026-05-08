@@ -12,3 +12,4 @@ public class UpdateVehicleRequest
 
     public bool IsActive { get; set; } = true;
 }
+

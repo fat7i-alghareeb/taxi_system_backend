@@ -33,10 +33,55 @@ Content-Type: application/json
     "code": "1234"
 }
 
+###############################################################################
+# IDENTITY  (POST /api/v1/identity/...)
+###############################################################################
 
-###############################################################################
-# DRIVERS  (GET|POST|PUT|DELETE /api/v1/drivers/...)
-###############################################################################
+### Generate tokens (Email/Password)
+POST {{baseUrl}}/v1/identity/token/generate
+Content-Type: application/json
+
+{
+    "email": "admin@taxi.com",
+    "password": "Password123!"
+}
+
+###
+
+### Refresh token
+POST {{baseUrl}}/v1/identity/token/refresh-token
+Content-Type: application/json
+
+{
+    "expiredAccessToken": "{{token}}",
+    "refreshToken": "YOUR_REFRESH_TOKEN_HERE"
+}
+
+###
+
+### Get current user info & claims
+GET {{baseUrl}}/v1/identity/current-user/claims
+Authorization: Bearer {{token}}
+
+###
+
+### Register a new Admin (Only for Admins)
+POST {{baseUrl}}/v1/identity/register-admin
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "phone": "+963912345678",
+    "password": "Admin@Password123!",
+    "nameEn": "New Admin",
+    "nameAr": "مدير جديد",
+    "nameNl": "Nieuwe Admin",
+    "email": "newadmin@taxi.com"
+}
+
+###
+
+
 
 ### Get all drivers
 GET {{baseUrl}}/v1/drivers

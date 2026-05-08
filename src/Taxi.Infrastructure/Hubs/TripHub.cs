@@ -30,3 +30,4 @@ public sealed class TripHub : Hub
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"VehicleType_{vehicleTypeCode}");
     }
 }
+

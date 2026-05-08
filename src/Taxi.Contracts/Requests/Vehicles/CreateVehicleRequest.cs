@@ -25,3 +25,4 @@ public class CreateVehicleRequest
     [Required(ErrorMessage = LocalizationKeys.Vehicle.LicensePlateRequired)]
     public string LicensePlate { get; set; } = string.Empty;
 }
+

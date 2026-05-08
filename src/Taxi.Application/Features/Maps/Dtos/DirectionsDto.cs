@@ -9,4 +9,7 @@ public record DirectionsDto(
 public record LegDto(
     int DistanceMeters,
     int DurationSeconds,
-    string EncodedPolyline);
+    string EncodedPolyline,
+    string StartLabel,
+    string EndLabel);
+

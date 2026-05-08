@@ -8,3 +8,4 @@ public record RequestTripCommand(
     Guid QuoteId,
     List<CoordinateDto> Stops,
     DateTimeOffset? ScheduledAt = null) : IRequest<Result<TripDto>>;
+

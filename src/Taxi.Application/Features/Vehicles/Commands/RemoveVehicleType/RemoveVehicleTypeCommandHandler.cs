@@ -1,7 +1,5 @@
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using Taxi.Application.Common.Interfaces;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
@@ -31,3 +29,4 @@ public class RemoveVehicleTypeCommandHandler(
         return Result.Deleted;
     }
 }
+

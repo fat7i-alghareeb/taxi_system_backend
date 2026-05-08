@@ -9,3 +9,4 @@ public class UserDto
     public string Role { get; set; } = string.Empty;
     public string? ProfilePhotoUrl { get; set; }
 }
+

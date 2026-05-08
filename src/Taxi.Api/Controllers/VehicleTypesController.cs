@@ -1,15 +1,16 @@
 using Asp.Versioning;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Taxi.Application.Features.Vehicles.Commands.CreateVehicleType;
 using Taxi.Application.Features.Vehicles.Commands.RemoveVehicleType;
 using Taxi.Application.Features.Vehicles.Commands.UpdateVehicleType;
-using Taxi.Application.Features.Vehicles.Dtos;
 using Taxi.Application.Features.Vehicles.Queries.GetVehicleCatalog;
 using Taxi.Application.Features.Vehicles.Queries.GetVehicleTypeByCode;
 using Taxi.Application.Features.Vehicles.Queries.GetVehicleTypeById;
 using Taxi.Contracts.Requests.Vehicles;
+using Taxi.Contracts.Responses.Vehicles;
 using Taxi.Domain.Common.Results;
 
 namespace Taxi.Api.Controllers;
@@ -65,6 +66,7 @@ public class VehicleTypesController(ISender sender) : ApiController
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(VehicleTypeDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [EndpointSummary("Creates a new vehicle type.")]
@@ -95,6 +97,7 @@ public class VehicleTypesController(ISender sender) : ApiController
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(VehicleTypeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Updates an existing vehicle type.")]
@@ -117,6 +120,7 @@ public class VehicleTypesController(ISender sender) : ApiController
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Removes a vehicle type.")]
@@ -131,3 +135,4 @@ public class VehicleTypesController(ISender sender) : ApiController
             Problem);
     }
 }
+

@@ -15,3 +15,4 @@ internal sealed class VersionInfoTransformer : IOpenApiDocumentTransformer
         return Task.CompletedTask;
     }
 }
+

@@ -67,3 +67,4 @@ public class RefreshTokenQueryHandler(
         return generateTokenResult.Value;
     }
 }
+

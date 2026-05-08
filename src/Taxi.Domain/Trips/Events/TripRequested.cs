@@ -10,3 +10,4 @@ public sealed class TripRequested : DomainEvent
 
     public Guid PassengerId { get; init; }
 }
+

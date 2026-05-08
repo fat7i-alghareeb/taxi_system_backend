@@ -10,3 +10,4 @@ namespace Taxi.Api;
 public sealed class SharedResource
 {
 }
+

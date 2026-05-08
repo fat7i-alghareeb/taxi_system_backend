@@ -4,7 +4,7 @@ namespace Taxi.Domain.Common;
 /// A value object representing a trilingual string stored as a single JSONB column.
 /// EF Core maps this via OwnsOne().ToJson() — properties must have setters for materialization.
 /// </summary>
-public sealed class LocalizedText
+public sealed class LocalizedText : ValueObject
 {
     public LocalizedText(string en, string ar, string nl)
     {
@@ -36,4 +36,12 @@ public sealed class LocalizedText
             _ => En
         };
     }
+
+    protected override IEnumerable<object?> GetEqualityComponents()
+    {
+        yield return En;
+        yield return Ar;
+        yield return Nl;
+    }
 }
+

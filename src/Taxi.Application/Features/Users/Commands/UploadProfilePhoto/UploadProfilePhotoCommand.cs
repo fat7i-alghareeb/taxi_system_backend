@@ -7,3 +7,4 @@ public record UploadProfilePhotoCommand(
     Stream FileStream,
     string FileName,
     string ContentType) : IRequest<Result<string>>;
+

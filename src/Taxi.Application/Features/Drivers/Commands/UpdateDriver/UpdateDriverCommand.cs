@@ -7,3 +7,4 @@ namespace Taxi.Application.Features.Drivers.Commands.UpdateDriver;
 public record UpdateDriverCommand(
     Guid Id,
     string LicenseNumber) : IRequest<Result<DriverDto>>;
+

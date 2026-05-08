@@ -13,3 +13,4 @@ public record GetUserByIdQuery(string UserId) : ICachedQuery<Result<AppUserDto>>
 
     public TimeSpan Expiration => TimeSpan.FromMinutes(10);
 }
+

@@ -10,3 +10,4 @@ public static class AuditableEntityExtensions
             r.TargetEntry?.Metadata.IsOwned() == true &&
             (r.TargetEntry.State == EntityState.Added || r.TargetEntry.State == EntityState.Modified));
 }
+

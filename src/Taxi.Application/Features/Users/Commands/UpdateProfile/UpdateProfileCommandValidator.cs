@@ -12,3 +12,4 @@ public class UpdateProfileCommandValidator : AbstractValidator<UpdateProfileComm
             .MaximumLength(100).WithErrorCode(LocalizationKeys.Validation.InvalidFormat);
     }
 }
+

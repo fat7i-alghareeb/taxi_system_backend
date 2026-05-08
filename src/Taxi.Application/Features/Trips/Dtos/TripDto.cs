@@ -12,3 +12,4 @@ public record TripDto(
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset? ScheduledAtUtc,
     List<TripStopDto> Stops);
+

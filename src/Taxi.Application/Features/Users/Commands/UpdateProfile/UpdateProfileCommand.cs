@@ -5,3 +5,4 @@ using Taxi.Domain.Common.Results;
 namespace Taxi.Application.Features.Users.Commands.UpdateProfile;
 
 public record UpdateProfileCommand(string Name) : IRequest<Result<UserDto>>;
+

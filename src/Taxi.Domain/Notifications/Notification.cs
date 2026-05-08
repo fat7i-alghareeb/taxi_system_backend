@@ -41,3 +41,4 @@ public class Notification
         SentAtUtc = DateTime.UtcNow;
     }
 }
+

@@ -10,3 +10,4 @@ public sealed class DriverAssigned : DomainEvent
 
     public Guid PassengerId { get; init; }
 }
+

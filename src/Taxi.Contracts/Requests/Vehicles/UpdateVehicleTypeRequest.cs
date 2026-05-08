@@ -16,3 +16,4 @@ public class UpdateVehicleTypeRequest
 
     public bool IsActive { get; set; } = true;
 }
+

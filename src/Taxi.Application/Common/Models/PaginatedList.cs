@@ -12,3 +12,4 @@ public class PaginatedList<T>
 
     public IReadOnlyCollection<T>? Items { get; init; }
 }
+

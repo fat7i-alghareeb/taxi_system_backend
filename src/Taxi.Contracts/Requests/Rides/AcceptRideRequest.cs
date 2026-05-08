@@ -9,3 +9,4 @@ public class AcceptRideRequest
     [Required(ErrorMessage = LocalizationKeys.Validation.RequiredField)]
     public Guid DriverId { get; set; }
 }
+

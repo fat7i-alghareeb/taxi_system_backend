@@ -1,5 +1,5 @@
 using MediatR;
-using Taxi.Application.Features.Vehicles.Dtos;
+using Taxi.Contracts.Responses.Vehicles;
 using Taxi.Domain.Common.Results;
 
 namespace Taxi.Application.Features.Vehicles.Commands.CreateVehicleType;
@@ -15,3 +15,4 @@ public record CreateVehicleTypeCommand(
     decimal MinFare,
     string Currency = "EUR",
     int SortOrder = 0) : IRequest<Result<VehicleTypeDto>>;
+

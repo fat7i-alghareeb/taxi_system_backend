@@ -10,3 +10,4 @@ public class UpdateVehicleCommandValidator : AbstractValidator<UpdateVehicleComm
         RuleFor(v => v.LicensePlate).NotEmpty();
     }
 }
+

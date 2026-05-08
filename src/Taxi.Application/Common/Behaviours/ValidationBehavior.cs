@@ -39,3 +39,4 @@ public class ValidationBehavior<TRequest, TResponse>(IValidator<TRequest>? valid
         return (dynamic)errors;
     }
 }
+

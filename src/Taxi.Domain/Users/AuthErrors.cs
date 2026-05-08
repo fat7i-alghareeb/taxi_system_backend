@@ -1,4 +1,3 @@
-using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
 
 namespace Taxi.Domain.Users;
@@ -6,34 +5,35 @@ namespace Taxi.Domain.Users;
 public static class AuthErrors
 {
     public static readonly Error NameEnRequired = Error.Validation(
-        code: LocalizationKeys.User.NameEnRequired,
+        code: "User.NameEnRequired",
         description: "English name is required.");
 
     public static readonly Error NameArRequired = Error.Validation(
-        code: LocalizationKeys.User.NameArRequired,
+        code: "User.NameArRequired",
         description: "Arabic name is required.");
 
     public static readonly Error NameNlRequired = Error.Validation(
-        code: LocalizationKeys.User.NameNlRequired,
+        code: "User.NameNlRequired",
         description: "Dutch name is required.");
 
     public static readonly Error PhoneRequired = Error.Validation(
-        code: LocalizationKeys.User.PhoneRequired,
+        code: "User.PhoneRequired",
         description: "Phone number is required.");
 
     public static readonly Error UserInactive = Error.Forbidden(
-        code: LocalizationKeys.User.Inactive,
+        code: "User.Inactive",
         description: "User account is inactive.");
 
     public static readonly Error UserNotFound = Error.NotFound(
-        code: LocalizationKeys.User.NotFound,
+        code: "User.NotFound",
         description: "User not found.");
 
     public static readonly Error InvalidOtp = Error.Validation(
-        code: LocalizationKeys.Auth.InvalidOtp,
+        code: "Auth.InvalidOtp",
         description: "The provided OTP is incorrect.");
 
     public static readonly Error OtpExpired = Error.Validation(
-        code: LocalizationKeys.Auth.OtpExpired,
+        code: "Auth.OtpExpired",
         description: "The OTP has expired.");
 }
+

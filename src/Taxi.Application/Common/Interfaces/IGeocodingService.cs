@@ -12,3 +12,4 @@ public record PlaceResult(
     string SecondaryAddress,
     decimal Latitude,
     decimal Longitude);
+

@@ -15,3 +15,4 @@ public class RequestTripCommandValidator : AbstractValidator<RequestTripCommand>
             .When(v => v.ScheduledAt.HasValue);
     }
 }
+

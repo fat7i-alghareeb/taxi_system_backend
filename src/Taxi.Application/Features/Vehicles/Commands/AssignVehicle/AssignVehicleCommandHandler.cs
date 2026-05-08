@@ -50,3 +50,4 @@ public class AssignVehicleCommandHandler(
         return Result.Success;
     }
 }
+

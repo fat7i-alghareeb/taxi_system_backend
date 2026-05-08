@@ -10,3 +10,4 @@ public class GetDirectionsRequest
     [MinLength(2, ErrorMessage = LocalizationKeys.Maps.InsufficientStops)]
     public List<CoordinateRequest> Stops { get; set; } = [];
 }
+

@@ -5,3 +5,4 @@ using Taxi.Domain.Common.Results;
 namespace Taxi.Application.Features.Users.Queries.GetCurrentUser;
 
 public record GetCurrentUserQuery : IRequest<Result<UserDto>>;
+

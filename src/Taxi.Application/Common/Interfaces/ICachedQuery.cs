@@ -14,3 +14,4 @@ public interface ICachedQuery
 }
 
 public interface ICachedQuery<TResponse> : IRequest<TResponse>, ICachedQuery;
+

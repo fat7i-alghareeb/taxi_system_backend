@@ -29,3 +29,4 @@ public class LoggingBehaviour<TRequest>(ILogger<TRequest> logger, IUser user, II
             "Request: {Name} {@UserId} {@UserName} {@Request}", requestName, userId, userName, request);
     }
 }
+

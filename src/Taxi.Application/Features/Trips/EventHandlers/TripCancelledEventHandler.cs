@@ -16,3 +16,4 @@ public sealed class TripCancelledEventHandler(ITripNotifier notifier)
             notification.PassengerId,
             ct);
 }
+
