@@ -24,7 +24,13 @@ public class GetDirectionsQueryHandler(IDirectionsService directionsService)
             l.DurationSeconds,
             l.EncodedPolyline,
             l.StartLabel,
-            l.EndLabel)).ToList();
+            l.EndLabel,
+            l.StartCoordinate.Latitude,
+            l.StartCoordinate.Longitude,
+            l.EndCoordinate.Latitude,
+            l.EndCoordinate.Longitude,
+            l.StartAddress,
+            l.EndAddress)).ToList();
 
         return new DirectionsDto(
             directionResponse.TotalDistanceMeters,

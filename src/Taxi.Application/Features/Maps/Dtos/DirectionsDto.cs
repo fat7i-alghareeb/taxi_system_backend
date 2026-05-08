@@ -11,5 +11,11 @@ public record LegDto(
     int DurationSeconds,
     string EncodedPolyline,
     string StartLabel,
-    string EndLabel);
+    string EndLabel,
+    decimal StartLatitude,
+    decimal StartLongitude,
+    decimal EndLatitude,
+    decimal EndLongitude,
+    string StartAddress,
+    string EndAddress);
 

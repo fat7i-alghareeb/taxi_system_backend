@@ -7,7 +7,8 @@ public class LocalFileStorage(IWebHostEnvironment environment) : IFileStorage
 {
     public async Task<string> SaveAsync(Stream stream, string relativePath, CancellationToken ct = default)
     {
-        var fullPath = Path.Combine(environment.WebRootPath, relativePath);
+        var rootPath = environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot");
+        var fullPath = Path.Combine(rootPath, relativePath);
         var directory = Path.GetDirectoryName(fullPath)!;
 
         if (!Directory.Exists(directory))
@@ -18,7 +19,9 @@ public class LocalFileStorage(IWebHostEnvironment environment) : IFileStorage
         await using var fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write);
         await stream.CopyToAsync(fileStream, ct);
 
-        return $"/{relativePath}";
+        // Normalize relative path for web access
+        var webPath = relativePath.Replace('\\', '/');
+        return webPath.StartsWith('/') ? webPath : $"/{webPath}";
     }
 }
 

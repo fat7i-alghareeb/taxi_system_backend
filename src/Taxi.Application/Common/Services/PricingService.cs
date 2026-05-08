@@ -11,8 +11,9 @@ public class PricingService : IPricingService
         var durationFare = (decimal)durationMin * vehicleType.RatePerMin;
 
         var totalFare = distanceFare + durationFare;
+        var finalFare = Math.Max(totalFare, vehicleType.MinimumFare);
 
-        return Math.Max(totalFare, vehicleType.MinimumFare);
+        return Math.Round(finalFare, 2);
     }
 }
 

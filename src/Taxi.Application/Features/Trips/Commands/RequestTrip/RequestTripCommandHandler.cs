@@ -58,8 +58,11 @@ public class RequestTripCommandHandler(
 
         var stops = stopResults.Select(r => r.Value).ToList();
 
+        var referenceCode = $"TRP-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
+
         var tripResult = Trip.Request(
             Guid.NewGuid(),
+            referenceCode,
             passengerId,
             quote,
             stops,
@@ -80,7 +83,7 @@ public class RequestTripCommandHandler(
             return TripErrors.DriverNotFound;
         }
 
-        var assignResult = trip.AssignDriver(adminDriver.Id);
+        var assignResult = trip.AssignDriver(adminDriver.UserId);
 
         if (assignResult.IsFailure)
         {

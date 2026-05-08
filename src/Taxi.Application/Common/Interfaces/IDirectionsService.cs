@@ -19,7 +19,11 @@ public record LegDetail(
     int DurationSeconds,
     string EncodedPolyline,
     string StartLabel,
-    string EndLabel);
+    string EndLabel,
+    Coordinate StartCoordinate,
+    Coordinate EndCoordinate,
+    string StartAddress,
+    string EndAddress);
 
 public record DirectionResponse(
     int DistanceMeters,

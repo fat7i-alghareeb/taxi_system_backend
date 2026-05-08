@@ -158,7 +158,21 @@ public class GoogleGeocodingService(
             ? (streetNumber.Length > 0 ? $"{route} {streetNumber}" : route)
             : result.FormattedAddress.Split(',')[0].Trim();
 
+        // If primary looks like a Plus Code (e.g. "54PH+PM9"), try to find a better name
+        if (primary.Contains('+') && !primary.Contains(' '))
+        {
+            var neighborhood = result.AddressComponents.FirstOrDefault(c => c.Types.Contains("neighborhood"))?.LongName;
+            var sublocality = result.AddressComponents.FirstOrDefault(c => c.Types.Contains("sublocality"))?.LongName;
+            primary = neighborhood ?? sublocality ?? primary;
+        }
+
         var secondary = city.Length > 0 ? city : result.FormattedAddress;
+
+        // If primary and secondary are same, try to expand secondary
+        if (primary == secondary && result.AddressComponents.Count > 0)
+        {
+            secondary = result.FormattedAddress;
+        }
 
         return new PlaceResult(result.PlaceId, primary, secondary, result.Geometry.Location.Lat, result.Geometry.Location.Lng);
     }

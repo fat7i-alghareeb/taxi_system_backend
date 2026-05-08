@@ -48,6 +48,18 @@ public class GoogleMapsService(
         [JsonPropertyName("duration")]
         public MeasureValue Duration { get; init; } = default!;
 
+        [JsonPropertyName("start_address")]
+        public string StartAddress { get; init; } = string.Empty;
+
+        [JsonPropertyName("end_address")]
+        public string EndAddress { get; init; } = string.Empty;
+
+        [JsonPropertyName("start_location")]
+        public LatLng StartLocation { get; init; } = default!;
+
+        [JsonPropertyName("end_location")]
+        public LatLng EndLocation { get; init; } = default!;
+
         [JsonPropertyName("steps")]
         public List<Step> Steps { get; init; } = [];
     }
@@ -56,6 +68,15 @@ public class GoogleMapsService(
     {
         [JsonPropertyName("polyline")]
         public OverviewPolyline Polyline { get; init; } = default!;
+    }
+
+    private sealed class LatLng
+    {
+        [JsonPropertyName("lat")]
+        public decimal Lat { get; init; }
+
+        [JsonPropertyName("lng")]
+        public decimal Lng { get; init; }
     }
 
     private sealed class MeasureValue
@@ -167,21 +188,27 @@ public class GoogleMapsService(
             var apiLeg = route.Legs[i];
 
             // Reconstruct leg polyline from steps (Google doesn't provide it at leg level directly)
-            // Wait, actually it's easier to just return the OverviewPolyline for the whole trip
-            // and maybe individual leg polylines are not strictly needed if the client uses the overview.
-            // But the user's DTO expects them.
+            // We must decode each step and re-encode as one single polyline to avoid offset corruption.
+            var points = apiLeg.Steps
+                .SelectMany(s => Common.Helpers.PolylineHelper.Decode(s.Polyline.Points))
+                .ToList();
 
-            var legPolyline = string.Join(string.Empty, apiLeg.Steps.Select(s => s.Polyline.Points));
+            var legPolyline = Common.Helpers.PolylineHelper.Encode(points);
 
-            // Note: Joining encoded polylines directly like this works for display in most decoders
-            // but might have slight artifacts. Better than the '|' join though.
+            // Descriptive labels (slightly shorter)
+            var startLabel = i == 0 ? "Pick" : $"Stop {i}";
+            var endLabel = i == route.Legs.Count - 1 ? "Dest" : $"Stop {i + 1}";
 
             legDetails.Add(new LegDetail(
                 apiLeg.Distance.Value,
                 apiLeg.Duration.Value,
                 legPolyline,
-                $"({(char)('A' + i)})",
-                $"({(char)('A' + i + 1)})"));
+                startLabel,
+                endLabel,
+                new Application.Common.Interfaces.Coordinate(apiLeg.StartLocation.Lat, apiLeg.StartLocation.Lng),
+                new Application.Common.Interfaces.Coordinate(apiLeg.EndLocation.Lat, apiLeg.EndLocation.Lng),
+                apiLeg.StartAddress,
+                apiLeg.EndAddress));
         }
 
         return new MultiStopDirectionResponse(

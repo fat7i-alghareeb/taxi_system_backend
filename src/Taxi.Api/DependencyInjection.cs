@@ -330,6 +330,7 @@ public static class DependencyInjection
         app.UseExceptionHandler();
         app.UseStatusCodePages();
         app.UseHttpsRedirection();
+        app.UseStaticFiles();
         app.UseSerilogRequestLogging();
         app.UseCors(configuration["AppSettings:CorsPolicyName"]!);
         app.UseRateLimiter();

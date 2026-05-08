@@ -43,6 +43,7 @@ public sealed class Trip : AuditableEntity
 
     public static Result<Trip> Request(
         Guid id,
+        string referenceCode,
         Guid passengerId,
         PricingQuote quote,
         IEnumerable<TripStop> stops,
@@ -57,8 +58,6 @@ public sealed class Trip : AuditableEntity
         {
             return TripErrors.InvalidStops;
         }
-
-        var referenceCode = $"TRP-{new Random().Next(1000, 9999)}";
 
         var trip = new Trip(id, referenceCode, passengerId, quote.VehicleTypeId, quote.Id, stops, scheduledAtUtc);
 
