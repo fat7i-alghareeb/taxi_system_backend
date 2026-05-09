@@ -1,16 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "/Xs419LP68U=",
+  "dgSpecHash": "3YBdED6+oUc=",
   "success": true,
   "projectFilePath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Client\\Taxi.Client.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Fat7i\\.nuget\\packages\\blazored.localstorage\\4.5.0\\blazored.localstorage.4.5.0.nupkg.sha512",
-    "C:\\Users\\Fat7i\\.nuget\\packages\\firebaseadmin\\3.5.0\\firebaseadmin.3.5.0.nupkg.sha512",
-    "C:\\Users\\Fat7i\\.nuget\\packages\\google.api.gax\\4.13.1\\google.api.gax.4.13.1.nupkg.sha512",
-    "C:\\Users\\Fat7i\\.nuget\\packages\\google.api.gax.rest\\4.13.1\\google.api.gax.rest.4.13.1.nupkg.sha512",
-    "C:\\Users\\Fat7i\\.nuget\\packages\\google.apis\\1.73.0\\google.apis.1.73.0.nupkg.sha512",
-    "C:\\Users\\Fat7i\\.nuget\\packages\\google.apis.auth\\1.73.0\\google.apis.auth.1.73.0.nupkg.sha512",
-    "C:\\Users\\Fat7i\\.nuget\\packages\\google.apis.core\\1.73.0\\google.apis.core.1.73.0.nupkg.sha512",
     "C:\\Users\\Fat7i\\.nuget\\packages\\humanizer\\3.0.10\\humanizer.3.0.10.nupkg.sha512",
     "C:\\Users\\Fat7i\\.nuget\\packages\\humanizer.core\\3.0.10\\humanizer.core.3.0.10.nupkg.sha512",
     "C:\\Users\\Fat7i\\.nuget\\packages\\humanizer.core.af\\3.0.10\\humanizer.core.af.3.0.10.nupkg.sha512",
@@ -81,7 +75,6 @@
     "C:\\Users\\Fat7i\\.nuget\\packages\\microsoft.aspnetcore.signalr.client.core\\10.0.7\\microsoft.aspnetcore.signalr.client.core.10.0.7.nupkg.sha512",
     "C:\\Users\\Fat7i\\.nuget\\packages\\microsoft.aspnetcore.signalr.common\\10.0.7\\microsoft.aspnetcore.signalr.common.10.0.7.nupkg.sha512",
     "C:\\Users\\Fat7i\\.nuget\\packages\\microsoft.aspnetcore.signalr.protocols.json\\10.0.7\\microsoft.aspnetcore.signalr.protocols.json.10.0.7.nupkg.sha512",
-    "C:\\Users\\Fat7i\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\6.0.0\\microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512",
     "C:\\Users\\Fat7i\\.nuget\\packages\\microsoft.dotnet.hotreload.webassembly.browser\\10.0.203\\microsoft.dotnet.hotreload.webassembly.browser.10.0.203.nupkg.sha512",
     "C:\\Users\\Fat7i\\.nuget\\packages\\microsoft.extensions.configuration\\10.0.7\\microsoft.extensions.configuration.10.0.7.nupkg.sha512",
     "C:\\Users\\Fat7i\\.nuget\\packages\\microsoft.extensions.configuration.abstractions\\10.0.7\\microsoft.extensions.configuration.abstractions.10.0.7.nupkg.sha512",
@@ -111,12 +104,9 @@
     "C:\\Users\\Fat7i\\.nuget\\packages\\microsoft.jsinterop.webassembly\\10.0.7\\microsoft.jsinterop.webassembly.10.0.7.nupkg.sha512",
     "C:\\Users\\Fat7i\\.nuget\\packages\\microsoft.net.illink.tasks\\10.0.7\\microsoft.net.illink.tasks.10.0.7.nupkg.sha512",
     "C:\\Users\\Fat7i\\.nuget\\packages\\microsoft.net.sdk.webassembly.pack\\10.0.7\\microsoft.net.sdk.webassembly.pack.10.0.7.nupkg.sha512",
-    "C:\\Users\\Fat7i\\.nuget\\packages\\newtonsoft.json\\13.0.4\\newtonsoft.json.13.0.4.nupkg.sha512",
     "C:\\Users\\Fat7i\\.nuget\\packages\\stylecop.analyzers\\1.2.0-beta.556\\stylecop.analyzers.1.2.0-beta.556.nupkg.sha512",
     "C:\\Users\\Fat7i\\.nuget\\packages\\stylecop.analyzers.unstable\\1.2.0.556\\stylecop.analyzers.unstable.1.2.0.556.nupkg.sha512",
-    "C:\\Users\\Fat7i\\.nuget\\packages\\system.codedom\\7.0.0\\system.codedom.7.0.0.nupkg.sha512",
     "C:\\Users\\Fat7i\\.nuget\\packages\\system.identitymodel.tokens.jwt\\8.17.0\\system.identitymodel.tokens.jwt.8.17.0.nupkg.sha512",
-    "C:\\Users\\Fat7i\\.nuget\\packages\\system.management\\7.0.2\\system.management.7.0.2.nupkg.sha512",
     "C:\\Users\\Fat7i\\.nuget\\packages\\microsoft.netcore.app.runtime.mono.browser-wasm\\10.0.7\\microsoft.netcore.app.runtime.mono.browser-wasm.10.0.7.nupkg.sha512"
   ],
   "logs": []
