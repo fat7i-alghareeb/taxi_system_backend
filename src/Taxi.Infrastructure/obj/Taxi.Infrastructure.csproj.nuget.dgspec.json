@@ -31,6 +31,7 @@
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
               "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj": {
@@ -56,8 +57,14 @@
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
+            "FirebaseAdmin": {
+              "target": "Package",
+              "version": "[3.5.0, )",
+              "versionCentrallyManaged": true
+            },
             "FluentValidation.DependencyInjectionExtensions": {
               "target": "Package",
               "version": "[12.1.1, )",
@@ -86,6 +93,7 @@
             "Asp.Versioning.Mvc.ApiExplorer": "10.0.0",
             "Blazored.LocalStorage": "4.5.0",
             "coverlet.collector": "10.0.0",
+            "FirebaseAdmin": "3.5.0",
             "FluentValidation.AspNetCore": "11.3.1",
             "FluentValidation.DependencyInjectionExtensions": "12.1.1",
             "Humanizer": "3.0.10",
@@ -451,6 +459,7 @@
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {}
           }
@@ -469,8 +478,14 @@
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
+            "FirebaseAdmin": {
+              "target": "Package",
+              "version": "[3.5.0, )",
+              "versionCentrallyManaged": true
+            },
             "Microsoft.AspNetCore.Components.DataAnnotations.Validation": {
               "target": "Package",
               "version": "[3.2.0-rc1.20223.4, )",
@@ -489,6 +504,7 @@
             "Asp.Versioning.Mvc.ApiExplorer": "10.0.0",
             "Blazored.LocalStorage": "4.5.0",
             "coverlet.collector": "10.0.0",
+            "FirebaseAdmin": "3.5.0",
             "FluentValidation.AspNetCore": "11.3.1",
             "FluentValidation.DependencyInjectionExtensions": "12.1.1",
             "Humanizer": "3.0.10",
@@ -854,6 +870,7 @@
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {}
           }
@@ -872,8 +889,14 @@
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
+            "FirebaseAdmin": {
+              "target": "Package",
+              "version": "[3.5.0, )",
+              "versionCentrallyManaged": true
+            },
             "MediatR": {
               "target": "Package",
               "version": "[14.1.0, )",
@@ -892,6 +915,7 @@
             "Asp.Versioning.Mvc.ApiExplorer": "10.0.0",
             "Blazored.LocalStorage": "4.5.0",
             "coverlet.collector": "10.0.0",
+            "FirebaseAdmin": "3.5.0",
             "FluentValidation.AspNetCore": "11.3.1",
             "FluentValidation.DependencyInjectionExtensions": "12.1.1",
             "Humanizer": "3.0.10",
@@ -1257,6 +1281,7 @@
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
               "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Application\\Taxi.Application.csproj": {
@@ -1279,8 +1304,14 @@
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
+            "FirebaseAdmin": {
+              "target": "Package",
+              "version": "[3.5.0, )",
+              "versionCentrallyManaged": true
+            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[10.0.7, )",
@@ -1343,6 +1374,7 @@
             "Asp.Versioning.Mvc.ApiExplorer": "10.0.0",
             "Blazored.LocalStorage": "4.5.0",
             "coverlet.collector": "10.0.0",
+            "FirebaseAdmin": "3.5.0",
             "FluentValidation.AspNetCore": "11.3.1",
             "FluentValidation.DependencyInjectionExtensions": "12.1.1",
             "Humanizer": "3.0.10",

@@ -14,5 +14,6 @@ public class CoordinateRequest
 {
     public decimal Latitude { get; set; }
     public decimal Longitude { get; set; }
+    public string? Label { get; set; }
 }
 

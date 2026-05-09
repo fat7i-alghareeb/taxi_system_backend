@@ -104,7 +104,7 @@ public class TokenProvider(IConfiguration configuration, IAppDbContext context) 
             Guid.NewGuid(),
             GenerateRefreshToken(),
             user.UserId,
-            DateTime.UtcNow.AddDays(7));
+            DateTime.UtcNow.AddDays(int.Parse(jwtSettings["RefreshTokenExpirationInDays"] ?? "7")));
 
         if (refreshTokenResult.IsError)
         {

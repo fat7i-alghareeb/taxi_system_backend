@@ -13,6 +13,9 @@ public class RequestTripCommandValidator : AbstractValidator<RequestTripCommand>
             .Must(s => s == null || s > DateTimeOffset.UtcNow.AddMinutes(15))
             .WithErrorCode(LocalizationKeys.Trip.ScheduledAtTooSoon)
             .When(v => v.ScheduledAt.HasValue);
+
+        RuleFor(v => v.PickupLatitude).NotEqual(0);
+        RuleFor(v => v.PickupLongitude).NotEqual(0);
     }
 }
 

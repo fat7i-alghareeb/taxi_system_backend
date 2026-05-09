@@ -16,8 +16,13 @@ public sealed class Trip : AuditableEntity
         Guid passengerId,
         Guid vehicleTypeId,
         Guid quoteId,
-        IEnumerable<TripStop> stops,
-        DateTimeOffset? scheduledAtUtc)
+      
+              IEnumerable<TripStop> stops,
+  DateTimeOffset? scheduledAtUtc,
+        Coordinate pickupCoordinate,
+        string? pickupAddress = null,
+        string? pickupStreetName = null,
+        string? pickupHouseNumber = null)
         : base(id)
     {
         PassengerId = passengerId;
@@ -25,6 +30,10 @@ public sealed class Trip : AuditableEntity
         VehicleTypeId = vehicleTypeId;
         QuoteId = quoteId;
         ScheduledAtUtc = scheduledAtUtc;
+        PickupCoordinate = pickupCoordinate;
+        PickupAddress = pickupAddress;
+        PickupStreetName = pickupStreetName;
+        PickupHouseNumber = pickupHouseNumber;
         Status = scheduledAtUtc.HasValue ? TripStatus.Scheduled : TripStatus.PendingDriver;
         _stops.AddRange(stops);
     }
@@ -36,6 +45,10 @@ public sealed class Trip : AuditableEntity
     public TripStatus Status { get; private set; }
     public Guid QuoteId { get; private set; }
     public IReadOnlyCollection<TripStop> Stops => _stops.AsReadOnly();
+    public Coordinate PickupCoordinate { get; private set; } = default!;
+    public string? PickupAddress { get; private set; }
+    public string? PickupStreetName { get; private set; }
+    public string? PickupHouseNumber { get; private set; }
     public DateTimeOffset? ScheduledAtUtc { get; private set; }
     public DateTimeOffset? StartedAtUtc { get; private set; }
     public DateTimeOffset? CompletedAtUtc { get; private set; }
@@ -47,7 +60,11 @@ public sealed class Trip : AuditableEntity
         Guid passengerId,
         PricingQuote quote,
         IEnumerable<TripStop> stops,
-        DateTimeOffset? scheduledAtUtc = null)
+        Coordinate pickupCoordinate,
+        string? pickupAddress = null,
+        DateTimeOffset? scheduledAtUtc = null,
+        string? pickupStreetName = null,
+        string? pickupHouseNumber = null)
     {
         if (quote.IsExpired())
         {
@@ -59,7 +76,18 @@ public sealed class Trip : AuditableEntity
             return TripErrors.InvalidStops;
         }
 
-        var trip = new Trip(id, referenceCode, passengerId, quote.VehicleTypeId, quote.Id, stops, scheduledAtUtc);
+        var trip = new Trip(
+            id,
+            referenceCode,
+            passengerId,
+            quote.VehicleTypeId,
+            quote.Id,
+            stops,
+            scheduledAtUtc,
+            pickupCoordinate,
+            pickupAddress,
+            pickupStreetName,
+            pickupHouseNumber);
 
         trip.AddDomainEvent(new TripRequested
         {

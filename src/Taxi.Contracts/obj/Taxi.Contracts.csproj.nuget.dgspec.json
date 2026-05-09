@@ -31,6 +31,7 @@
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {}
           }
@@ -49,8 +50,14 @@
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
+            "FirebaseAdmin": {
+              "target": "Package",
+              "version": "[3.5.0, )",
+              "versionCentrallyManaged": true
+            },
             "Microsoft.AspNetCore.Components.DataAnnotations.Validation": {
               "target": "Package",
               "version": "[3.2.0-rc1.20223.4, )",
@@ -69,6 +76,7 @@
             "Asp.Versioning.Mvc.ApiExplorer": "10.0.0",
             "Blazored.LocalStorage": "4.5.0",
             "coverlet.collector": "10.0.0",
+            "FirebaseAdmin": "3.5.0",
             "FluentValidation.AspNetCore": "11.3.1",
             "FluentValidation.DependencyInjectionExtensions": "12.1.1",
             "Humanizer": "3.0.10",

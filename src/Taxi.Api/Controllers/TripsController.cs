@@ -90,7 +90,12 @@ public class TripsController(ISender sender) : ApiController
     {
         var command = new RequestTripCommand(
             request.QuoteId,
-            request.Stops.Select(s => new CoordinateDto(s.Latitude, s.Longitude)).ToList(),
+            request.Stops.Select(s => new CoordinateDto(s.Latitude, s.Longitude, s.Label)).ToList(),
+            request.PickupLatitude,
+            request.PickupLongitude,
+            request.PickupAddress,
+            request.PickupStreetName,
+            request.PickupHouseNumber,
             request.ScheduledAt);
 
         var result = await sender.Send(command, ct);
