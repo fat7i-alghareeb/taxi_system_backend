@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 
+using Taxi.Domain.Configuration;
 using Taxi.Domain.Drivers;
 using Taxi.Domain.Users;
 using Taxi.Domain.Vehicles;
@@ -23,7 +24,7 @@ public class ApplicationDbContextInitialiser(
 
     public async Task InitialiseAsync()
     {
-        await context.Database.EnsureDeletedAsync();
+        // await context.Database.EnsureDeletedAsync();
         await context.Database.MigrateAsync();
     }
 
@@ -87,7 +88,24 @@ public class ApplicationDbContextInitialiser(
             await context.SaveChangesAsync();
         }
 
-        // 3. Seed super admin
+        // 3. Seed AppConfig defaults
+        if (!await context.AppConfigs.AnyAsync(c => c.Key == AppConfigKeys.TripDiscountPercent))
+        {
+            var configResult = AppConfig.Create(
+                AppConfigKeys.TripDiscountPercent,
+                "5",
+                "Global trip discount percentage (0 = no discount)");
+
+            if (configResult.IsFailure)
+            {
+                throw new InvalidOperationException($"Failed to create app config: {configResult.Error.Description}");
+            }
+
+            context.AppConfigs.Add(configResult.Value);
+            await context.SaveChangesAsync();
+        }
+
+        // 4. Seed super admin
         await SeedSuperAdminAsync();
 
         // 4. Seed admin driver (fixed GUID so idempotent)
@@ -108,7 +126,15 @@ public class ApplicationDbContextInitialiser(
         }
 
         // 1. Create Identity user for Super Admin
-        adminUser = new AppUser { UserName = SuperAdminPhone, PhoneNumber = SuperAdminPhone, Email = "admin@fat7i.dev", EmailConfirmed = true, PhoneNumberConfirmed = true };
+        adminUser = new AppUser
+        {
+            Id = SuperAdminUserId.ToString(),
+            UserName = SuperAdminPhone,
+            PhoneNumber = SuperAdminPhone,
+            Email = "admin@fat7i.dev",
+            EmailConfirmed = true,
+            PhoneNumberConfirmed = true
+        };
         var identityResult = await userManager.CreateAsync(adminUser, SuperAdminPassword);
         if (!identityResult.Succeeded)
         {
@@ -148,7 +174,12 @@ public class ApplicationDbContextInitialiser(
 
         // Create Identity user for the admin driver
         var phone = "+10000000000";
-        var identityUser = new AppUser { UserName = phone, PhoneNumber = phone };
+        var identityUser = new AppUser
+        {
+            Id = AdminDriverUserId.ToString(),
+            UserName = phone,
+            PhoneNumber = phone
+        };
         var identityResult = await userManager.CreateAsync(identityUser, "Driver@123!");
         if (!identityResult.Succeeded)
         {

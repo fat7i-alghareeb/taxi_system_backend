@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -14,32 +15,45 @@ public class AuthFlowTests(EndToEndTestFixture fixture)
     private readonly HttpClient client = fixture.CreateClient();
 
     [Fact]
-    public async Task SendAndVerifyOtp_ReturnsTokens()
+    public async Task LoginAndRefresh_RotatesRefreshToken()
     {
         var phone = "+10000000001";
 
-        var sendResponse = await client.PostAsJsonAsync("/api/v1/auth/send-otp", new { phone });
-        sendResponse.EnsureSuccessStatusCode();
+        var verifyResponse = await client.PostAsJsonAsync(
+            "/api/v1/auth/login",
+            new { phone, firebaseIdToken = phone, fcmToken = (string?)null });
 
-        var sendPayload = await sendResponse.Content.ReadFromJsonAsync<SendOtpResponse>(JsonOptions);
-
-        Assert.NotNull(sendPayload);
-        Assert.False(string.IsNullOrWhiteSpace(sendPayload!.SessionToken));
-
-        var verifyResponse = await client.PostAsJsonAsync("/api/v1/auth/verify-otp", new { phone, sessionToken = sendPayload.SessionToken, code = "1234" });
         verifyResponse.EnsureSuccessStatusCode();
-
         var authPayload = await verifyResponse.Content.ReadFromJsonAsync<AuthResponseDto>(JsonOptions);
 
         Assert.NotNull(authPayload);
         Assert.False(string.IsNullOrWhiteSpace(authPayload!.AccessToken));
         Assert.False(string.IsNullOrWhiteSpace(authPayload.RefreshToken));
         Assert.Equal(phone, authPayload.User.Phone);
-    }
 
-    private sealed record SendOtpResponse(string SessionToken);
+        var refreshResponse = await client.PostAsJsonAsync(
+            "/api/v1/identity/tokens/refresh",
+            new { expiredAccessToken = authPayload.AccessToken, refreshToken = authPayload.RefreshToken });
+
+        refreshResponse.EnsureSuccessStatusCode();
+        var refreshedPayload = await refreshResponse.Content.ReadFromJsonAsync<TokenResponseDto>(JsonOptions);
+
+        Assert.NotNull(refreshedPayload);
+        Assert.False(string.IsNullOrWhiteSpace(refreshedPayload!.AccessToken));
+        Assert.False(string.IsNullOrWhiteSpace(refreshedPayload.RefreshToken));
+        Assert.NotEqual(authPayload.RefreshToken, refreshedPayload.RefreshToken);
+        Assert.True(refreshedPayload.ExpiresOnUtc > DateTimeOffset.UtcNow);
+
+        var reusedOldRefreshResponse = await client.PostAsJsonAsync(
+            "/api/v1/identity/tokens/refresh",
+            new { expiredAccessToken = authPayload.AccessToken, refreshToken = authPayload.RefreshToken });
+
+        Assert.Equal(HttpStatusCode.Conflict, reusedOldRefreshResponse.StatusCode);
+    }
 
     private sealed record AuthResponseDto(string AccessToken, string RefreshToken, UserDto User);
 
-    private sealed record UserDto(Guid Id, string Name, string Phone, string Role, string? Email, string? ProfilePhotoUrl);
+    private sealed record TokenResponseDto(string AccessToken, string RefreshToken, DateTimeOffset ExpiresOnUtc);
+
+    private sealed record UserDto(Guid Id, string? Name, string Phone, string Role, string? Email, string? ProfilePhotoUrl);
 }

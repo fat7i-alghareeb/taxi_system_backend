@@ -128,6 +128,13 @@ public static class LocalizationKeys
         public const string NotFound = "Audit.NotFound";
     }
 
+    public static class AppConfig
+    {
+        public const string KeyRequired = "AppConfig.Key.Required";
+        public const string ValueRequired = "AppConfig.Value.Required";
+        public const string NotFound = "AppConfig.NotFound";
+    }
+
     public static class Promo
     {
         public const string CodeRequired = "Promo.Code.Required";

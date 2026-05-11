@@ -13,9 +13,7 @@ public class RequestTripCommandValidatorTests
         var validator = new RequestTripCommandValidator();
         var command = new RequestTripCommand(
             Guid.NewGuid(),
-            [new CoordinateDto(1, 2, "Label")],
-            0,
-            0);
+            [new CoordinateDto(1, 2, "Label")]);
 
         var result = validator.Validate(command);
 
@@ -31,9 +29,7 @@ public class RequestTripCommandValidatorTests
             [
                 new CoordinateDto(1, 2, "Label 1"),
                 new CoordinateDto(3, 4, "Label 2"),
-            ],
-            0,
-            0);
+            ]);
 
         var result = validator.Validate(command);
 

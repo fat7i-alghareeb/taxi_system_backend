@@ -50,9 +50,19 @@ public class RefreshTokenQueryHandler(
         var refreshToken = await this.context.RefreshTokens
             .FirstOrDefaultAsync(r => r.Token == request.RefreshToken && r.UserId == userId, ct);
 
-        if (refreshToken is null || refreshToken.ExpiresOnUtc < DateTime.UtcNow)
+        if (refreshToken is null)
         {
-            this.logger.LogError("Refresh token has expired");
+            this.logger.LogError("Refresh token was not found for user {UserId}", userId);
+            return ApplicationErrors.RefreshTokenExpired;
+        }
+
+        if (refreshToken.ExpiresOnUtc < DateTimeOffset.UtcNow)
+        {
+            this.logger.LogError(
+                "Refresh token has expired for user {UserId}. ExpiresOnUtc={ExpiresOnUtc}",
+                userId,
+                refreshToken.ExpiresOnUtc);
+
             return ApplicationErrors.RefreshTokenExpired;
         }
 

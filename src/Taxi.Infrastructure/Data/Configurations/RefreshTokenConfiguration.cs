@@ -17,6 +17,11 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
 
         builder.Property(r => r.UserId)
                .IsRequired();
+
+        builder.Property(r => r.ExpiresOnUtc)
+               .IsRequired();
+
+        builder.HasIndex(r => new { r.UserId, r.Token });
     }
 }
 

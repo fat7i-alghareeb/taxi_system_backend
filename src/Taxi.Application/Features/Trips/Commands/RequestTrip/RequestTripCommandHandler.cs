@@ -67,11 +67,7 @@ public class RequestTripCommandHandler(
             passengerId,
             quote,
             stops,
-            new Domain.Trips.Coordinate(request.PickupLatitude, request.PickupLongitude),
-            request.PickupAddress,
-            request.ScheduledAt,
-            request.PickupStreetName,
-            request.PickupHouseNumber);
+            request.ScheduledAt);
 
         if (tripResult.IsFailure)
         {

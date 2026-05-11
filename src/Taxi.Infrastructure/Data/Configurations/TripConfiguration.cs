@@ -49,16 +49,8 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
             s.Property(x => x.AddressLabel).HasMaxLength(500);
         });
 
-        builder.OwnsOne(t => t.PickupCoordinate, c =>
-        {
-            c.Property(p => p.Latitude).HasPrecision(18, 10);
-            c.Property(p => p.Longitude).HasPrecision(18, 10);
-        });
-
-        builder.Property(t => t.PickupAddress).HasMaxLength(500);
-        builder.Property(t => t.PickupStreetName).HasMaxLength(200);
-        builder.Property(t => t.PickupHouseNumber).HasMaxLength(50);
-
+        // MIGRATION TODO: next migration must drop the following nullable columns from Trips:
+        // PickupAddress, PickupStreetName, PickupHouseNumber, PickupCoordinate_Latitude, PickupCoordinate_Longitude.
         builder.Property(t => t.ReferenceCode)
             .HasMaxLength(20)
             .IsRequired();

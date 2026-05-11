@@ -13,10 +13,5 @@ public class RequestTripRequest
     public List<CoordinateRequest> Stops { get; set; } = [];
 
     public DateTimeOffset? ScheduledAt { get; set; }
-    public string? PickupStreetName { get; set; }
-    public string? PickupHouseNumber { get; set; }
-    public decimal PickupLatitude { get; set; }
-    public decimal PickupLongitude { get; set; }
-    public string? PickupAddress { get; set; }
 }
 

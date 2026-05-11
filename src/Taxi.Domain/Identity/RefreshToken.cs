@@ -17,11 +17,11 @@ public sealed class RefreshToken : AuditableEntity
         this.ExpiresOnUtc = expiresOnUtc;
     }
 
-    public string? Token { get; }
+    public string? Token { get; private set; }
 
-    public string? UserId { get; }
+    public string? UserId { get; private set; }
 
-    public DateTimeOffset ExpiresOnUtc { get; }
+    public DateTimeOffset ExpiresOnUtc { get; private set; }
 
     public static Result<RefreshToken> Create(Guid id, string? token, string? userId, DateTimeOffset expiresOnUtc)
     {
