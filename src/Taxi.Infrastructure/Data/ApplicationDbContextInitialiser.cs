@@ -24,7 +24,7 @@ public class ApplicationDbContextInitialiser(
 
     public async Task InitialiseAsync()
     {
-        // await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureDeletedAsync();
         await context.Database.MigrateAsync();
     }
 
