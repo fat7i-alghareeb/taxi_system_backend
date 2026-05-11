@@ -1945,7 +1945,11 @@
         "frameworks": {
           "net10.0": {
             "targetAlias": "net10.0",
-            "projectReferences": {}
+            "projectReferences": {
+              "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj": {
+                "projectPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj"
+              }
+            }
           }
         },
         "warningProperties": {
@@ -2372,6 +2376,11 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "dependencies": {
+            "FirebaseAdmin": {
+              "target": "Package",
+              "version": "[3.5.0, )",
+              "versionCentrallyManaged": true
+            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[10.0.7, )",

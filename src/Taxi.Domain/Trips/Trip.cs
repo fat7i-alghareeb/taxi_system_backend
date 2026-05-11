@@ -16,9 +16,8 @@ public sealed class Trip : AuditableEntity
         Guid passengerId,
         Guid vehicleTypeId,
         Guid quoteId,
-      
-              IEnumerable<TripStop> stops,
-  DateTimeOffset? scheduledAtUtc,
+        IEnumerable<TripStop> stops,
+        DateTimeOffset? scheduledAtUtc,
         Coordinate pickupCoordinate,
         string? pickupAddress = null,
         string? pickupStreetName = null,

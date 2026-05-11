@@ -1,12 +1,18 @@
 namespace Microsoft.Extensions.DependencyInjection;
 
 using System.Text;
+
+using FirebaseAdmin;
+
+using Google.Apis.Auth.OAuth2;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+
 using Taxi.Application.Common.Interfaces;
 using Taxi.Infrastructure.Auth;
 using Taxi.Infrastructure.Data;
@@ -15,7 +21,6 @@ using Taxi.Infrastructure.Identity;
 using Taxi.Infrastructure.Maps;
 using Taxi.Infrastructure.RealTime;
 using Taxi.Infrastructure.Settings;
-using Taxi.Infrastructure.Sms;
 using Taxi.Infrastructure.Storage;
 
 public static class DependencyInjection
@@ -23,6 +28,27 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
+
+        if (FirebaseApp.DefaultInstance == null)
+        {
+            var appSettings = configuration.GetSection("AppSettings").Get<AppSettings>()
+                ?? throw new InvalidOperationException("AppSettings configuration section is missing.");
+
+            var raw = appSettings.FirebaseCredentials;
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                throw new InvalidOperationException(
+                    "AppSettings:FirebaseCredentials is missing. " +
+                    "Provide inline JSON (docker/.env) or a file path (user-secrets).");
+            }
+
+            var credential = raw.TrimStart().StartsWith('{')
+                ? CredentialFactory.FromJson<ServiceAccountCredential>(raw).ToGoogleCredential()
+                : CredentialFactory.FromFile<ServiceAccountCredential>(raw).ToGoogleCredential();
+
+            FirebaseApp.Create(new AppOptions { Credential = credential });
+        }
+
         services.AddSingleton(TimeProvider.System);
         services.AddSignalR();
 
@@ -82,9 +108,7 @@ public static class DependencyInjection
         services.AddTransient<IIdentityService, IdentityService>();
         services.AddTransient<ITokenProvider, TokenProvider>();
 
-        services.AddMemoryCache();
-        services.AddSingleton<IOtpService, OtpService>();
-        services.AddSingleton<ISmsProvider, ConsoleSmsProvider>();
+        services.AddSingleton<IFirebaseAuthService, FirebaseAuthService>();
         services.AddHttpClient<IDirectionsService, GoogleMapsService>(client =>
         {
             client.BaseAddress = new Uri("https://maps.googleapis.com/");

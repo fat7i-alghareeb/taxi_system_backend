@@ -1,3 +1,4 @@
+using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
 
 namespace Taxi.Domain.Trips;
@@ -21,7 +22,7 @@ public sealed class TripStop
     {
         if (sequence < 0)
         {
-            return Error.Validation("Validation.InvalidFormat", "Stop sequence must be zero or greater.");
+            return Error.Validation(LocalizationKeys.Validation.InvalidFormat, "Stop sequence must be zero or greater.");
         }
 
         return new TripStop(coordinate, sequence, addressLabel);

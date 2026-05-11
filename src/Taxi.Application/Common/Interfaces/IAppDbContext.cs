@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Taxi.Domain.Audit;
-using Taxi.Domain.Auth;
 using Taxi.Domain.Configuration;
 using Taxi.Domain.Drivers;
 using Taxi.Domain.Identity;
@@ -28,7 +27,6 @@ public interface IAppDbContext
     public DbSet<Notification> Notifications { get; }
     public DbSet<PassengerPaymentMethod> PaymentMethods { get; }
     public DbSet<AppConfig> AppConfigs { get; }
-    public DbSet<OtpSession> OtpSessions { get; }
     public DbSet<TripRoute> TripRoutes { get; }
     public DbSet<PricingQuote> PricingQuotes { get; }
 

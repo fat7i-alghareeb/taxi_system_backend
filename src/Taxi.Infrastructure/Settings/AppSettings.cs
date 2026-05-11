@@ -15,7 +15,7 @@ public class AppSettings
     public string DefaultLanguage { get; set; } = Languages.Default;
 
     public string GoogleMapsApiKey { get; set; } = default!;
-    
+
     public string FirebaseCredentials { get; set; } = default!;
 }
 

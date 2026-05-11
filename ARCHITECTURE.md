@@ -45,7 +45,7 @@ A forensic sweep of the environment configurations and `.csproj` dependencies re
 ### Global Configuration & Orchestration
 
 - **`Directory.Packages.props`**: Implements **Centralized Package Management**, ensuring unified versioning for all NuGet dependencies across the entire solution.
-- **`Directory.Build.props`**: Enforces global build standards, including Target Framework (`net10.0`), Nullable context, Implicit Usings, and **StyleCop.Analyzers** for strict code quality compliance.
+- **`Directory.Build.props`**: Enforces global build standards, including Target Framework (`net10.0`), Nullable context, Implicit Usings, centralized **UserSecretsId**, and **StyleCop.Analyzers** for strict code quality compliance.
 - **`docker-compose.yml`**: Orchestrates the localized infrastructure, provisioning the **PostgreSQL** database and **Seq** log aggregation engine for consistent development environments.
 
 ---

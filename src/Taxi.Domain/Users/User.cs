@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-
+using Taxi.Contracts.Common;
 using Taxi.Domain.Common;
 using Taxi.Domain.Common.Results;
 
@@ -32,6 +32,7 @@ public sealed class User : AuditableEntity
     public bool IsActive { get; private set; }
     public Guid? ActiveVehicleId { get; private set; }
     public DateTimeOffset? DeletedAtUtc { get; private set; }
+    public string? FcmToken { get; private set; }
 
     public static Result<User> Create(
         Guid id,
@@ -89,7 +90,7 @@ public sealed class User : AuditableEntity
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            return Error.Validation("User.ProfileNameRequired", "Name is required.");
+            return Error.Validation(LocalizationKeys.User.ProfileNameRequired, "Name is required.");
         }
 
         var trimmed = name.Trim();
@@ -107,7 +108,7 @@ public sealed class User : AuditableEntity
     {
         if (Role != UserRole.Driver)
         {
-            return Error.Validation("User.NotADriver", "Only users with the Driver role can be assigned a vehicle.");
+            return Error.Validation(LocalizationKeys.User.NotADriver, "Only users with the Driver role can be assigned a vehicle.");
         }
 
         ActiveVehicleId = vehicleId;
@@ -117,6 +118,17 @@ public sealed class User : AuditableEntity
     public Result<Success> UnassignVehicle()
     {
         ActiveVehicleId = null;
+        return Result.Success;
+    }
+
+    public Result<Success> UpdateFcmToken(string? fcmToken)
+    {
+        if (fcmToken is { Length: > 4096 })
+        {
+            return Error.Validation(LocalizationKeys.User.FcmTokenInvalid, "FCM token is invalid.");
+        }
+
+        FcmToken = string.IsNullOrWhiteSpace(fcmToken) ? null : fcmToken.Trim();
         return Result.Success;
     }
 }

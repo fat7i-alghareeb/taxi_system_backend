@@ -45,6 +45,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasConversion<string>()
             .HasMaxLength(20);
 
+        builder.Property(x => x.FcmToken)
+            .HasMaxLength(4096)
+            .IsRequired(false);
+
         // Global query filter for soft delete
         builder.HasQueryFilter(x => x.DeletedAtUtc == null);
     }

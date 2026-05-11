@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
 		<PackageReference Include="Microsoft.AspNetCore.Authorization" />
@@ -16,6 +17,7 @@
 		<PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
 		<PackageReference Include="Serilog.AspNetCore" />
         <PackageReference Include="Serilog.Sinks.Seq" />
+        <PackageReference Include="FirebaseAdmin" />
 	</ItemGroup>
 
 	<ItemGroup>

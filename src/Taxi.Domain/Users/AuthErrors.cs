@@ -1,3 +1,4 @@
+using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
 
 namespace Taxi.Domain.Users;
@@ -5,35 +6,43 @@ namespace Taxi.Domain.Users;
 public static class AuthErrors
 {
     public static readonly Error NameEnRequired = Error.Validation(
-        code: "User.NameEnRequired",
+        code: LocalizationKeys.User.NameEnRequired,
         description: "English name is required.");
 
     public static readonly Error NameArRequired = Error.Validation(
-        code: "User.NameArRequired",
+        code: LocalizationKeys.User.NameArRequired,
         description: "Arabic name is required.");
 
     public static readonly Error NameNlRequired = Error.Validation(
-        code: "User.NameNlRequired",
+        code: LocalizationKeys.User.NameNlRequired,
         description: "Dutch name is required.");
 
     public static readonly Error PhoneRequired = Error.Validation(
-        code: "User.PhoneRequired",
+        code: LocalizationKeys.User.PhoneRequired,
         description: "Phone number is required.");
 
     public static readonly Error UserInactive = Error.Forbidden(
-        code: "User.Inactive",
+        code: LocalizationKeys.User.Inactive,
         description: "User account is inactive.");
 
     public static readonly Error UserNotFound = Error.NotFound(
-        code: "User.NotFound",
+        code: LocalizationKeys.User.NotFound,
         description: "User not found.");
 
-    public static readonly Error InvalidOtp = Error.Validation(
-        code: "Auth.InvalidOtp",
-        description: "The provided OTP is incorrect.");
+    public static readonly Error InvalidFirebaseToken = Error.Unauthorized(
+        code: LocalizationKeys.Auth.InvalidFirebaseToken,
+        description: "The Firebase token is invalid.");
 
-    public static readonly Error OtpExpired = Error.Validation(
-        code: "Auth.OtpExpired",
-        description: "The OTP has expired.");
+    public static readonly Error FirebaseTokenExpired = Error.Unauthorized(
+        code: LocalizationKeys.Auth.FirebaseTokenExpired,
+        description: "The Firebase token has expired. Please sign in again.");
+
+    public static readonly Error FirebasePhoneMissing = Error.Validation(
+        code: LocalizationKeys.Auth.FirebasePhoneMissing,
+        description: "The Firebase token does not include a phone number.");
+
+    public static readonly Error PhoneMismatch = Error.Validation(
+        code: LocalizationKeys.Auth.PhoneMismatch,
+        description: "The phone number does not match the verified Firebase identity.");
 }
 

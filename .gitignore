@@ -5,7 +5,7 @@
 
 # dotenv files
 .env
-firebase-key.json.json
+firebase-key.json
 # User-specific files
 *.rsuser
 *.suo

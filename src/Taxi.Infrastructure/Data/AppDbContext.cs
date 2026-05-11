@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Domain.Audit;
-using Taxi.Domain.Auth;
 using Taxi.Domain.Common;
 using Taxi.Domain.Configuration;
 using Taxi.Domain.Drivers;
@@ -33,7 +32,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, IMediator medi
     public DbSet<Notification> Notifications => this.Set<Notification>();
     public DbSet<PassengerPaymentMethod> PaymentMethods => this.Set<PassengerPaymentMethod>();
     public DbSet<AppConfig> AppConfigs => this.Set<AppConfig>();
-    public DbSet<OtpSession> OtpSessions => this.Set<OtpSession>();
     public DbSet<TripRoute> TripRoutes => this.Set<TripRoute>();
     public DbSet<PricingQuote> PricingQuotes => this.Set<PricingQuote>();
 

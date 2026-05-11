@@ -10,6 +10,7 @@
         "Dtos",
         "ipascalcase",
         "Mediat",
+        "Npgsql",
         "pascalcase",
         "prerender",
         "Serilog",

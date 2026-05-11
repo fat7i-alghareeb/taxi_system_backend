@@ -1,3 +1,4 @@
+using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
 
 namespace Taxi.Domain.Vehicles;
@@ -5,27 +6,27 @@ namespace Taxi.Domain.Vehicles;
 public static class VehicleErrors
 {
     public static readonly Error CodeRequired = Error.Validation(
-        code: "Vehicle.CodeRequired",
+        code: LocalizationKeys.Vehicle.CodeRequired,
         description: "Vehicle type code is required.");
 
     public static readonly Error NameEnRequired = Error.Validation(
-        code: "Vehicle.NameEnRequired",
+        code: LocalizationKeys.Vehicle.NameEnRequired,
         description: "English name is required.");
 
     public static readonly Error NameArRequired = Error.Validation(
-        code: "Vehicle.NameArRequired",
+        code: LocalizationKeys.Vehicle.NameArRequired,
         description: "Arabic name is required.");
 
     public static readonly Error NameNlRequired = Error.Validation(
-        code: "Vehicle.NameNlRequired",
+        code: LocalizationKeys.Vehicle.NameNlRequired,
         description: "Dutch name is required.");
 
     public static readonly Error NotFound = Error.NotFound(
-        code: "Vehicle.NotFound",
+        code: LocalizationKeys.Vehicle.NotFound,
         description: "Vehicle not found.");
 
     public static readonly Error DriverNotFound = Error.NotFound(
-        code: "Vehicle.DriverNotFound",
+        code: LocalizationKeys.Vehicle.DriverNotFound,
         description: "Driver not found or is not a driver.");
 }
 

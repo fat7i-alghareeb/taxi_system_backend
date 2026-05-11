@@ -23,14 +23,16 @@ public static class LocalizationKeys
     public static class Auth
     {
         public const string ExpiredAccessTokenInvalid = "Auth.ExpiredAccessToken.Invalid";
-        public const string InvalidOtp = "Auth.InvalidOtp";
-        public const string OtpExpired = "Auth.OtpExpired";
         public const string PhoneBlocked = "Auth.PhoneBlocked";
         public const string SessionNotFound = "Auth.SessionNotFound";
         public const string UserIdClaimInvalid = "Auth.UserIdClaim.Invalid";
         public const string RefreshTokenExpired = "Auth.RefreshToken.Expired";
         public const string UserNotFound = "Auth.User.NotFound";
         public const string TokenGenerationFailed = "Auth.TokenGeneration.Failed";
+        public const string InvalidFirebaseToken = "Auth.InvalidFirebaseToken";
+        public const string FirebaseTokenExpired = "Auth.FirebaseTokenExpired";
+        public const string FirebasePhoneMissing = "Auth.FirebasePhoneMissing";
+        public const string PhoneMismatch = "Auth.PhoneMismatch";
     }
 
     public static class User
@@ -44,6 +46,7 @@ public static class LocalizationKeys
         public const string NotADriver = "User.NotADriver";
         public const string ProfileNameRequired = "User.Profile.NameRequired";
         public const string ProfilePhotoInvalid = "User.Profile.PhotoInvalid";
+        public const string FcmTokenInvalid = "User.FcmTokenInvalid";
     }
 
     public static class Validation
