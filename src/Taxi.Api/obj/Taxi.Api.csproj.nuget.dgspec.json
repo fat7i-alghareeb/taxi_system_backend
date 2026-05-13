@@ -31,6 +31,7 @@
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
               "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Application\\Taxi.Application.csproj": {
@@ -62,6 +63,7 @@
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "Asp.Versioning.Mvc": {
@@ -126,6 +128,11 @@
               "version": "[2.14.6, )",
               "versionCentrallyManaged": true
             },
+            "Stripe.net": {
+              "target": "Package",
+              "version": "[51.1.0, )",
+              "versionCentrallyManaged": true
+            },
             "StyleCop.Analyzers": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers",
               "suppressParent": "All",
@@ -181,6 +188,7 @@
             "Scalar.AspNetCore": "2.14.6",
             "Serilog.AspNetCore": "10.0.0",
             "Serilog.Sinks.Seq": "9.0.0",
+            "Stripe.net": "51.1.0",
             "StyleCop.Analyzers": "1.2.0-beta.556",
             "Swashbuckle.AspNetCore": "10.1.7",
             "System.IdentityModel.Tokens.Jwt": "8.17.0",
@@ -653,6 +661,7 @@
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
               "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj": {
@@ -678,6 +687,7 @@
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "FluentValidation.DependencyInjectionExtensions": {
@@ -693,6 +703,11 @@
             "QuestPDF": {
               "target": "Package",
               "version": "[2026.2.4, )",
+              "versionCentrallyManaged": true
+            },
+            "Stripe.net": {
+              "target": "Package",
+              "version": "[51.1.0, )",
               "versionCentrallyManaged": true
             },
             "StyleCop.Analyzers": {
@@ -745,6 +760,7 @@
             "Scalar.AspNetCore": "2.14.6",
             "Serilog.AspNetCore": "10.0.0",
             "Serilog.Sinks.Seq": "9.0.0",
+            "Stripe.net": "51.1.0",
             "StyleCop.Analyzers": "1.2.0-beta.556",
             "Swashbuckle.AspNetCore": "10.1.7",
             "System.IdentityModel.Tokens.Jwt": "8.17.0",
@@ -1074,6 +1090,7 @@
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
               "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj": {
@@ -1096,6 +1113,7 @@
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "Blazored.LocalStorage": {
@@ -1144,6 +1162,11 @@
               "target": "Package",
               "version": "[10.0.7, )",
               "autoReferenced": true
+            },
+            "Stripe.net": {
+              "target": "Package",
+              "version": "[51.1.0, )",
+              "versionCentrallyManaged": true
             },
             "StyleCop.Analyzers": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers",
@@ -1200,6 +1223,7 @@
             "Scalar.AspNetCore": "2.14.6",
             "Serilog.AspNetCore": "10.0.0",
             "Serilog.Sinks.Seq": "9.0.0",
+            "Stripe.net": "51.1.0",
             "StyleCop.Analyzers": "1.2.0-beta.556",
             "Swashbuckle.AspNetCore": "10.1.7",
             "System.IdentityModel.Tokens.Jwt": "8.17.0",
@@ -1540,6 +1564,7 @@
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {}
           }
@@ -1558,11 +1583,17 @@
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "Microsoft.AspNetCore.Components.DataAnnotations.Validation": {
               "target": "Package",
               "version": "[3.2.0-rc1.20223.4, )",
+              "versionCentrallyManaged": true
+            },
+            "Stripe.net": {
+              "target": "Package",
+              "version": "[51.1.0, )",
               "versionCentrallyManaged": true
             },
             "StyleCop.Analyzers": {
@@ -1615,6 +1646,7 @@
             "Scalar.AspNetCore": "2.14.6",
             "Serilog.AspNetCore": "10.0.0",
             "Serilog.Sinks.Seq": "9.0.0",
+            "Stripe.net": "51.1.0",
             "StyleCop.Analyzers": "1.2.0-beta.556",
             "Swashbuckle.AspNetCore": "10.1.7",
             "System.IdentityModel.Tokens.Jwt": "8.17.0",
@@ -1944,6 +1976,7 @@
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
               "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj": {
@@ -1966,11 +1999,17 @@
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "MediatR": {
               "target": "Package",
               "version": "[14.1.0, )",
+              "versionCentrallyManaged": true
+            },
+            "Stripe.net": {
+              "target": "Package",
+              "version": "[51.1.0, )",
               "versionCentrallyManaged": true
             },
             "StyleCop.Analyzers": {
@@ -2023,6 +2062,7 @@
             "Scalar.AspNetCore": "2.14.6",
             "Serilog.AspNetCore": "10.0.0",
             "Serilog.Sinks.Seq": "9.0.0",
+            "Stripe.net": "51.1.0",
             "StyleCop.Analyzers": "1.2.0-beta.556",
             "Swashbuckle.AspNetCore": "10.1.7",
             "System.IdentityModel.Tokens.Jwt": "8.17.0",
@@ -2352,6 +2392,7 @@
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
               "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Application\\Taxi.Application.csproj": {
@@ -2374,6 +2415,7 @@
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "FirebaseAdmin": {
@@ -2430,6 +2472,11 @@
               "version": "[9.0.0, )",
               "versionCentrallyManaged": true
             },
+            "Stripe.net": {
+              "target": "Package",
+              "version": "[51.1.0, )",
+              "versionCentrallyManaged": true
+            },
             "StyleCop.Analyzers": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers",
               "suppressParent": "All",
@@ -2480,6 +2527,7 @@
             "Scalar.AspNetCore": "2.14.6",
             "Serilog.AspNetCore": "10.0.0",
             "Serilog.Sinks.Seq": "9.0.0",
+            "Stripe.net": "51.1.0",
             "StyleCop.Analyzers": "1.2.0-beta.556",
             "Swashbuckle.AspNetCore": "10.1.7",
             "System.IdentityModel.Tokens.Jwt": "8.17.0",
