@@ -30,6 +30,12 @@
         <Content Update="Resources\SharedResource.en.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Update="Resources\SharedResource.ar.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Update="Resources\SharedResource.nl.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Update="Resources\SharedResource.de.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Update="Resources\SharedResource.pl.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Update="Resources\SharedResource.uk.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Update="Resources\SharedResource.fr.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Update="Resources\SharedResource.es.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Update="Resources\SharedResource.ro.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
 </Project>

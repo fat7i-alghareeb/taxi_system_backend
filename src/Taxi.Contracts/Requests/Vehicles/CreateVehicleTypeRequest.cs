@@ -17,6 +17,24 @@ public class CreateVehicleTypeRequest
     [Required(ErrorMessage = LocalizationKeys.Vehicle.NameNlRequired)]
     public string NameNl { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = LocalizationKeys.Vehicle.NameDeRequired)]
+    public string NameDe { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = LocalizationKeys.Vehicle.NamePlRequired)]
+    public string NamePl { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = LocalizationKeys.Vehicle.NameUkRequired)]
+    public string NameUk { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = LocalizationKeys.Vehicle.NameFrRequired)]
+    public string NameFr { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = LocalizationKeys.Vehicle.NameEsRequired)]
+    public string NameEs { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = LocalizationKeys.Vehicle.NameRoRequired)]
+    public string NameRo { get; set; } = string.Empty;
+
     [Range(1, 100, ErrorMessage = LocalizationKeys.Validation.InvalidFormat)]
     public int Capacity { get; set; }
 

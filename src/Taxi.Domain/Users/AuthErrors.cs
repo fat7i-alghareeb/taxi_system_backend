@@ -17,6 +17,30 @@ public static class AuthErrors
         code: LocalizationKeys.User.NameNlRequired,
         description: "Dutch name is required.");
 
+    public static readonly Error NameDeRequired = Error.Validation(
+        code: LocalizationKeys.User.NameDeRequired,
+        description: "German name is required.");
+
+    public static readonly Error NamePlRequired = Error.Validation(
+        code: LocalizationKeys.User.NamePlRequired,
+        description: "Polish name is required.");
+
+    public static readonly Error NameUkRequired = Error.Validation(
+        code: LocalizationKeys.User.NameUkRequired,
+        description: "Ukrainian name is required.");
+
+    public static readonly Error NameFrRequired = Error.Validation(
+        code: LocalizationKeys.User.NameFrRequired,
+        description: "French name is required.");
+
+    public static readonly Error NameEsRequired = Error.Validation(
+        code: LocalizationKeys.User.NameEsRequired,
+        description: "Spanish name is required.");
+
+    public static readonly Error NameRoRequired = Error.Validation(
+        code: LocalizationKeys.User.NameRoRequired,
+        description: "Romanian name is required.");
+
     public static readonly Error PhoneRequired = Error.Validation(
         code: LocalizationKeys.User.PhoneRequired,
         description: "Phone number is required.");

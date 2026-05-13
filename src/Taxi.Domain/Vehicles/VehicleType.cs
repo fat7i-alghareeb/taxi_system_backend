@@ -46,6 +46,12 @@ public sealed class VehicleType : AuditableEntity
         string nameEn,
         string nameAr,
         string nameNl,
+        string nameDe,
+        string namePl,
+        string nameUk,
+        string nameFr,
+        string nameEs,
+        string nameRo,
         int passengerCapacity,
         decimal ratePerKm,
         decimal ratePerMin,
@@ -73,7 +79,37 @@ public sealed class VehicleType : AuditableEntity
             return VehicleErrors.NameNlRequired;
         }
 
-        var name = new LocalizedText(nameEn, nameAr, nameNl);
+        if (string.IsNullOrWhiteSpace(nameDe))
+        {
+            return VehicleErrors.NameDeRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(namePl))
+        {
+            return VehicleErrors.NamePlRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(nameUk))
+        {
+            return VehicleErrors.NameUkRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(nameFr))
+        {
+            return VehicleErrors.NameFrRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(nameEs))
+        {
+            return VehicleErrors.NameEsRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(nameRo))
+        {
+            return VehicleErrors.NameRoRequired;
+        }
+
+        var name = new LocalizedText(nameEn, nameAr, nameNl, nameDe, namePl, nameUk, nameFr, nameEs, nameRo);
         return new VehicleType(id, code, name, passengerCapacity, ratePerKm, ratePerMin, minimumFare, currencyCode, sortOrder);
     }
 
@@ -82,6 +118,12 @@ public sealed class VehicleType : AuditableEntity
         RatePerKm = ratePerKm;
         RatePerMin = ratePerMin;
         MinimumFare = minimumFare;
+        return Result.Success;
+    }
+
+    public Result<Success> UpdateSortOrder(int sortOrder)
+    {
+        SortOrder = sortOrder;
         return Result.Success;
     }
 

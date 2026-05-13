@@ -47,12 +47,24 @@ public sealed class LoginCommandHandler(
             var placeholderEn = $"Passenger {verifiedPhone}";
             var placeholderAr = $"راكب {verifiedPhone}";
             var placeholderNl = $"Passagier {verifiedPhone}";
+            var placeholderDe = $"Passagier {verifiedPhone}";
+            var placeholderPl = $"Pasażer {verifiedPhone}";
+            var placeholderUk = $"Пасажир {verifiedPhone}";
+            var placeholderFr = $"Passager {verifiedPhone}";
+            var placeholderEs = $"Pasajero {verifiedPhone}";
+            var placeholderRo = $"Pasager {verifiedPhone}";
 
             var createResult = User.Create(
                 Guid.Parse(identityId),
                 placeholderEn,
                 placeholderAr,
                 placeholderNl,
+                placeholderDe,
+                placeholderPl,
+                placeholderUk,
+                placeholderFr,
+                placeholderEs,
+                placeholderRo,
                 verifiedPhone,
                 null,
                 UserRole.Passenger);
@@ -100,7 +112,12 @@ public sealed class LoginCommandHandler(
         var resolvedName = domainUser.Name.GetTranslation(languageContext.Language);
         var isPlaceholder = resolvedName.StartsWith("Passenger ")
             || resolvedName.StartsWith("راكب ")
-            || resolvedName.StartsWith("Passagier ");
+            || resolvedName.StartsWith("Passagier ")
+            || resolvedName.StartsWith("Pasażer ")
+            || resolvedName.StartsWith("Пасажир ")
+            || resolvedName.StartsWith("Passager ")
+            || resolvedName.StartsWith("Pasajero ")
+            || resolvedName.StartsWith("Pasager ");
 
         var userDto = new UserDto
         {

@@ -40,6 +40,12 @@ public static class LocalizationKeys
         public const string NameEnRequired = "User.NameEnRequired";
         public const string NameArRequired = "User.NameArRequired";
         public const string NameNlRequired = "User.NameNlRequired";
+        public const string NameDeRequired = "User.NameDeRequired";
+        public const string NamePlRequired = "User.NamePlRequired";
+        public const string NameUkRequired = "User.NameUkRequired";
+        public const string NameFrRequired = "User.NameFrRequired";
+        public const string NameEsRequired = "User.NameEsRequired";
+        public const string NameRoRequired = "User.NameRoRequired";
         public const string PhoneRequired = "User.PhoneRequired";
         public const string Inactive = "User.Inactive";
         public const string NotFound = "User.NotFound";
@@ -77,6 +83,12 @@ public static class LocalizationKeys
         public const string NameEnRequired = "Vehicle.NameEn.Required";
         public const string NameArRequired = "Vehicle.NameAr.Required";
         public const string NameNlRequired = "Vehicle.NameNl.Required";
+        public const string NameDeRequired = "Vehicle.NameDe.Required";
+        public const string NamePlRequired = "Vehicle.NamePl.Required";
+        public const string NameUkRequired = "Vehicle.NameUk.Required";
+        public const string NameFrRequired = "Vehicle.NameFr.Required";
+        public const string NameEsRequired = "Vehicle.NameEs.Required";
+        public const string NameRoRequired = "Vehicle.NameRo.Required";
         public const string NotFound = "Vehicle.NotFound";
         public const string TypeIdRequired = "Vehicle.TypeId.Required";
         public const string MakeRequired = "Vehicle.Make.Required";

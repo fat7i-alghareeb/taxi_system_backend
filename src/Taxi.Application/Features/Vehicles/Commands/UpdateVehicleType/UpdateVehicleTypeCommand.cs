@@ -9,5 +9,6 @@ public record UpdateVehicleTypeCommand(
     decimal RatePerKm,
     decimal RatePerMin,
     decimal MinFare,
-    bool IsActive) : IRequest<Result<VehicleTypeDto>>;
+    bool IsActive,
+    int SortOrder) : IRequest<Result<VehicleTypeDto>>;
 

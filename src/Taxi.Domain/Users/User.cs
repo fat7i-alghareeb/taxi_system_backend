@@ -39,6 +39,12 @@ public sealed class User : AuditableEntity
         string nameEn,
         string nameAr,
         string nameNl,
+        string nameDe,
+        string namePl,
+        string nameUk,
+        string nameFr,
+        string nameEs,
+        string nameRo,
         string phone,
         string? email,
         UserRole role)
@@ -58,12 +64,45 @@ public sealed class User : AuditableEntity
             return AuthErrors.NameNlRequired;
         }
 
+        if (string.IsNullOrWhiteSpace(nameDe))
+        {
+            return AuthErrors.NameDeRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(namePl))
+        {
+            return AuthErrors.NamePlRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(nameUk))
+        {
+            return AuthErrors.NameUkRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(nameFr))
+        {
+            return AuthErrors.NameFrRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(nameEs))
+        {
+            return AuthErrors.NameEsRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(nameRo))
+        {
+            return AuthErrors.NameRoRequired;
+        }
+
         if (string.IsNullOrWhiteSpace(phone) || !Regex.IsMatch(phone, @"^\+?\d{7,15}$"))
         {
             return AuthErrors.PhoneRequired;
         }
 
-        var localizedName = new LocalizedText(nameEn.Trim(), nameAr.Trim(), nameNl.Trim());
+        var localizedName = new LocalizedText(
+            nameEn.Trim(), nameAr.Trim(), nameNl.Trim(),
+            nameDe.Trim(), namePl.Trim(), nameUk.Trim(),
+            nameFr.Trim(), nameEs.Trim(), nameRo.Trim());
 
         return new User(id, localizedName, phone, email, role);
     }
@@ -94,7 +133,7 @@ public sealed class User : AuditableEntity
         }
 
         var trimmed = name.Trim();
-        Name = new LocalizedText(trimmed, trimmed, trimmed);
+        Name = new LocalizedText(trimmed, trimmed, trimmed, trimmed, trimmed, trimmed, trimmed, trimmed, trimmed);
 
         if (profilePhotoUrl is not null)
         {

@@ -79,6 +79,12 @@ public class VehicleTypesController(ISender sender) : ApiController
             request.NameEn,
             request.NameAr,
             request.NameNl,
+            request.NameDe,
+            request.NamePl,
+            request.NameUk,
+            request.NameFr,
+            request.NameEs,
+            request.NameRo,
             request.Capacity,
             request.RatePerKm,
             request.RatePerMin,
@@ -110,7 +116,8 @@ public class VehicleTypesController(ISender sender) : ApiController
             request.RatePerKm,
             request.RatePerMin,
             request.MinFare,
-            request.IsActive);
+            request.IsActive,
+            request.SortOrder);
 
         var result = await sender.Send(command, ct);
 

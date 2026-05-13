@@ -15,5 +15,7 @@ public class UpdateVehicleTypeRequest
     public decimal MinFare { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    public int SortOrder { get; set; }
 }
 

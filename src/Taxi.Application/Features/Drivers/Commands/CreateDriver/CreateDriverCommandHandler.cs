@@ -25,7 +25,13 @@ public class CreateDriverCommandHandler(
                 Guid.NewGuid(),
                 request.NameEn,
                 request.NameAr,
-                request.NameEn, // Use EN as NL fallback
+                request.NameNl,
+                request.NameDe,
+                request.NamePl,
+                request.NameUk,
+                request.NameFr,
+                request.NameEs,
+                request.NameRo,
                 request.Phone,
                 null,
                 UserRole.Driver);

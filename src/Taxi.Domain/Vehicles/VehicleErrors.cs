@@ -21,6 +21,30 @@ public static class VehicleErrors
         code: LocalizationKeys.Vehicle.NameNlRequired,
         description: "Dutch name is required.");
 
+    public static readonly Error NameDeRequired = Error.Validation(
+        code: LocalizationKeys.Vehicle.NameDeRequired,
+        description: "German name is required.");
+
+    public static readonly Error NamePlRequired = Error.Validation(
+        code: LocalizationKeys.Vehicle.NamePlRequired,
+        description: "Polish name is required.");
+
+    public static readonly Error NameUkRequired = Error.Validation(
+        code: LocalizationKeys.Vehicle.NameUkRequired,
+        description: "Ukrainian name is required.");
+
+    public static readonly Error NameFrRequired = Error.Validation(
+        code: LocalizationKeys.Vehicle.NameFrRequired,
+        description: "French name is required.");
+
+    public static readonly Error NameEsRequired = Error.Validation(
+        code: LocalizationKeys.Vehicle.NameEsRequired,
+        description: "Spanish name is required.");
+
+    public static readonly Error NameRoRequired = Error.Validation(
+        code: LocalizationKeys.Vehicle.NameRoRequired,
+        description: "Romanian name is required.");
+
     public static readonly Error NotFound = Error.NotFound(
         code: LocalizationKeys.Vehicle.NotFound,
         description: "Vehicle not found.");

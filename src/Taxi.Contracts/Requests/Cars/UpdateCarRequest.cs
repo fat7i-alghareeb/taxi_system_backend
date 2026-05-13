@@ -30,5 +30,29 @@ public class UpdateCarRequest
     [Required(ErrorMessage = LocalizationKeys.Validation.DescriptionRequired)]
     [StringLength(1000)]
     public string DescriptionNl { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = LocalizationKeys.Validation.DescriptionRequired)]
+    [StringLength(1000)]
+    public string DescriptionDe { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = LocalizationKeys.Validation.DescriptionRequired)]
+    [StringLength(1000)]
+    public string DescriptionPl { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = LocalizationKeys.Validation.DescriptionRequired)]
+    [StringLength(1000)]
+    public string DescriptionUk { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = LocalizationKeys.Validation.DescriptionRequired)]
+    [StringLength(1000)]
+    public string DescriptionFr { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = LocalizationKeys.Validation.DescriptionRequired)]
+    [StringLength(1000)]
+    public string DescriptionEs { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = LocalizationKeys.Validation.DescriptionRequired)]
+    [StringLength(1000)]
+    public string DescriptionRo { get; set; } = string.Empty;
 }
 

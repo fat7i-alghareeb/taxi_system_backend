@@ -24,7 +24,7 @@ public class ApplicationDbContextInitialiser(
 
     public async Task InitialiseAsync()
     {
-        // await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureDeletedAsync();
         await context.Database.MigrateAsync();
     }
 
@@ -67,15 +67,22 @@ public class ApplicationDbContextInitialiser(
 
         var types = new List<VehicleType>
         {
-            VehicleType.Create(Guid.NewGuid(), "standard", "Standard", "عادي", "Standaard", 4, 2.8m, 0.20m, 5.0m).Value,
-            VehicleType.Create(Guid.NewGuid(), "xl", "XL Van", "فان كبير", "XL Van", 8, 3.20m, 0.25m, 8.0m).Value,
-            VehicleType.Create(Guid.NewGuid(), "wheelchair", "Wheelchair Taxi", "تاكسي ذوي الاحتياجات الخاصة", "Rolstoel Taxi", 4, 3.50m, 0.25m, 10.0m).Value
+            VehicleType.Create(Guid.NewGuid(), "standard", "Standard", "عادي", "Standaard", "Standard", "Standard", "Standard", "Standard", "Standard", "Standard", 4, 2.8m, 0.20m, 5.0m, "EUR", 1).Value,
+            VehicleType.Create(Guid.NewGuid(), "xl", "XL Van", "فان كبير", "XL Van", "XL Van", "XL Van", "XL Van", "XL Van", "XL Van", "XL Van", 8, 3.20m, 0.25m, 8.0m, "EUR", 2).Value,
+            VehicleType.Create(Guid.NewGuid(), "wheelchair", "Wheelchair Taxi", "تاكسي ذوي الاحتياجات الخاصة", "Rolstoel Taxi", "Wheelchair Taxi", "Wheelchair Taxi", "Wheelchair Taxi", "Wheelchair Taxi", "Wheelchair Taxi", "Wheelchair Taxi", 4, 3.50m, 0.25m, 10.0m, "EUR", 3).Value
         };
 
         foreach (var type in types)
         {
-            if (existingCodeSet.Contains(type.Code))
+            var existing = await context.VehicleTypes.FirstOrDefaultAsync(v => v.Code == type.Code);
+            if (existing != null)
             {
+                if (existing.SortOrder != type.SortOrder)
+                {
+                    existing.UpdateSortOrder(type.SortOrder);
+                    addedAny = true;
+                }
+
                 continue;
             }
 
@@ -151,6 +158,7 @@ public class ApplicationDbContextInitialiser(
         var domainUserResult = User.Create(
             SuperAdminUserId,
             "Super Admin", "مدير النظام", "Super Administrateur",
+            "Super Admin", "Super Admin", "Super Admin", "Super Admin", "Super Admin", "Super Admin",
             SuperAdminPhone,
             adminUser.Email,
             UserRole.Admin);
@@ -193,6 +201,7 @@ public class ApplicationDbContextInitialiser(
         var domainUserResult = User.Create(
             AdminDriverUserId,
             "Admin Driver", "السائق الإداري", "Admin Chauffeur",
+            "Admin Driver", "Admin Driver", "Admin Driver", "Admin Driver", "Admin Driver", "Admin Driver",
             phone,
             null,
             UserRole.Driver);

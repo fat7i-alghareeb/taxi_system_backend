@@ -21,6 +21,12 @@ public class CreateVehicleTypeCommandHandler(
             request.NameEn,
             request.NameAr,
             request.NameNl,
+            request.NameDe,
+            request.NamePl,
+            request.NameUk,
+            request.NameFr,
+            request.NameEs,
+            request.NameRo,
             request.Capacity,
             request.RatePerKm,
             request.RatePerMin,
@@ -46,7 +52,8 @@ public class CreateVehicleTypeCommandHandler(
             vehicleType.RatePerKm,
             vehicleType.RatePerMin,
             vehicleType.MinimumFare,
-            vehicleType.CurrencyCode);
+            vehicleType.CurrencyCode,
+            vehicleType.SortOrder);
     }
 }
 

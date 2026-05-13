@@ -88,6 +88,12 @@ public sealed class IdentityController(ISender sender) : ApiController
             request.NameEn,
             request.NameAr,
             request.NameNl,
+            request.NameDe,
+            request.NamePl,
+            request.NameUk,
+            request.NameFr,
+            request.NameEs,
+            request.NameRo,
             request.Email);
 
         var result = await sender.Send(command, ct);

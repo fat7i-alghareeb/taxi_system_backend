@@ -9,5 +9,11 @@ public record RegisterAdminCommand(
     string NameEn,
     string NameAr,
     string NameNl,
+    string NameDe,
+    string NamePl,
+    string NameUk,
+    string NameFr,
+    string NameEs,
+    string NameRo,
     string? Email) : IRequest<Result<Guid>>;
 
