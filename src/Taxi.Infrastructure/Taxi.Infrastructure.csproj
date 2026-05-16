@@ -18,6 +18,7 @@
 		<PackageReference Include="Serilog.AspNetCore" />
         <PackageReference Include="Serilog.Sinks.Seq" />
         <PackageReference Include="FirebaseAdmin" />
+        <PackageReference Include="Stripe.net" />
 	</ItemGroup>
 
 	<ItemGroup>

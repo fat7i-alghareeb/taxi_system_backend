@@ -20,5 +20,14 @@ public interface ITripNotifier
 
     /// <summary>Sends to the trip group that the ride has been cancelled.</summary>
     Task NotifyTripCancelledAsync(Guid tripId, Guid passengerId, CancellationToken ct = default);
+
+    /// <summary>Sends to the passenger that their payment has been confirmed and the trip is being dispatched.</summary>
+    Task NotifyPaymentConfirmedAsync(Guid tripId, Guid passengerId, CancellationToken ct = default);
+
+    /// <summary>Sends to the passenger that their payment failed; the trip is now in PaymentFailed state.</summary>
+    Task NotifyPaymentFailedAsync(Guid tripId, Guid passengerId, string reason, CancellationToken ct = default);
+
+    /// <summary>Sends to the trip group that the trip has been refunded.</summary>
+    Task NotifyTripRefundedAsync(Guid tripId, Guid passengerId, decimal amount, CancellationToken ct = default);
 }
 

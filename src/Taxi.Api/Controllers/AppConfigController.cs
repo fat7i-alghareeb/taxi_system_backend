@@ -2,6 +2,7 @@ using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Taxi.Application.Features.Config.GetClientConfig;
 using Taxi.Application.Features.Config.GetTripDiscount;
 using Taxi.Application.Features.Config.UpdateTripDiscount;
 using Taxi.Contracts.Requests.Config;
@@ -13,6 +14,19 @@ namespace Taxi.Api.Controllers;
 [Route("api/v{version:apiVersion}/app-config")]
 public class AppConfigController(ISender sender) : ApiController
 {
+    [HttpGet("client")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ClientConfigDto), StatusCodes.Status200OK)]
+    [EndpointSummary("Returns public client configuration (Stripe enablement, publishable key).")]
+    [EndpointDescription("Consumed by the mobile app at bootstrap to decide whether to initialize Stripe and which publishable key to use.")]
+    [EndpointName("GetClientConfig")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetClientConfig(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetClientConfigQuery(), ct);
+        return result.Match(Ok, Problem);
+    }
+
     [HttpGet("trip-discount")]
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(TripDiscountDto), StatusCodes.Status200OK)]

@@ -25,7 +25,7 @@ public sealed class Trip : AuditableEntity
         VehicleTypeId = vehicleTypeId;
         QuoteId = quoteId;
         ScheduledAtUtc = scheduledAtUtc;
-        Status = scheduledAtUtc.HasValue ? TripStatus.Scheduled : TripStatus.PendingDriver;
+        Status = TripStatus.AwaitingPayment;
         _stops.AddRange(stops);
     }
 
@@ -139,7 +139,7 @@ public sealed class Trip : AuditableEntity
 
     public Result<Success> Cancel()
     {
-        if (Status == TripStatus.Completed || Status == TripStatus.Cancelled)
+        if (Status == TripStatus.Completed || Status == TripStatus.Cancelled || Status == TripStatus.Refunded)
         {
             return TripErrors.InvalidStatus(Status);
         }
@@ -151,6 +151,62 @@ public sealed class Trip : AuditableEntity
             TripId = Id,
             PassengerId = PassengerId,
             DriverId = DriverId,
+        });
+
+        return Result.Success;
+    }
+
+    public Result<Success> ConfirmPayment()
+    {
+        if (Status != TripStatus.AwaitingPayment)
+        {
+            return TripErrors.InvalidStatus(Status);
+        }
+
+        Status = ScheduledAtUtc.HasValue ? TripStatus.Scheduled : TripStatus.PendingDriver;
+
+        AddDomainEvent(new PaymentConfirmed
+        {
+            TripId = Id,
+            PassengerId = PassengerId,
+        });
+
+        return Result.Success;
+    }
+
+    public Result<Success> MarkPaymentFailed(string reason)
+    {
+        if (Status != TripStatus.AwaitingPayment)
+        {
+            return TripErrors.InvalidStatus(Status);
+        }
+
+        Status = TripStatus.PaymentFailed;
+
+        AddDomainEvent(new PaymentFailed
+        {
+            TripId = Id,
+            PassengerId = PassengerId,
+            Reason = reason,
+        });
+
+        return Result.Success;
+    }
+
+    public Result<Success> MarkRefunded(decimal amount)
+    {
+        if (Status != TripStatus.Cancelled && Status != TripStatus.Completed)
+        {
+            return TripErrors.InvalidStatus(Status);
+        }
+
+        Status = TripStatus.Refunded;
+
+        AddDomainEvent(new TripRefunded
+        {
+            TripId = Id,
+            PassengerId = PassengerId,
+            Amount = amount,
         });
 
         return Result.Success;

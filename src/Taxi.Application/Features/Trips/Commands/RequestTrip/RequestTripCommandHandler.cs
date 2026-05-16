@@ -1,8 +1,11 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Features.Trips.Common;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Domain.Common.Results;
+using Taxi.Domain.Payments;
 using Taxi.Domain.Trips;
 using Taxi.Domain.Users;
 
@@ -10,7 +13,9 @@ namespace Taxi.Application.Features.Trips.Commands.RequestTrip;
 
 public class RequestTripCommandHandler(
     IAppDbContext context,
-    IUser currentUser) : IRequestHandler<RequestTripCommand, Result<TripDto>>
+    IUser currentUser,
+    IClientConfigProvider clientConfig,
+    IStripePaymentService stripe) : IRequestHandler<RequestTripCommand, Result<TripDto>>
 {
     private readonly IAppDbContext _context = context;
 
@@ -58,7 +63,6 @@ public class RequestTripCommandHandler(
         }
 
         var stops = stopResults.Select(r => r.Value).ToList();
-
         var referenceCode = $"TRP-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
 
         var tripResult = Trip.Request(
@@ -76,24 +80,70 @@ public class RequestTripCommandHandler(
 
         var trip = tripResult.Value;
 
-        var adminDriver = await _context.Drivers
-            .FirstOrDefaultAsync(d => d.IsActive, ct);
-
-        if (adminDriver is null)
-        {
-            return TripErrors.DriverNotFound;
-        }
-
-        var assignResult = trip.AssignDriver(adminDriver.UserId);
-
-        if (assignResult.IsFailure)
-        {
-            return assignResult.Error;
-        }
-
+        // Mark quote consumed up front (per plan: quote.Used set when Trip is created).
         quote.MarkAsUsed();
-        _context.Trips.Add(trip);
-        await _context.SaveChangesAsync(ct);
+
+        var stripeEnabled = clientConfig.GetClientConfig().StripeEnabled;
+        StripePaymentDto? stripePaymentDto = null;
+
+        if (!stripeEnabled)
+        {
+            // Legacy paymentless flow: immediately confirm payment and assign a driver
+            // so the existing client UX (no PaymentSheet) keeps working.
+            var confirmResult = trip.ConfirmPayment();
+            if (confirmResult.IsFailure)
+            {
+                return confirmResult.Error;
+            }
+
+            var dispatchResult = await TripDispatchHelper.AssignDefaultDriverAsync(trip, _context, ct);
+            if (dispatchResult.IsFailure)
+            {
+                return dispatchResult.Error;
+            }
+
+            _context.Trips.Add(trip);
+            await _context.SaveChangesAsync(ct);
+        }
+        else
+        {
+            var intentResult = await stripe.CreatePaymentIntentAsync(
+                quoteId: quote.Id,
+                amount: quote.FinalFare,
+                currency: quote.CurrencyCode,
+                tripId: trip.Id,
+                passengerId: passengerId,
+                ct);
+
+            if (intentResult.IsFailure)
+            {
+                return intentResult.Error;
+            }
+
+            var intent = intentResult.Value;
+
+            var paymentResult = Payment.CreateForStripe(
+                Guid.NewGuid(),
+                trip.Id,
+                quote.FinalFare,
+                quote.CurrencyCode,
+                intent.PaymentIntentId,
+                intent.ClientSecret);
+
+            if (paymentResult.IsFailure)
+            {
+                return paymentResult.Error;
+            }
+
+            _context.Trips.Add(trip);
+            _context.Payments.Add(paymentResult.Value);
+            await _context.SaveChangesAsync(ct);
+
+            stripePaymentDto = new StripePaymentDto(
+                intent.PaymentIntentId,
+                intent.ClientSecret,
+                intent.PublishableKey);
+        }
 
         var stopDtos = trip.Stops
             .OrderBy(s => s.Sequence)
@@ -111,7 +161,7 @@ public class RequestTripCommandHandler(
             quote.CurrencyCode,
             trip.CreatedAtUtc,
             trip.ScheduledAtUtc,
-            stopDtos);
+            stopDtos,
+            stripePaymentDto);
     }
 }
-

@@ -30,6 +30,11 @@ public sealed class Payment : AuditableEntity
     public PaymentStatus Status { get; private set; }
     public DateTime? ProcessedAtUtc { get; private set; }
     public string? TransactionReference { get; private set; }
+    public string? StripePaymentIntentId { get; private set; }
+    public string? StripeClientSecret { get; private set; }
+    public string? StripeChargeId { get; private set; }
+    public string? LastErrorCode { get; private set; }
+    public string? LastErrorMessage { get; private set; }
 
     public static Result<Payment> Create(
         Guid id,
@@ -46,17 +51,61 @@ public sealed class Payment : AuditableEntity
         return new Payment(id, tripId, amount, currency, method);
     }
 
-    public void MarkAsCompleted(string? reference = null)
+    public static Result<Payment> CreateForStripe(
+        Guid id,
+        Guid tripId,
+        decimal amount,
+        string currency,
+        string paymentIntentId,
+        string clientSecret)
     {
-        Status = PaymentStatus.Completed;
-        ProcessedAtUtc = DateTime.UtcNow;
-        TransactionReference = reference;
+        if (amount <= 0)
+        {
+            return PaymentErrors.InvalidAmount;
+        }
+
+        var payment = new Payment(id, tripId, amount, currency, PaymentMethod.CreditCard)
+        {
+            StripePaymentIntentId = paymentIntentId,
+            StripeClientSecret = clientSecret,
+            TransactionReference = paymentIntentId,
+        };
+
+        return payment;
     }
 
-    public void MarkAsFailed()
+    public void MarkAsCompleted(string? chargeId = null)
+    {
+        if (Status == PaymentStatus.Completed)
+        {
+            return;
+        }
+
+        Status = PaymentStatus.Completed;
+        ProcessedAtUtc = DateTime.UtcNow;
+        if (!string.IsNullOrWhiteSpace(chargeId))
+        {
+            StripeChargeId = chargeId;
+            TransactionReference = chargeId;
+        }
+    }
+
+    public void MarkAsFailed(string? errorCode = null, string? errorMessage = null)
     {
         Status = PaymentStatus.Failed;
         ProcessedAtUtc = DateTime.UtcNow;
+        LastErrorCode = errorCode;
+        LastErrorMessage = errorMessage;
+    }
+
+    public void MarkAsRefunded()
+    {
+        if (Status == PaymentStatus.Refunded)
+        {
+            return;
+        }
+
+        Status = PaymentStatus.Refunded;
+        ProcessedAtUtc = DateTime.UtcNow;
     }
 }
-

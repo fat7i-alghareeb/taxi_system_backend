@@ -1,14 +1,52 @@
+# Production overrides.
+# Caddy fronts the stack on 80/443 with TLS for api.fat7i.dev.
+# taxi.api is bound to 127.0.0.1:5001 only (no public exposure).
+# Seq / Grafana / Prometheus stay on the internal Docker network
+# (reach them via SSH tunnel: e.g. `ssh -L 8081:localhost:8081 host`).
+#
+# Pre-flight:
+#   - DNS A record api.fat7i.dev -> server IP
+#   - Inbound TCP 80 and 443 open on the firewall
+#   - .env populated (POSTGRES_*, JWT_SECRET, STRIPE_*, GRAFANA_ADMIN_PASSWORD, ...)
+#
+# Run prod :  docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Stop prod:  docker compose -f docker-compose.yml -f docker-compose.prod.yml down
+# Logs     :  docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f
+# Caddy log:  docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f caddy
+
 services:
-  taxi.api:
+  caddy:
+    image: caddy:2-alpine
+    restart: always
     ports:
-      - "5001:8080"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - taxi.api
+
+  taxi.api:
+    # Bound to loopback only — Caddy is the public entry point.
+    # SSH-tunnel this port for direct API debugging.
+    ports:
+      - "127.0.0.1:5001:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
+      # Honor X-Forwarded-Proto from Caddy so Request.Scheme reports
+      # https for cookies, OAuth redirects, etc.
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=TaxiDb_Prod;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       JwtSettings__Secret: ${JWT_SECRET}
       AppSettings__GoogleMapsApiKey: ${GOOGLE_MAPS_API_KEY}
       AppSettings__FirebaseCredentials: ${FIREBASE_CREDENTIALS}
+      AppSettings__Stripe__SecretKey: ${STRIPE_SECRET_KEY}
+      AppSettings__Stripe__PublishableKey: ${STRIPE_PUBLISHABLE_KEY}
+      AppSettings__Stripe__WebhookSecret: ${STRIPE_WEBHOOK_SECRET}
+      AppSettings__Features__StripeEnabled: ${STRIPE_ENABLED}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://seq:5341/ingest/otlp/v1/traces
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
     restart: always
@@ -33,3 +71,7 @@ services:
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
     restart: always
+
+volumes:
+  caddy_data:
+  caddy_config:

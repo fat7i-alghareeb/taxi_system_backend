@@ -1,10 +1,23 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Taxi.Infrastructure.Hubs;
 
+[Authorize]
 public sealed class TripHub : Hub
 {
     public const string HubUrl = "/hubs/trips";
+
+    public override async Task OnConnectedAsync()
+    {
+        var userId = Context.UserIdentifier;
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{userId}");
+        }
+
+        await base.OnConnectedAsync();
+    }
 
     /// <summary>Called by a passenger or driver to receive updates for a specific trip.</summary>
     /// <param name="tripId">The trip identifier used to form the group name.</param>
@@ -30,4 +43,3 @@ public sealed class TripHub : Hub
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"VehicleType_{vehicleTypeCode}");
     }
 }
-

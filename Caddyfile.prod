@@ -1,0 +1,24 @@
+# Caddy reverse proxy — production only.
+# Mounted into the caddy container by docker-compose.prod.yml.
+# TLS certs are issued automatically via Let's Encrypt and persisted
+# in the `caddy_data` named volume.
+
+{
+    email fat7ighareeb@gmail.com
+}
+
+api.fat7i.dev {
+    encode zstd gzip
+
+    reverse_proxy taxi.api:8080 {
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+
+        # SignalR keeps long-lived WebSocket connections; default
+        # timeouts would drop the hub mid-trip.
+        transport http {
+            read_timeout  24h
+            write_timeout 24h
+        }
+    }
+}

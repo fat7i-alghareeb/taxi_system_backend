@@ -8,6 +8,9 @@ public enum TripStatus
     DriverAssigned,
     InProgress,
     Completed,
-    Cancelled
+    Cancelled,
+    AwaitingPayment,
+    PaymentFailed,
+    Refunded
 }
 

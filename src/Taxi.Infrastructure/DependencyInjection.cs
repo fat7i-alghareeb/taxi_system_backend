@@ -15,10 +15,12 @@ using Microsoft.IdentityModel.Tokens;
 
 using Taxi.Application.Common.Interfaces;
 using Taxi.Infrastructure.Auth;
+using Taxi.Infrastructure.Common;
 using Taxi.Infrastructure.Data;
 using Taxi.Infrastructure.Data.Interceptors;
 using Taxi.Infrastructure.Identity;
 using Taxi.Infrastructure.Maps;
+using Taxi.Infrastructure.Payments;
 using Taxi.Infrastructure.RealTime;
 using Taxi.Infrastructure.Settings;
 using Taxi.Infrastructure.Storage;
@@ -89,6 +91,24 @@ public static class DependencyInjection
                 IssuerSigningKey = new SymmetricSecurityKey(
                        Encoding.UTF8.GetBytes(jwtSettings["Secret"]!)),
             };
+
+            // SignalR JWT auth: WebSocket clients cannot send Authorization headers,
+            // so we accept the access token from the ?access_token= query string
+            // when the request targets a hub.
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var accessToken = context.Request.Query["access_token"];
+                    var path = context.HttpContext.Request.Path;
+                    if (!string.IsNullOrEmpty(accessToken) &&
+                        path.StartsWithSegments("/hubs"))
+                    {
+                        context.Token = accessToken;
+                    }
+                    return Task.CompletedTask;
+                }
+            };
         });
 
         services
@@ -121,6 +141,10 @@ public static class DependencyInjection
         });
         services.AddScoped<ITripNotifier, SignalRTripNotifier>();
         services.AddScoped<IFileStorage, LocalFileStorage>();
+
+        services.AddScoped<IStripePaymentService, StripePaymentService>();
+        services.AddScoped<IStripeWebhookValidator, StripeWebhookValidator>();
+        services.AddSingleton<IClientConfigProvider, ClientConfigProvider>();
 
         services.AddHybridCache(options => options.DefaultEntryOptions = new Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions
         {

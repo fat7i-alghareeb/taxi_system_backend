@@ -1,0 +1,478 @@
+version=1
+
+# This file caches language service data to improve the performance of C# Dev Kit.
+# It is not intended for manual editing. It can safely be deleted and will be
+# regenerated automatically. For more information, see https://aka.ms/lscache
+#
+# To control where cache files are stored, use the following VS Code setting:
+#   "dotnet.projectsystem.cacheInProjectFolder": true
+
+[project]
+language=C#
+primary
+lastDtbSucceeded
+
+[properties]
+AssemblyName=Taxi.Application
+CommandLineArgsForDesignTimeEvaluation=-langversion:latest -define:TRACE
+CompilerGeneratedFilesOutputPath=
+MaxSupportedLangVersion=14.0
+ProjectAssetsFile=<PATH>obj/project.assets.json
+RootNamespace=Taxi.Application
+RunAnalyzers=
+RunAnalyzersDuringLiveAnalysis=
+SolutionPath=<PATH>../../Taxi_Server.slnx
+TargetFrameworkIdentifier=.NETCoreApp
+TargetPath=<PATH>bin/Debug/net10.0/Taxi.Application.dll
+TargetRefPath=<PATH>obj/Debug/net10.0/ref/Taxi.Application.dll
+TemporaryDependencyNodeTargetIdentifier=net10.0
+
+[commandLineArguments]
+/noconfig
+/unsafe-
+/checked-
+/nowarn:SA1633,SA0001,SA1518,1701,1702,8002
+/fullpaths
+/nostdlib+
+/errorreport:prompt
+/warn:10
+/define:TRACE;DEBUG;NET;NET10_0;NETCOREAPP;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NET9_0_OR_GREATER;NET10_0_OR_GREATER;NETCOREAPP1_0_OR_GREATER;NETCOREAPP1_1_OR_GREATER;NETCOREAPP2_0_OR_GREATER;NETCOREAPP2_1_OR_GREATER;NETCOREAPP2_2_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER
+/highentropyva+
+/nullable:enable
+/features:"InterceptorsNamespaces=;Microsoft.Extensions.Validation.Generated"
+/debug+
+/debug:portable
+/filealign:512
+/optimize-
+/out:obj\Debug\net10.0\Taxi.Application.dll
+/refout:obj\Debug\net10.0\refint\Taxi.Application.dll
+/target:library
+/warnaserror-
+/utf8output
+/deterministic+
+/langversion:latest
+/warnaserror+:NU1605,SYSLIB0011
+
+[sourceFiles]
+Common/Behaviours/
+ CachingBehavior.cs
+ LoggingBehaviour.cs
+ PerformanceBehaviour.cs
+ UnhandledExceptionBehaviour.cs
+ ValidationBehavior.cs
+Common/
+ Errors/ApplicationErrors.cs
+ Interfaces/
+  IAppDbContext.cs
+  ICachedQuery.cs
+  IClientConfigProvider.cs
+  IDirectionsService.cs
+  IFileStorage.cs
+  IFirebaseAuthService.cs
+  IGeocodingService.cs
+  IIdentityService.cs
+  ILanguageContext.cs
+  IPricingService.cs
+  IStripePaymentService.cs
+  IStripeWebhookValidator.cs
+  ITokenProvider.cs
+  ITripNotifier.cs
+  IUser.cs
+  UtilityService.cs
+ Models/PaginatedList.cs
+ Services/PricingService.cs
+DependencyInjection.cs
+Features/Auth/Commands/Login/
+ LoginCommand.cs
+ LoginCommandHandler.cs
+ LoginCommandValidator.cs
+Features/Auth/Dtos/
+ AuthResponse.cs
+ UserDto.cs
+Features/Config/GetClientConfig/
+ GetClientConfigQuery.cs
+ GetClientConfigQueryHandler.cs
+Features/Config/GetTripDiscount/
+ GetTripDiscountQuery.cs
+ GetTripDiscountQueryHandler.cs
+Features/Config/UpdateTripDiscount/
+ UpdateTripDiscountCommand.cs
+ UpdateTripDiscountCommandHandler.cs
+ UpdateTripDiscountCommandValidator.cs
+Features/Drivers/Commands/CreateDriver/
+ CreateDriverCommand.cs
+ CreateDriverCommandHandler.cs
+ CreateDriverCommandValidator.cs
+Features/Drivers/Commands/DeleteDriver/
+ DeleteDriverCommand.cs
+ DeleteDriverCommandHandler.cs
+Features/Drivers/Commands/UpdateDriver/
+ UpdateDriverCommand.cs
+ UpdateDriverCommandHandler.cs
+Features/Drivers/
+ Dtos/DriverDto.cs
+ Queries/GetDriverById/
+  GetDriverByIdQuery.cs
+  GetDriverByIdQueryHandler.cs
+  GetDriverByIdQueryValidator.cs
+ Queries/GetDrivers/
+  GetDriversQuery.cs
+  GetDriversQueryHandler.cs
+Features/Identity/Commands/RegisterAdmin/
+ RegisterAdminCommand.cs
+ RegisterAdminCommandHandler.cs
+Features/Identity/Dtos/
+ AppUserDto.cs
+ TokenResponse.cs
+Features/Identity/Queries/GenerateTokens/
+ GenerateTokenQuery.cs
+ GenerateTokenQueryHandler.cs
+ GenerateTokenQueryValidator.cs
+Features/Identity/Queries/GetUserInfo/
+ GetUserByIdQuery.cs
+ GetUserByIdQueryHandler.cs
+Features/Identity/Queries/RefreshTokens/
+ RefreshTokenQuery.cs
+ RefreshTokenQueryHandler.cs
+ RefreshTokenQueryValidator.cs
+Features/Maps/Dtos/
+ DirectionsDto.cs
+ PlaceResultDto.cs
+ ReverseGeocodeDto.cs
+Features/Maps/Queries/GetDirections/
+ GetDirectionsQuery.cs
+ GetDirectionsQueryHandler.cs
+Features/Maps/Queries/ReverseGeocode/
+ ReverseGeocodeQuery.cs
+ ReverseGeocodeQueryHandler.cs
+Features/Maps/Queries/SearchPlaces/
+ SearchPlacesQuery.cs
+ SearchPlacesQueryHandler.cs
+Features/Payments/Commands/HandleStripeWebhook/
+ HandleStripeWebhookCommand.cs
+ HandleStripeWebhookCommandHandler.cs
+Features/Trips/Commands/CancelTrip/
+ CancelTripCommand.cs
+ CancelTripCommandHandler.cs
+Features/Trips/Commands/GetPricingQuotes/
+ GetPricingQuotesCommand.cs
+ GetPricingQuotesCommandHandler.cs
+ GetPricingQuotesCommandValidator.cs
+Features/Trips/Commands/RequestTrip/
+ RequestTripCommand.cs
+ RequestTripCommandHandler.cs
+ RequestTripCommandValidator.cs
+Features/Trips/
+ Common/TripDispatchHelper.cs
+ Dtos/
+  CoordinateDto.cs
+  PagedResult.cs
+  PricingQuoteDto.cs
+  PricingQuotesListDto.cs
+  StripePaymentDto.cs
+  TripDto.cs
+  TripStopDto.cs
+  TripSummaryDto.cs
+ EventHandlers/
+  DriverAssignedEventHandler.cs
+  PaymentConfirmedEventHandler.cs
+  PaymentFailedEventHandler.cs
+  TripCancelledEventHandler.cs
+  TripCompletedEventHandler.cs
+  TripRefundedEventHandler.cs
+  TripRequestedEventHandler.cs
+  TripStartedEventHandler.cs
+ Queries/GetPassengerTripCount/
+  GetPassengerTripCountQuery.cs
+  GetPassengerTripCountQueryHandler.cs
+ Queries/GetPassengerTrips/
+  GetPassengerTripsQuery.cs
+  GetPassengerTripsQueryHandler.cs
+ Queries/GetTripById/
+  GetTripByIdQuery.cs
+  GetTripByIdQueryHandler.cs
+Features/Users/Commands/UpdateProfile/
+ UpdateProfileCommand.cs
+ UpdateProfileCommandHandler.cs
+ UpdateProfileCommandValidator.cs
+Features/Users/Commands/UpdateUserProfile/
+ UpdateUserProfileCommand.cs
+ UpdateUserProfileCommandHandler.cs
+Features/Users/Commands/UploadProfilePhoto/
+ UploadProfilePhotoCommand.cs
+ UploadProfilePhotoCommandHandler.cs
+Features/Users/Queries/GetCurrentUser/
+ GetCurrentUserQuery.cs
+ GetCurrentUserQueryHandler.cs
+Features/Vehicles/Commands/AssignVehicle/
+ AssignVehicleCommand.cs
+ AssignVehicleCommandHandler.cs
+Features/Vehicles/Commands/CreateVehicle/
+ CreateVehicleCommand.cs
+ CreateVehicleCommandHandler.cs
+ CreateVehicleCommandValidator.cs
+Features/Vehicles/Commands/CreateVehicleType/
+ CreateVehicleTypeCommand.cs
+ CreateVehicleTypeCommandHandler.cs
+ CreateVehicleTypeCommandValidator.cs
+Features/Vehicles/Commands/RemoveVehicle/
+ RemoveVehicleCommand.cs
+ RemoveVehicleCommandHandler.cs
+Features/Vehicles/Commands/RemoveVehicleType/
+ RemoveVehicleTypeCommand.cs
+ RemoveVehicleTypeCommandHandler.cs
+ RemoveVehicleTypeCommandValidator.cs
+Features/Vehicles/Commands/UpdateVehicle/
+ UpdateVehicleCommand.cs
+ UpdateVehicleCommandHandler.cs
+ UpdateVehicleCommandValidator.cs
+Features/Vehicles/Commands/UpdateVehicleType/
+ UpdateVehicleTypeCommand.cs
+ UpdateVehicleTypeCommandHandler.cs
+ UpdateVehicleTypeCommandValidator.cs
+Features/Vehicles/Queries/GetVehicleById/
+ GetVehicleByIdQuery.cs
+ GetVehicleByIdQueryHandler.cs
+Features/Vehicles/Queries/GetVehicleCatalog/
+ GetVehicleCatalogQuery.cs
+ GetVehicleCatalogQueryHandler.cs
+ GetVehicleCatalogQueryValidator.cs
+Features/Vehicles/Queries/GetVehicles/
+ GetVehiclesQuery.cs
+ GetVehiclesQueryHandler.cs
+Features/Vehicles/Queries/GetVehicleTypeByCode/
+ GetVehicleTypeByCodeQuery.cs
+ GetVehicleTypeByCodeQueryHandler.cs
+ GetVehicleTypeByCodeQueryValidator.cs
+Features/Vehicles/Queries/GetVehicleTypeById/
+ GetVehicleTypeByIdQuery.cs
+ GetVehicleTypeByIdQueryHandler.cs
+ GetVehicleTypeByIdQueryValidator.cs
+obj/Debug/net10.0/
+ .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
+ Taxi.Application.AssemblyInfo.cs
+ Taxi.Application.GlobalUsings.g.cs
+
+[metadataReferences]
+../
+ Taxi.Contracts/obj/Debug/net10.0/ref/Taxi.Contracts.dll
+ Taxi.Domain/obj/Debug/net10.0/ref/Taxi.Domain.dll
+<DOTNET>/packs/Microsoft.NETCore.App.Ref/10.0.7/ref/net10.0/
+ Microsoft.CSharp.dll
+ Microsoft.VisualBasic.Core.dll
+ Microsoft.VisualBasic.dll
+ Microsoft.Win32.Primitives.dll
+ Microsoft.Win32.Registry.dll
+ mscorlib.dll
+ netstandard.dll
+ System.AppContext.dll
+ System.Buffers.dll
+ System.Collections.Concurrent.dll
+ System.Collections.dll
+ System.Collections.Immutable.dll
+ System.Collections.NonGeneric.dll
+ System.Collections.Specialized.dll
+ System.ComponentModel.Annotations.dll
+ System.ComponentModel.DataAnnotations.dll
+ System.ComponentModel.dll
+ System.ComponentModel.EventBasedAsync.dll
+ System.ComponentModel.Primitives.dll
+ System.ComponentModel.TypeConverter.dll
+ System.Configuration.dll
+ System.Console.dll
+ System.Core.dll
+ System.Data.Common.dll
+ System.Data.DataSetExtensions.dll
+ System.Data.dll
+ System.Diagnostics.Contracts.dll
+ System.Diagnostics.Debug.dll
+ System.Diagnostics.DiagnosticSource.dll
+ System.Diagnostics.FileVersionInfo.dll
+ System.Diagnostics.Process.dll
+ System.Diagnostics.StackTrace.dll
+ System.Diagnostics.TextWriterTraceListener.dll
+ System.Diagnostics.Tools.dll
+ System.Diagnostics.TraceSource.dll
+ System.Diagnostics.Tracing.dll
+ System.dll
+ System.Drawing.dll
+ System.Drawing.Primitives.dll
+ System.Dynamic.Runtime.dll
+ System.Formats.Asn1.dll
+ System.Formats.Tar.dll
+ System.Globalization.Calendars.dll
+ System.Globalization.dll
+ System.Globalization.Extensions.dll
+ System.IO.Compression.Brotli.dll
+ System.IO.Compression.dll
+ System.IO.Compression.FileSystem.dll
+ System.IO.Compression.ZipFile.dll
+ System.IO.dll
+ System.IO.FileSystem.AccessControl.dll
+ System.IO.FileSystem.dll
+ System.IO.FileSystem.DriveInfo.dll
+ System.IO.FileSystem.Primitives.dll
+ System.IO.FileSystem.Watcher.dll
+ System.IO.IsolatedStorage.dll
+ System.IO.MemoryMappedFiles.dll
+ System.IO.Pipelines.dll
+ System.IO.Pipes.AccessControl.dll
+ System.IO.Pipes.dll
+ System.IO.UnmanagedMemoryStream.dll
+ System.Linq.AsyncEnumerable.dll
+ System.Linq.dll
+ System.Linq.Expressions.dll
+ System.Linq.Parallel.dll
+ System.Linq.Queryable.dll
+ System.Memory.dll
+ System.Net.dll
+ System.Net.Http.dll
+ System.Net.Http.Json.dll
+ System.Net.HttpListener.dll
+ System.Net.Mail.dll
+ System.Net.NameResolution.dll
+ System.Net.NetworkInformation.dll
+ System.Net.Ping.dll
+ System.Net.Primitives.dll
+ System.Net.Quic.dll
+ System.Net.Requests.dll
+ System.Net.Security.dll
+ System.Net.ServerSentEvents.dll
+ System.Net.ServicePoint.dll
+ System.Net.Sockets.dll
+ System.Net.WebClient.dll
+ System.Net.WebHeaderCollection.dll
+ System.Net.WebProxy.dll
+ System.Net.WebSockets.Client.dll
+ System.Net.WebSockets.dll
+ System.Numerics.dll
+ System.Numerics.Vectors.dll
+ System.ObjectModel.dll
+ System.Reflection.DispatchProxy.dll
+ System.Reflection.dll
+ System.Reflection.Emit.dll
+ System.Reflection.Emit.ILGeneration.dll
+ System.Reflection.Emit.Lightweight.dll
+ System.Reflection.Extensions.dll
+ System.Reflection.Metadata.dll
+ System.Reflection.Primitives.dll
+ System.Reflection.TypeExtensions.dll
+ System.Resources.Reader.dll
+ System.Resources.ResourceManager.dll
+ System.Resources.Writer.dll
+ System.Runtime.CompilerServices.Unsafe.dll
+ System.Runtime.CompilerServices.VisualC.dll
+ System.Runtime.dll
+ System.Runtime.Extensions.dll
+ System.Runtime.Handles.dll
+ System.Runtime.InteropServices.dll
+ System.Runtime.InteropServices.JavaScript.dll
+ System.Runtime.InteropServices.RuntimeInformation.dll
+ System.Runtime.Intrinsics.dll
+ System.Runtime.Loader.dll
+ System.Runtime.Numerics.dll
+ System.Runtime.Serialization.dll
+ System.Runtime.Serialization.Formatters.dll
+ System.Runtime.Serialization.Json.dll
+ System.Runtime.Serialization.Primitives.dll
+ System.Runtime.Serialization.Xml.dll
+ System.Security.AccessControl.dll
+ System.Security.Claims.dll
+ System.Security.Cryptography.Algorithms.dll
+ System.Security.Cryptography.Cng.dll
+ System.Security.Cryptography.Csp.dll
+ System.Security.Cryptography.dll
+ System.Security.Cryptography.Encoding.dll
+ System.Security.Cryptography.OpenSsl.dll
+ System.Security.Cryptography.Primitives.dll
+ System.Security.Cryptography.X509Certificates.dll
+ System.Security.dll
+ System.Security.Principal.dll
+ System.Security.Principal.Windows.dll
+ System.Security.SecureString.dll
+ System.ServiceModel.Web.dll
+ System.ServiceProcess.dll
+ System.Text.Encoding.CodePages.dll
+ System.Text.Encoding.dll
+ System.Text.Encoding.Extensions.dll
+ System.Text.Encodings.Web.dll
+ System.Text.Json.dll
+ System.Text.RegularExpressions.dll
+ System.Threading.AccessControl.dll
+ System.Threading.Channels.dll
+ System.Threading.dll
+ System.Threading.Overlapped.dll
+ System.Threading.Tasks.Dataflow.dll
+ System.Threading.Tasks.dll
+ System.Threading.Tasks.Extensions.dll
+ System.Threading.Tasks.Parallel.dll
+ System.Threading.Thread.dll
+ System.Threading.ThreadPool.dll
+ System.Threading.Timer.dll
+ System.Transactions.dll
+ System.Transactions.Local.dll
+ System.ValueTuple.dll
+ System.Web.dll
+ System.Web.HttpUtility.dll
+ System.Windows.dll
+ System.Xml.dll
+ System.Xml.Linq.dll
+ System.Xml.ReaderWriter.dll
+ System.Xml.Serialization.dll
+ System.Xml.XDocument.dll
+ System.Xml.XmlDocument.dll
+ System.Xml.XmlSerializer.dll
+ System.Xml.XPath.dll
+ System.Xml.XPath.XDocument.dll
+ WindowsBase.dll
+<NUGET>/
+ fluentvalidation.dependencyinjectionextensions/12.1.1/lib/net8.0/FluentValidation.DependencyInjectionExtensions.dll
+ fluentvalidation/12.1.1/lib/net8.0/FluentValidation.dll
+ mediatr.contracts/2.0.1/lib/netstandard2.0/MediatR.Contracts.dll
+ mediatr/14.1.0/lib/net10.0/MediatR.dll
+ microsoft.aspnetcore.authorization/3.1.3/lib/netcoreapp3.1/Microsoft.AspNetCore.Authorization.dll
+ microsoft.aspnetcore.components.dataannotations.validation/3.2.0-rc1.20223.4/lib/netstandard2.1/Microsoft.AspNetCore.Components.DataAnnotations.Validation.dll
+ microsoft.aspnetcore.components.forms/3.1.3/lib/netcoreapp3.1/Microsoft.AspNetCore.Components.Forms.dll
+ microsoft.aspnetcore.components/3.1.3/lib/netcoreapp3.1/Microsoft.AspNetCore.Components.dll
+ microsoft.aspnetcore.metadata/3.1.3/lib/netcoreapp3.1/Microsoft.AspNetCore.Metadata.dll
+ microsoft.entityframeworkcore.abstractions/10.0.7/lib/net10.0/Microsoft.EntityFrameworkCore.Abstractions.dll
+ microsoft.entityframeworkcore/10.0.7/lib/net10.0/Microsoft.EntityFrameworkCore.dll
+ microsoft.extensions.caching.abstractions/10.0.7/lib/net10.0/Microsoft.Extensions.Caching.Abstractions.dll
+ microsoft.extensions.caching.memory/10.0.7/lib/net10.0/Microsoft.Extensions.Caching.Memory.dll
+ microsoft.extensions.dependencyinjection.abstractions/10.0.7/lib/net10.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll
+ microsoft.extensions.dependencyinjection/10.0.7/lib/net10.0/Microsoft.Extensions.DependencyInjection.dll
+ microsoft.extensions.logging.abstractions/10.0.7/lib/net10.0/Microsoft.Extensions.Logging.Abstractions.dll
+ microsoft.extensions.logging/10.0.7/lib/net10.0/Microsoft.Extensions.Logging.dll
+ microsoft.extensions.options/10.0.7/lib/net10.0/Microsoft.Extensions.Options.dll
+ microsoft.extensions.primitives/10.0.7/lib/net10.0/Microsoft.Extensions.Primitives.dll
+ microsoft.identitymodel.abstractions/8.14.0/lib/net9.0/Microsoft.IdentityModel.Abstractions.dll
+ microsoft.identitymodel.jsonwebtokens/8.14.0/lib/net9.0/Microsoft.IdentityModel.JsonWebTokens.dll
+ microsoft.identitymodel.logging/8.14.0/lib/net9.0/Microsoft.IdentityModel.Logging.dll
+ microsoft.identitymodel.tokens/8.14.0/lib/net9.0/Microsoft.IdentityModel.Tokens.dll
+ microsoft.jsinterop/3.1.3/lib/netcoreapp3.1/Microsoft.JSInterop.dll
+ questpdf/2026.2.4/lib/net10.0/QuestPDF.dll
+
+[analyzerReferences]
+<DOTNET>/packs/Microsoft.NETCore.App.Ref/10.0.7/analyzers/dotnet/cs/
+ Microsoft.Interop.ComInterfaceGenerator.dll
+ Microsoft.Interop.JavaScript.JSImportGenerator.dll
+ Microsoft.Interop.LibraryImportGenerator.dll
+ Microsoft.Interop.SourceGeneration.dll
+ System.Text.Json.SourceGeneration.dll
+ System.Text.RegularExpressions.Generator.dll
+<DOTNET>/sdk/10.0.203/Sdks/Microsoft.NET.Sdk/analyzers/
+ Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll
+ Microsoft.CodeAnalysis.NetAnalyzers.dll
+<NUGET>/
+ microsoft.aspnetcore.components.analyzers/3.1.3/analyzers/dotnet/cs/Microsoft.AspNetCore.Components.Analyzers.dll
+ microsoft.entityframeworkcore.analyzers/10.0.7/analyzers/dotnet/cs/Microsoft.EntityFrameworkCore.Analyzers.dll
+ microsoft.extensions.logging.abstractions/10.0.7/analyzers/dotnet/roslyn4.4/cs/Microsoft.Extensions.Logging.Generators.dll
+ microsoft.extensions.options/10.0.7/analyzers/dotnet/roslyn4.4/cs/Microsoft.Extensions.Options.SourceGeneration.dll
+ stylecop.analyzers.unstable/1.2.0.556/analyzers/dotnet/cs/
+  StyleCop.Analyzers.CodeFixes.dll
+  StyleCop.Analyzers.dll
+
+[analyzerConfigFiles]
+../../.editorconfig
+<DOTNET>/sdk/10.0.203/Sdks/Microsoft.NET.Sdk/analyzers/build/config/analysislevel_10_default.globalconfig
+obj/Debug/net10.0/Taxi.Application.GeneratedMSBuildEditorConfig.editorconfig

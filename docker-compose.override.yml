@@ -1,3 +1,10 @@
+# Development overrides (ports exposed on 0.0.0.0, Seq no-auth, etc.).
+# Auto-loaded by `docker compose up` (no `-f` flag needed).
+#
+# Run dev :  docker compose up -d
+# Stop dev:  docker compose down
+# Logs    :  docker compose logs -f taxi.api
+
 services:
   taxi.api:
     ports:
@@ -9,6 +16,10 @@ services:
       JwtSettings__Secret: ${JWT_SECRET}
       AppSettings__GoogleMapsApiKey: ${GOOGLE_MAPS_API_KEY}
       AppSettings__FirebaseCredentials: ${FIREBASE_CREDENTIALS}
+      AppSettings__Stripe__SecretKey: ${STRIPE_SECRET_KEY}
+      AppSettings__Stripe__PublishableKey: ${STRIPE_PUBLISHABLE_KEY}
+      AppSettings__Stripe__WebhookSecret: ${STRIPE_WEBHOOK_SECRET}
+      AppSettings__Features__StripeEnabled: ${STRIPE_ENABLED}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://seq:5341/ingest/otlp/v1/traces
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
     restart: on-failure

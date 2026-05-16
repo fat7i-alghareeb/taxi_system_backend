@@ -446,6 +446,14 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
+                    b.Property<string>("LastErrorCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("LastErrorMessage")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
@@ -465,14 +473,32 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<string>("StripeChargeId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("StripeClientSecret")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("StripePaymentIntentId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
                     b.Property<string>("TransactionReference")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<Guid>("TripId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("StripePaymentIntentId")
+                        .IsUnique()
+                        .HasFilter("\"StripePaymentIntentId\" IS NOT NULL");
+
+                    b.HasIndex("TripId");
 
                     b.ToTable("Payments");
                 });
@@ -995,6 +1021,15 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Taxi.Domain.Payments.Payment", b =>
+                {
+                    b.HasOne("Taxi.Domain.Trips.Trip", null)
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Taxi.Domain.Trips.PricingQuote", b =>
                 {
                     b.OwnsMany("Taxi.Domain.Trips.Coordinate", "Stops", b1 =>
@@ -1112,10 +1147,28 @@ namespace Taxi.Infrastructure.Data.Migrations
                             b1.Property<string>("Ar")
                                 .IsRequired();
 
+                            b1.Property<string>("De")
+                                .IsRequired();
+
                             b1.Property<string>("En")
                                 .IsRequired();
 
+                            b1.Property<string>("Es")
+                                .IsRequired();
+
+                            b1.Property<string>("Fr")
+                                .IsRequired();
+
                             b1.Property<string>("Nl")
+                                .IsRequired();
+
+                            b1.Property<string>("Pl")
+                                .IsRequired();
+
+                            b1.Property<string>("Ro")
+                                .IsRequired();
+
+                            b1.Property<string>("Uk")
                                 .IsRequired();
 
                             b1.HasKey("UserId");
@@ -1158,10 +1211,28 @@ namespace Taxi.Infrastructure.Data.Migrations
                             b1.Property<string>("Ar")
                                 .IsRequired();
 
+                            b1.Property<string>("De")
+                                .IsRequired();
+
                             b1.Property<string>("En")
                                 .IsRequired();
 
+                            b1.Property<string>("Es")
+                                .IsRequired();
+
+                            b1.Property<string>("Fr")
+                                .IsRequired();
+
                             b1.Property<string>("Nl")
+                                .IsRequired();
+
+                            b1.Property<string>("Pl")
+                                .IsRequired();
+
+                            b1.Property<string>("Ro")
+                                .IsRequired();
+
+                            b1.Property<string>("Uk")
                                 .IsRequired();
 
                             b1.HasKey("VehicleTypeId");

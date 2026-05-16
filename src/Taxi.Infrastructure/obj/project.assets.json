@@ -1897,7 +1897,6 @@
           "FluentValidation.DependencyInjectionExtensions": "12.1.1",
           "Microsoft.EntityFrameworkCore": "10.0.7",
           "QuestPDF": "2026.2.4",
-          "Stripe.net": "51.1.0",
           "Taxi.Contracts": "1.0.0",
           "Taxi.Domain": "1.0.0"
         },
@@ -1912,8 +1911,7 @@
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
-          "Microsoft.AspNetCore.Components.DataAnnotations.Validation": "3.2.0-rc1.20223.4",
-          "Stripe.net": "51.1.0"
+          "Microsoft.AspNetCore.Components.DataAnnotations.Validation": "3.2.0-rc1.20223.4"
         },
         "compile": {
           "bin/placeholder/Taxi.Contracts.dll": {}
@@ -1927,7 +1925,6 @@
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
           "MediatR": "14.1.0",
-          "Stripe.net": "51.1.0",
           "Taxi.Contracts": "1.0.0"
         },
         "compile": {
@@ -5202,7 +5199,6 @@
       },
       "frameworks": {
         "net10.0": {
-          "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
             "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Application\\Taxi.Application.csproj": {
@@ -5225,7 +5221,6 @@
     },
     "frameworks": {
       "net10.0": {
-        "framework": "net10.0",
         "targetAlias": "net10.0",
         "dependencies": {
           "FirebaseAdmin": {

@@ -1,3 +1,13 @@
+# Base compose file (services without environment-specific settings).
+#
+# Do NOT run this file alone — it relies on either the dev override
+# (auto-loaded) or the prod override (explicit -f flag).
+#
+# Dev  : docker compose up -d
+#        (auto-merges docker-compose.override.yml)
+#
+# Prod : docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
 services:
   taxi.api:
     build:

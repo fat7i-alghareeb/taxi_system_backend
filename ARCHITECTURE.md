@@ -185,3 +185,73 @@ To ensure a professional, predictable, and scalable API surface, all developers 
 5. **Version Everything**: Always include a version indicator in your base route (e.g., `/api/v1/resources`). This protects clients from breaking during system overhauls.
 
 ---
+
+## 7. Stripe Payment Architecture
+
+### Why
+
+Taxi fares are charged at booking confirmation, not at trip completion. This is a deliberate product decision: a passenger must pay before a driver is assigned. Stripe PaymentIntents are the chosen mechanism. Async webhook reconciliation handles the gap between the Payment Sheet closing on the device and the final charge state arriving server-side.
+
+### Components
+
+| Class | Layer | Role |
+|-------|-------|------|
+| `IStripePaymentService` | Application (interface) | Creates PaymentIntents |
+| `StripePaymentService` | Infrastructure | Stripe.net implementation of `IStripePaymentService` |
+| `IStripeWebhookValidator` | Application (interface) | Parses raw body + validates `Stripe-Signature` header |
+| `StripeWebhookValidator` | Infrastructure | Stripe.net implementation of `IStripeWebhookValidator` |
+| `HandleStripeWebhookCommandHandler` | Application | Vertical slice that processes the 4 event kinds |
+| `WebhooksController` | API | `[AllowAnonymous]` endpoint; delegates entirely to MediatR |
+| `Payment` | Domain | Aggregate with state machine (`Pending → Completed/Failed/Refunded`) |
+| `Trip` | Domain | `ConfirmPayment()`, `MarkPaymentFailed()`, `MarkRefunded()` transition methods |
+
+### Trip → Payment seam
+
+`RequestTripCommandHandler` reads `ClientConfig.StripeEnabled`. When enabled:
+
+1. Creates a `Payment` aggregate via `Payment.CreateForStripe(quoteId, amount, currency)` — initial state `Pending`.
+2. Calls `IStripePaymentService.CreatePaymentIntentAsync(quoteId, amount, ...)` — returns `(IntentId, ClientSecret, PublishableKey)`.
+3. Sets trip initial state to `AwaitingPayment`.
+4. Returns `clientSecret` + `publishableKey` in the `TripResponse` contract — consumed by the Flutter app's Stripe Payment Sheet.
+
+### Webhook flow
+
+`POST /api/webhooks/stripe` is `[AllowAnonymous]`. The raw request body is read before model binding; `IStripeWebhookValidator` verifies the `Stripe-Signature` header against `Stripe:WebhookSecret`. Invalid signatures return `400`. The validated event is dispatched via `ISender.Send(new HandleStripeWebhookCommand(stripeEvent))`.
+
+`HandleStripeWebhookCommandHandler` handles four event kinds:
+
+| Event type | Effect on `Payment` | Effect on `Trip` |
+|------------|--------------------|--------------------|
+| `payment_intent.succeeded` | `MarkAsCompleted(chargeId)` | `ConfirmPayment()` → `PendingDriver`; driver assigned via `TripDispatchHelper` |
+| `payment_intent.payment_failed` | `MarkAsFailed(reason)` | `MarkPaymentFailed(reason)` → `PaymentFailed` |
+| `payment_intent.canceled` | `MarkAsFailed(reason)` | `MarkPaymentFailed(reason)` → `PaymentFailed` |
+| `charge.refunded` | `MarkAsRefunded(amount)` | `MarkRefunded(amount)` → `Refunded` |
+
+Unknown event types log a warning and return `200` so Stripe does not schedule a retry.
+
+### Idempotency
+
+Each `Payment` transition method (`MarkAsCompleted`, `MarkAsFailed`, `MarkAsRefunded`) returns `Result.Success` immediately if the payment is already in the target state. `HandleStripeWebhookCommandHandler` therefore short-circuits cleanly on re-delivered webhooks without emitting duplicate domain events or side effects.
+
+### State machine reference
+
+```
+Trip:     AwaitingPayment → PendingDriver (or Scheduled) → DriverAssigned → Started → Completed → Refunded
+                          → PaymentFailed
+                          → Cancelled
+
+Payment:  Pending → Completed
+                  → Failed
+                  → Refunded
+```
+
+### Key file paths
+
+- [`src/Taxi.Infrastructure/Payments/StripePaymentService.cs`](src/Taxi.Infrastructure/Payments/StripePaymentService.cs)
+- [`src/Taxi.Infrastructure/Payments/StripeWebhookValidator.cs`](src/Taxi.Infrastructure/Payments/StripeWebhookValidator.cs)
+- [`src/Taxi.Application/Features/Payments/Commands/HandleStripeWebhook/HandleStripeWebhookCommandHandler.cs`](src/Taxi.Application/Features/Payments/Commands/HandleStripeWebhook/HandleStripeWebhookCommandHandler.cs)
+- [`src/Taxi.Api/Controllers/WebhooksController.cs`](src/Taxi.Api/Controllers/WebhooksController.cs)
+- [`src/Taxi.Domain/Payments/Payment.cs`](src/Taxi.Domain/Payments/Payment.cs)
+- [`src/Taxi.Domain/Trips/Trip.cs`](src/Taxi.Domain/Trips/Trip.cs)
+
+---

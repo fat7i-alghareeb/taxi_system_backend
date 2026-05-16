@@ -17,5 +17,26 @@ public class AppSettings
     public string GoogleMapsApiKey { get; set; } = default!;
 
     public string FirebaseCredentials { get; set; } = default!;
+
+    public StripeSettings Stripe { get; set; } = new();
+
+    public FeatureFlags Features { get; set; } = new();
 }
 
+public class StripeSettings
+{
+    public string SecretKey { get; set; } = string.Empty;
+
+    public string PublishableKey { get; set; } = string.Empty;
+
+    public string WebhookSecret { get; set; } = string.Empty;
+
+    public bool TestMode { get; set; } = true;
+}
+
+public class FeatureFlags
+{
+    public bool StripeEnabled { get; set; }
+
+    public bool SignalREnabled { get; set; } = true;
+}

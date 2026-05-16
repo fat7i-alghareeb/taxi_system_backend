@@ -1,3 +1,5 @@
+using Taxi.Contracts.Responses.Payments;
+
 namespace Taxi.Contracts.Responses.Trips;
 
 public record TripResponse(
@@ -9,5 +11,5 @@ public record TripResponse(
     string Status,
     decimal QuotedFare,
     string CurrencyCode,
-    DateTime CreatedAtUtc);
-
+    DateTime CreatedAtUtc,
+    StripePaymentResponse? StripePayment = null);

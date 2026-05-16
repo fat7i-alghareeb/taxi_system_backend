@@ -11,5 +11,5 @@ public record TripDto(
     string CurrencyCode,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset? ScheduledAtUtc,
-    List<TripStopDto> Stops);
-
+    List<TripStopDto> Stops,
+    StripePaymentDto? StripePayment = null);

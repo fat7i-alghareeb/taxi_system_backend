@@ -108,6 +108,10 @@ public static class LocalizationKeys
     {
         public const string InvalidAmount = "Payment.Amount.Invalid";
         public const string NotFound = "Payment.NotFound";
+        public const string StripeInitiationFailed = "Payment.Stripe.InitiationFailed";
+        public const string StripeSignatureInvalid = "Payment.Stripe.SignatureInvalid";
+        public const string StripeIntentNotFound = "Payment.Stripe.IntentNotFound";
+        public const string WebhookHandlingFailed = "Payment.Stripe.WebhookHandlingFailed";
     }
 
     public static class Trip

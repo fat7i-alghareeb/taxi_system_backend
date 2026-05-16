@@ -2445,7 +2445,6 @@
           "FluentValidation.DependencyInjectionExtensions": "12.1.1",
           "Microsoft.EntityFrameworkCore": "10.0.7",
           "QuestPDF": "2026.2.4",
-          "Stripe.net": "51.1.0",
           "Taxi.Contracts": "1.0.0",
           "Taxi.Domain": "1.0.0"
         },
@@ -2466,7 +2465,6 @@
           "Microsoft.AspNetCore.Components.WebAssembly.Authentication": "10.0.7",
           "Microsoft.AspNetCore.SignalR.Client": "10.0.7",
           "Microsoft.DotNet.HotReload.WebAssembly.Browser": "10.0.203",
-          "Stripe.net": "51.1.0",
           "System.IdentityModel.Tokens.Jwt": "8.17.0",
           "Taxi.Contracts": "1.0.0"
         },
@@ -2481,8 +2479,7 @@
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
-          "Microsoft.AspNetCore.Components.DataAnnotations.Validation": "3.2.0-rc1.20223.4",
-          "Stripe.net": "51.1.0"
+          "Microsoft.AspNetCore.Components.DataAnnotations.Validation": "3.2.0-rc1.20223.4"
         },
         "compile": {
           "bin/placeholder/Taxi.Contracts.dll": {}
@@ -2496,7 +2493,6 @@
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
           "MediatR": "14.1.0",
-          "Stripe.net": "51.1.0",
           "Taxi.Contracts": "1.0.0"
         },
         "compile": {
@@ -6707,7 +6703,6 @@
       "OpenTelemetry.Instrumentation.AspNetCore >= 1.15.2",
       "OpenTelemetry.Instrumentation.Http >= 1.15.1",
       "Scalar.AspNetCore >= 2.14.6",
-      "Stripe.net >= 51.1.0",
       "StyleCop.Analyzers >= 1.2.0-beta.556",
       "Swashbuckle.AspNetCore >= 10.1.7",
       "Taxi.Application >= 1.0.0",
@@ -6747,7 +6742,6 @@
       },
       "frameworks": {
         "net10.0": {
-          "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
             "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Application\\Taxi.Application.csproj": {
@@ -6779,7 +6773,6 @@
     },
     "frameworks": {
       "net10.0": {
-        "framework": "net10.0",
         "targetAlias": "net10.0",
         "dependencies": {
           "Asp.Versioning.Mvc": {
@@ -6842,11 +6835,6 @@
           "Scalar.AspNetCore": {
             "target": "Package",
             "version": "[2.14.6, )",
-            "versionCentrallyManaged": true
-          },
-          "Stripe.net": {
-            "target": "Package",
-            "version": "[51.1.0, )",
             "versionCentrallyManaged": true
           },
           "StyleCop.Analyzers": {
