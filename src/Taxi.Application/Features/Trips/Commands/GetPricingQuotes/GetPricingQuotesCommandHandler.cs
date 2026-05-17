@@ -38,16 +38,24 @@ public class GetPricingQuotesCommandHandler(
             .OrderBy(vt => vt.SortOrder)
             .ToListAsync(ct);
 
+        var discountConfig = await _context.AppConfigs
+            .FirstOrDefaultAsync(c => c.Key == AppConfigKeys.TripDiscountPercent, ct);
+        var discountPercent = decimal.TryParse(discountConfig?.Value, out var d) && d > 0 ? d : 0m;
+
         var validUntil = DateTime.UtcNow.AddMinutes(15);
         var quotes = new List<PricingQuote>();
         var domainCoordinates = stops.Select(s => new Domain.Trips.Coordinate(s.Latitude, s.Longitude)).ToList();
 
         foreach (var vehicleType in vehicleTypes)
         {
-            var fare = pricingService.CalculateFare(
+            var originalFare = pricingService.CalculateFare(
                 vehicleType,
                 (double)totalDistanceKm,
                 (double)totalDurationMin);
+
+            var finalFare = discountPercent > 0
+                ? Math.Round(originalFare * (1 - (discountPercent / 100)), 2)
+                : originalFare;
 
             var quoteResult = PricingQuote.Create(
                 Guid.NewGuid(),
@@ -55,7 +63,9 @@ public class GetPricingQuotesCommandHandler(
                 vehicleType.Id,
                 totalDistanceKm,
                 totalDurationMin,
-                fare,
+                finalFare,
+                originalFare,
+                discountPercent,
                 vehicleType.CurrencyCode,
                 validUntil,
                 domainCoordinates);
@@ -71,30 +81,19 @@ public class GetPricingQuotesCommandHandler(
 
         await _context.SaveChangesAsync(ct);
 
-        var discountConfig = await _context.AppConfigs
-            .FirstOrDefaultAsync(c => c.Key == AppConfigKeys.TripDiscountPercent, ct);
-        var discountPercent = decimal.TryParse(discountConfig?.Value, out var d) && d > 0 ? d : 0m;
-
         var lang = languageContext.Language;
 
         var quoteDtos = quotes.Zip(vehicleTypes, (quote, vt) =>
-        {
-            var originalFare = quote.FinalFare;
-            var finalFare = discountPercent > 0
-                ? Math.Round(originalFare * (1 - (discountPercent / 100)), 2)
-                : originalFare;
-
-            return new PricingQuoteDto(
+            new PricingQuoteDto(
                 quote.Id,
                 vt.Id,
                 lang == Languages.Ar ? vt.Name.Ar : lang == Languages.Nl ? vt.Name.Nl : vt.Name.En,
                 vt.PassengerCapacity,
-                originalFare,
-                finalFare,
-                discountPercent,
+                quote.OriginalFare,
+                quote.FinalFare,
+                quote.DiscountPercent,
                 quote.CurrencyCode,
-                quote.ValidUntil);
-        }).ToList();
+                quote.ValidUntil)).ToList();
 
         return new PricingQuotesListDto(totalDistanceKm, totalDurationMin, quoteDtos);
     }

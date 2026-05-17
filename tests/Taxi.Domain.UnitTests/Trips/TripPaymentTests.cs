@@ -136,8 +136,16 @@ public class TripPaymentTests
         var vehicleTypeId = Guid.NewGuid();
 
         var quote = PricingQuote.Create(
-            Guid.NewGuid(), passengerId, vehicleTypeId,
-            5m, 10m, 15m, "eur", DateTime.UtcNow.AddHours(1),
+            Guid.NewGuid(),
+            passengerId,
+            vehicleTypeId,
+            5m,
+            10m,
+            15m,
+            15m,
+            0m,
+            "eur",
+            DateTime.UtcNow.AddHours(1),
             [new Coordinate(52.37m, 4.89m), new Coordinate(52.38m, 4.90m)]).Value;
 
         var stops = new[]

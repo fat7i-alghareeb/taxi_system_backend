@@ -23,6 +23,12 @@ public class PricingQuoteConfiguration : IEntityTypeConfiguration<PricingQuote>
         builder.Property(q => q.FinalFare)
             .HasPrecision(10, 2);
 
+        builder.Property(q => q.OriginalFare)
+            .HasPrecision(10, 2);
+
+        builder.Property(q => q.DiscountPercent)
+            .HasPrecision(5, 2);
+
         builder.Property(q => q.ValidUntil)
             .IsRequired();
 

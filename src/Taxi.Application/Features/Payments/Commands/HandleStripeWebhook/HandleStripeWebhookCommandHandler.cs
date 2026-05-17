@@ -141,6 +141,24 @@ public class HandleStripeWebhookCommandHandler(
             {
                 return failResult.Error;
             }
+
+            // Restore the quote so the passenger can retry with the same quoteId.
+            // Stripe only fires this webhook when the PaymentIntent is explicitly
+            // failed or canceled on Stripe's side (e.g. card decline, 24-hour
+            // expiry). The Flutter client reuses the existing PaymentIntent on a
+            // simple dismiss, so the quote stays consumed in that path — no
+            // backend call is made. Here we handle the case where the PI is
+            // truly terminal and the client needs to start a fresh requestTrip.
+            var quote = await context.PricingQuotes
+                .FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
+            if (quote is not null)
+            {
+                quote.MarkAsUnused();
+                logger.LogInformation(
+                    "Restored quoteId={QuoteId} to unused after PaymentIntent failure for tripId={TripId}",
+                    quote.Id,
+                    trip.Id);
+            }
         }
 
         await context.SaveChangesAsync(ct);

@@ -17,6 +17,8 @@ public sealed class PricingQuote : Entity
         decimal totalDistanceKm,
         decimal totalDurationMin,
         decimal finalFare,
+        decimal originalFare,
+        decimal discountPercent,
         string currencyCode,
         DateTime validUntil,
         IEnumerable<Coordinate> stops)
@@ -27,6 +29,8 @@ public sealed class PricingQuote : Entity
         TotalDistanceKm = totalDistanceKm;
         TotalDurationMin = totalDurationMin;
         FinalFare = finalFare;
+        OriginalFare = originalFare;
+        DiscountPercent = discountPercent;
         CurrencyCode = currencyCode;
         ValidUntil = validUntil;
         Used = false;
@@ -41,6 +45,8 @@ public sealed class PricingQuote : Entity
         decimal totalDistanceKm,
         decimal totalDurationMin,
         decimal finalFare,
+        decimal originalFare,
+        decimal discountPercent,
         string currencyCode,
         DateTime validUntil,
         IEnumerable<Coordinate> stops)
@@ -82,6 +88,8 @@ public sealed class PricingQuote : Entity
             totalDistanceKm,
             totalDurationMin,
             finalFare,
+            originalFare,
+            discountPercent,
             currencyCode,
             validUntil,
             stops);
@@ -92,6 +100,8 @@ public sealed class PricingQuote : Entity
     public decimal TotalDistanceKm { get; private set; }
     public decimal TotalDurationMin { get; private set; }
     public decimal FinalFare { get; private set; }
+    public decimal OriginalFare { get; private set; }
+    public decimal DiscountPercent { get; private set; }
     public string CurrencyCode { get; private set; } = default!;
     public DateTime ValidUntil { get; private set; }
     public bool Used { get; private set; }
@@ -100,5 +110,6 @@ public sealed class PricingQuote : Entity
 
     public bool IsExpired() => DateTime.UtcNow > ValidUntil;
     public void MarkAsUsed() => Used = true;
+    public void MarkAsUnused() => Used = false;
 }
 

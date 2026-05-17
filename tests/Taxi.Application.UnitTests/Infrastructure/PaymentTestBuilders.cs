@@ -15,6 +15,8 @@ internal static class PaymentTestBuilders
             totalDistanceKm: 5m,
             totalDurationMin: 10m,
             finalFare: 15.00m,
+            originalFare: 15.00m,
+            discountPercent: 0m,
             currencyCode: "eur",
             validUntil: DateTime.UtcNow.AddHours(1),
             stops: [new Coordinate(52.37m, 4.89m), new Coordinate(52.38m, 4.90m)]).Value;
@@ -26,7 +28,12 @@ internal static class PaymentTestBuilders
             quoteId,
             passengerId,
             vehicleTypeId,
-            5m, 10m, 15.00m, "eur",
+            5m,
+            10m,
+            15.00m,
+            15.00m,
+            0m,
+            "eur",
             DateTime.UtcNow.AddHours(1),
             [new Coordinate(52.37m, 4.89m), new Coordinate(52.38m, 4.90m)]).Value;
 

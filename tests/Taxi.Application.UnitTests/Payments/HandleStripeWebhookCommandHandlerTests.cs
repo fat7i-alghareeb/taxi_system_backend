@@ -146,9 +146,11 @@ public class HandleStripeWebhookCommandHandlerTests
 
         var paymentsSet = DbSetMockFactory.Create([payment]);
         var tripsSet = DbSetMockFactory.Create([trip]);
+        var quotesSet = DbSetMockFactory.Create<PricingQuote>([]);
         var context = Substitute.For<IAppDbContext>();
         context.Payments.Returns(paymentsSet);
         context.Trips.Returns(tripsSet);
+        context.PricingQuotes.Returns(quotesSet);
         context.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
         var handler = CreateHandler(context);
 
@@ -195,9 +197,11 @@ public class HandleStripeWebhookCommandHandlerTests
 
         var paymentsSet = DbSetMockFactory.Create([payment]);
         var tripsSet = DbSetMockFactory.Create([trip]);
+        var quotesSet = DbSetMockFactory.Create<PricingQuote>([]);
         var context = Substitute.For<IAppDbContext>();
         context.Payments.Returns(paymentsSet);
         context.Trips.Returns(tripsSet);
+        context.PricingQuotes.Returns(quotesSet);
         context.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
         var handler = CreateHandler(context);
 

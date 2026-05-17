@@ -123,8 +123,16 @@ public class RequestTripCommandHandlerStripeTests
     {
         var quoteId = Guid.NewGuid();
         var quote = PricingQuote.Create(
-            quoteId, passengerId, vehicleTypeId,
-            5m, 10m, 15m, "eur", DateTime.UtcNow.AddHours(1),
+            quoteId,
+            passengerId,
+            vehicleTypeId,
+            5m,
+            10m,
+            15m,
+            15m,
+            0m,
+            "eur",
+            DateTime.UtcNow.AddHours(1),
             [new(52.37m, 4.89m), new(52.38m, 4.90m)]).Value;
         if (quoteUsed)
         {
