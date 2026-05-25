@@ -15,7 +15,6 @@ public sealed class VehicleType : AuditableEntity
         decimal ratePerKm,
         decimal ratePerMin,
         decimal minimumFare,
-        string currencyCode,
         int sortOrder)
         : base(id)
     {
@@ -25,7 +24,6 @@ public sealed class VehicleType : AuditableEntity
         RatePerKm = ratePerKm;
         RatePerMin = ratePerMin;
         MinimumFare = minimumFare;
-        CurrencyCode = currencyCode;
         SortOrder = sortOrder;
         IsActive = true;
     }
@@ -36,7 +34,6 @@ public sealed class VehicleType : AuditableEntity
     public decimal RatePerKm { get; private set; }
     public decimal RatePerMin { get; private set; }
     public decimal MinimumFare { get; private set; }
-    public string CurrencyCode { get; private set; } = "EUR";
     public bool IsActive { get; private set; }
     public int SortOrder { get; private set; }
 
@@ -56,7 +53,6 @@ public sealed class VehicleType : AuditableEntity
         decimal ratePerKm,
         decimal ratePerMin,
         decimal minimumFare,
-        string currencyCode = "EUR",
         int sortOrder = 0)
     {
         if (string.IsNullOrWhiteSpace(code))
@@ -110,7 +106,7 @@ public sealed class VehicleType : AuditableEntity
         }
 
         var name = new LocalizedText(nameEn, nameAr, nameNl, nameDe, namePl, nameUk, nameFr, nameEs, nameRo);
-        return new VehicleType(id, code, name, passengerCapacity, ratePerKm, ratePerMin, minimumFare, currencyCode, sortOrder);
+        return new VehicleType(id, code, name, passengerCapacity, ratePerKm, ratePerMin, minimumFare, sortOrder);
     }
 
     public Result<Success> UpdatePricing(decimal ratePerKm, decimal ratePerMin, decimal minimumFare)

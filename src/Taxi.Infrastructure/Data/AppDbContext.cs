@@ -10,7 +10,6 @@ using Taxi.Domain.Identity;
 using Taxi.Domain.Notifications;
 using Taxi.Domain.PaymentMethods;
 using Taxi.Domain.Payments;
-using Taxi.Domain.Promos;
 using Taxi.Domain.Trips;
 using Taxi.Domain.Users;
 using Taxi.Domain.Vehicles;
@@ -23,17 +22,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, IMediator medi
     public DbSet<RefreshToken> RefreshTokens => this.Set<RefreshToken>();
     public DbSet<User> DomainUsers => this.Set<User>();
     public DbSet<VehicleType> VehicleTypes => this.Set<VehicleType>();
-    public DbSet<Vehicle> Vehicles => this.Set<Vehicle>();
     public DbSet<Driver> Drivers => this.Set<Driver>();
+    public DbSet<DriverDocument> DriverDocuments => this.Set<DriverDocument>();
     public DbSet<Trip> Trips => this.Set<Trip>();
     public DbSet<Payment> Payments => this.Set<Payment>();
-    public DbSet<PromoCode> PromoCodes => this.Set<PromoCode>();
     public DbSet<AuditLog> AuditLogs => this.Set<AuditLog>();
     public DbSet<Notification> Notifications => this.Set<Notification>();
     public DbSet<PassengerPaymentMethod> PaymentMethods => this.Set<PassengerPaymentMethod>();
     public DbSet<AppConfig> AppConfigs => this.Set<AppConfig>();
     public DbSet<TripRoute> TripRoutes => this.Set<TripRoute>();
     public DbSet<PricingQuote> PricingQuotes => this.Set<PricingQuote>();
+    public DbSet<TripCancellation> TripCancellations => this.Set<TripCancellation>();
+    public DbSet<TripCompensationClaim> TripCompensationClaims => this.Set<TripCompensationClaim>();
+    public DbSet<TripWaitingSession> TripWaitingSessions => this.Set<TripWaitingSession>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

@@ -5,6 +5,7 @@ using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Application.UnitTests.Infrastructure;
 using Taxi.Domain.Payments;
 using Taxi.Domain.Trips;
+using Taxi.Domain.Vehicles;
 using Xunit;
 
 namespace Taxi.Application.UnitTests.Trips;
@@ -58,8 +59,10 @@ public class RequestTripCommandHandlerStripeTests
         _clientConfig.GetClientConfig().Returns(new ClientConfig(StripeEnabled: true, StripePublishableKey: "pk_test", SignalREnabled: true));
         _stripe.CreatePaymentIntentAsync(
                 Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(),
-                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
-            .Returns(new StripePaymentIntentResult("pi_test_123", "cs_test_secret", "pk_test"));
+                Arg.Any<Guid>(), Arg.Any<Guid>(),
+                Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<string?>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new StripePaymentIntentResult("pi_test_123", "cs_test_secret", "pk_test", "cus_test_123", "ek_test_secret"));
         var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId);
         var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe);
 
@@ -77,8 +80,10 @@ public class RequestTripCommandHandlerStripeTests
         _clientConfig.GetClientConfig().Returns(new ClientConfig(StripeEnabled: true, StripePublishableKey: "pk_test", SignalREnabled: true));
         _stripe.CreatePaymentIntentAsync(
                 Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(),
-                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
-            .Returns(new StripePaymentIntentResult("pi_test_123", "cs_test_secret", "pk_test"));
+                Arg.Any<Guid>(), Arg.Any<Guid>(),
+                Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<string?>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new StripePaymentIntentResult("pi_test_123", "cs_test_secret", "pk_test", "cus_test_123", "ek_test_secret"));
         var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId);
         var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe);
 
@@ -95,7 +100,9 @@ public class RequestTripCommandHandlerStripeTests
         _clientConfig.GetClientConfig().Returns(new ClientConfig(StripeEnabled: true, StripePublishableKey: "pk_test", SignalREnabled: true));
         _stripe.CreatePaymentIntentAsync(
                 Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(),
-                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+                Arg.Any<Guid>(), Arg.Any<Guid>(),
+                Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<string?>(),
+                Arg.Any<CancellationToken>())
             .Returns(PaymentErrors.StripeInitiationFailed);
         var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId);
         var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe);
@@ -141,12 +148,18 @@ public class RequestTripCommandHandlerStripeTests
 
         var passenger = PaymentTestBuilders.CreatePassenger(passengerId);
         var driver = PaymentTestBuilders.CreateActiveDriver();
+        var vehicleType = VehicleType.Create(
+            vehicleTypeId,
+            "standard", "Standard", "عادي", "Standaard",
+            "Standard", "Standard", "Standard", "Standard", "Standard", "Standard",
+            4, 2.8m, 0.20m, 5.0m, 1).Value;
 
         var usersSet = DbSetMockFactory.Create([passenger]);
         var quotesSet = DbSetMockFactory.Create([quote]);
         var driversSet = DbSetMockFactory.Create([driver]);
         var tripsSet = DbSetMockFactory.Create<Trip>([]);
         var paymentsSet = DbSetMockFactory.Create<Payment>([]);
+        var vehicleTypesSet = DbSetMockFactory.Create([vehicleType]);
 
         var context = Substitute.For<IAppDbContext>();
         context.DomainUsers.Returns(usersSet);
@@ -154,6 +167,7 @@ public class RequestTripCommandHandlerStripeTests
         context.Drivers.Returns(driversSet);
         context.Trips.Returns(tripsSet);
         context.Payments.Returns(paymentsSet);
+        context.VehicleTypes.Returns(vehicleTypesSet);
         context.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 
         return (context, quoteId);

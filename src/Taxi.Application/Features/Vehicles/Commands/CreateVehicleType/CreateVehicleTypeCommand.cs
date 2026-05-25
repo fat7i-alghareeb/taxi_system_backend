@@ -19,6 +19,5 @@ public record CreateVehicleTypeCommand(
     decimal RatePerKm,
     decimal RatePerMin,
     decimal MinFare,
-    string Currency = "EUR",
     int SortOrder = 0) : IRequest<Result<VehicleTypeDto>>;
 

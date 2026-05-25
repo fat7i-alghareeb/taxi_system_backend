@@ -1,5 +1,7 @@
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Drivers.Dtos;
 using Taxi.Domain.Common.Results;
@@ -23,7 +25,14 @@ public class UpdateDriverCommandHandler(
             return Error.NotFound("Driver.NotFound", $"Driver with ID {request.Id} was not found.");
         }
 
+        var vehicleTypeExists = await _context.VehicleTypes.AnyAsync(t => t.Id == request.VehicleTypeId, ct);
+        if (!vehicleTypeExists)
+        {
+            return Error.NotFound("VehicleType.NotFound", $"Vehicle type with ID {request.VehicleTypeId} was not found.");
+        }
+
         driver.UpdateDetails(request.LicenseNumber);
+        driver.SetVehicleType(request.VehicleTypeId);
         await _context.SaveChangesAsync(ct);
 
         var user = await _context.DomainUsers
@@ -33,10 +42,10 @@ public class UpdateDriverCommandHandler(
         return new DriverDto(
             driver.Id,
             driver.UserId,
-            user?.Name?.GetTranslation(_languageContext.Language),
+            user?.Name,
             driver.LicenseNumber,
             driver.Status.ToString(),
-            driver.ActiveVehicleId);
+            driver.ApprovalStatus.ToString(),
+            driver.VehicleTypeId);
     }
 }
-

@@ -95,6 +95,8 @@ public class TripPaymentTests
         var trip = CreateAwaitingPaymentTrip();
         trip.ConfirmPayment();
         trip.AssignDriver(Guid.NewGuid());
+        trip.DriverEnRoute();
+        trip.DriverArrived();
         trip.Start();
         trip.Complete();
 
@@ -110,6 +112,8 @@ public class TripPaymentTests
         var trip = CreateAwaitingPaymentTrip();
         trip.ConfirmPayment();
         trip.AssignDriver(Guid.NewGuid());
+        trip.DriverEnRoute();
+        trip.DriverArrived();
         trip.Start();
 
         var result = trip.MarkRefunded(15m);

@@ -6,6 +6,8 @@ public enum TripStatus
     Scheduled,
     PendingDriver,
     DriverAssigned,
+    DriverEnRoute,
+    DriverArrived,
     InProgress,
     Completed,
     Cancelled,

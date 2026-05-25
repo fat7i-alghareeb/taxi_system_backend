@@ -44,27 +44,11 @@ public sealed class LoginCommandHandler(
 
         if (domainUser is null)
         {
-            var placeholderEn = $"Passenger {verifiedPhone}";
-            var placeholderAr = $"راكب {verifiedPhone}";
-            var placeholderNl = $"Passagier {verifiedPhone}";
-            var placeholderDe = $"Passagier {verifiedPhone}";
-            var placeholderPl = $"Pasażer {verifiedPhone}";
-            var placeholderUk = $"Пасажир {verifiedPhone}";
-            var placeholderFr = $"Passager {verifiedPhone}";
-            var placeholderEs = $"Pasajero {verifiedPhone}";
-            var placeholderRo = $"Pasager {verifiedPhone}";
+            var placeholder = $"Passenger {verifiedPhone}";
 
             var createResult = User.Create(
                 Guid.Parse(identityId),
-                placeholderEn,
-                placeholderAr,
-                placeholderNl,
-                placeholderDe,
-                placeholderPl,
-                placeholderUk,
-                placeholderFr,
-                placeholderEs,
-                placeholderRo,
+                placeholder,
                 verifiedPhone,
                 null,
                 UserRole.Passenger);
@@ -109,15 +93,21 @@ public sealed class LoginCommandHandler(
         }
 
         // 7. Build response (hide placeholder names so the client treats them as null)
-        var resolvedName = domainUser.Name.GetTranslation(languageContext.Language);
-        var isPlaceholder = resolvedName.StartsWith("Passenger ")
-            || resolvedName.StartsWith("راكب ")
-            || resolvedName.StartsWith("Passagier ")
-            || resolvedName.StartsWith("Pasażer ")
-            || resolvedName.StartsWith("Пасажир ")
-            || resolvedName.StartsWith("Passager ")
-            || resolvedName.StartsWith("Pasajero ")
-            || resolvedName.StartsWith("Pasager ");
+        var resolvedName = domainUser.Name;
+        var isPlaceholder = resolvedName.StartsWith("Passenger ");
+
+        Guid? driverId = null;
+        string? approvalStatus = null;
+
+        if (domainUser.Role == UserRole.Driver)
+        {
+            var driver = await dbContext.Drivers.FirstOrDefaultAsync(d => d.UserId == domainUser.Id, cancellationToken);
+            if (driver != null)
+            {
+                driverId = driver.Id;
+                approvalStatus = driver.ApprovalStatus.ToString();
+            }
+        }
 
         var userDto = new UserDto
         {
@@ -127,6 +117,8 @@ public sealed class LoginCommandHandler(
             Email = domainUser.Email,
             ProfilePhotoUrl = domainUser.ProfilePhotoUrl,
             Name = isPlaceholder ? null : resolvedName,
+            DriverId = driverId,
+            ApprovalStatus = approvalStatus,
         };
 
         return new AuthResponse(

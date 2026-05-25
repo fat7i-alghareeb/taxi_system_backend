@@ -85,15 +85,7 @@ public sealed class IdentityController(ISender sender) : ApiController
         var command = new RegisterAdminCommand(
             request.Phone,
             request.Password,
-            request.NameEn,
-            request.NameAr,
-            request.NameNl,
-            request.NameDe,
-            request.NamePl,
-            request.NameUk,
-            request.NameFr,
-            request.NameEs,
-            request.NameRo,
+            request.Name,
             request.Email);
 
         var result = await sender.Send(command, ct);

@@ -47,6 +47,7 @@ app.UseCoreMiddlewares(builder.Configuration);
 
 app.MapControllers();
 app.MapHub<TripHub>(TripHub.HubUrl);
+app.MapHub<LocationTrackingHub>("/hubs/location");
 
 app.Run();
 

@@ -8,6 +8,5 @@ public record VehicleTypeDto(
     decimal RatePerKm,
     decimal RatePerMin,
     decimal MinFare,
-    string Currency,
     int SortOrder);
 

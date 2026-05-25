@@ -47,10 +47,6 @@ public static class VehicleErrors
 
     public static readonly Error NotFound = Error.NotFound(
         code: LocalizationKeys.Vehicle.NotFound,
-        description: "Vehicle not found.");
-
-    public static readonly Error DriverNotFound = Error.NotFound(
-        code: LocalizationKeys.Vehicle.DriverNotFound,
-        description: "Driver not found or is not a driver.");
+        description: "Vehicle type not found.");
 }
 

@@ -12,6 +12,12 @@ public interface ITripNotifier
     /// <summary>Sends to the specific passenger that their driver has been confirmed.</summary>
     Task NotifyDriverAssignedAsync(Guid tripId, Guid passengerId, Guid driverId, CancellationToken ct = default);
 
+    /// <summary>Sends to the trip group that the driver is en route.</summary>
+    Task NotifyDriverEnRouteAsync(Guid tripId, Guid passengerId, Guid driverId, CancellationToken ct = default);
+
+    /// <summary>Sends to the trip group that the driver has arrived.</summary>
+    Task NotifyDriverArrivedAsync(Guid tripId, Guid passengerId, Guid driverId, CancellationToken ct = default);
+
     /// <summary>Sends to the trip group that the ride has started.</summary>
     Task NotifyTripStartedAsync(Guid tripId, Guid passengerId, CancellationToken ct = default);
 

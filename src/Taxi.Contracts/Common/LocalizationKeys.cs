@@ -33,10 +33,12 @@ public static class LocalizationKeys
         public const string FirebaseTokenExpired = "Auth.FirebaseTokenExpired";
         public const string FirebasePhoneMissing = "Auth.FirebasePhoneMissing";
         public const string PhoneMismatch = "Auth.PhoneMismatch";
+        public const string Unauthorized = "Identity.Unauthorized";
     }
 
     public static class User
     {
+        public const string NameRequired = "User.NameRequired";
         public const string NameEnRequired = "User.NameEnRequired";
         public const string NameArRequired = "User.NameArRequired";
         public const string NameNlRequired = "User.NameNlRequired";
@@ -53,6 +55,9 @@ public static class LocalizationKeys
         public const string ProfileNameRequired = "User.Profile.NameRequired";
         public const string ProfilePhotoInvalid = "User.Profile.PhotoInvalid";
         public const string FcmTokenInvalid = "User.FcmTokenInvalid";
+        public const string PreferredLanguageRequired = "User.PreferredLanguageRequired";
+        public const string PreferredLanguageInvalid = "User.PreferredLanguageInvalid";
+        public const string StripeCustomerIdRequired = "User.StripeCustomerIdRequired";
     }
 
     public static class Validation
@@ -90,11 +95,6 @@ public static class LocalizationKeys
         public const string NameEsRequired = "Vehicle.NameEs.Required";
         public const string NameRoRequired = "Vehicle.NameRo.Required";
         public const string NotFound = "Vehicle.NotFound";
-        public const string TypeIdRequired = "Vehicle.TypeId.Required";
-        public const string MakeRequired = "Vehicle.Make.Required";
-        public const string ModelRequired = "Vehicle.Model.Required";
-        public const string LicensePlateRequired = "Vehicle.LicensePlate.Required";
-        public const string DriverNotFound = "Vehicle.DriverId.Invalid";
     }
 
     public static class Driver
@@ -102,6 +102,19 @@ public static class LocalizationKeys
         public const string UserIdRequired = "Driver.UserId.Required";
         public const string LicenseRequired = "Driver.License.Required";
         public const string NotFound = "Driver.NotFound";
+        public const string NotApproved = "Driver.NotApproved";
+        public const string Inactive = "Driver.Inactive";
+        public const string DocumentsNotApproved = "Driver.DocumentsNotApproved";
+        public const string NoActiveVehicle = "Driver.NoActiveVehicle";
+        public const string InvalidApprovalTransition = "Driver.InvalidApprovalTransition";
+    }
+
+    public static class DriverDocument
+    {
+        public const string DriverIdRequired = "DriverDocument.DriverIdRequired";
+        public const string FileUrlRequired = "DriverDocument.FileUrlRequired";
+        public const string RejectionNotesRequired = "DriverDocument.RejectionNotesRequired";
+        public const string NotFound = "DriverDocument.NotFound";
     }
 
     public static class Payment
@@ -128,7 +141,15 @@ public static class LocalizationKeys
         public const string DriverNotFound = "Trip.Driver.NotFound";
         public const string ScheduledAtTooSoon = "Trip.ScheduledAt.TooSoon";
         public const string CannotCancel = "Trip.CannotCancel";
+        public const string CancellationWindowExpired = "Trip.Cancellation.WindowExpired";
+        public const string DriverCancelTooEarly = "Trip.Cancellation.DriverTooEarly";
+        public const string InvalidCancellationReason = "Trip.Cancellation.InvalidReason";
+        public const string CompensationClaimNoteRequired = "Trip.CompensationClaim.NoteRequired";
+        public const string CompensationClaimAlreadyReviewed = "Trip.CompensationClaim.AlreadyReviewed";
+        public const string ActiveWaitingSessionExists = "Trip.Waiting.ActiveSessionExists";
+        public const string ActiveWaitingSessionNotFound = "Trip.Waiting.ActiveSessionNotFound";
         public const string NotOwnedByPassenger = "Trip.NotOwnedByPassenger";
+        public const string DriverMismatch = "Trip.DriverMismatch";
     }
 
     public static class Maps
@@ -156,5 +177,12 @@ public static class LocalizationKeys
         public const string CodeRequired = "Promo.Code.Required";
         public const string NotFound = "Promo.NotFound";
     }
+
+    public static class Notification
+    {
+        public const string TitleRequired = "Notification.Title.Required";
+        public const string BodyRequired = "Notification.Body.Required";
+    }
 }
+
 

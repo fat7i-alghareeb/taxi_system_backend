@@ -38,7 +38,6 @@ public class GetVehicleTypeByIdQueryHandler(
                 t.RatePerKm,
                 t.RatePerMin,
                 t.MinimumFare,
-                t.CurrencyCode,
                 t.SortOrder))
             .FirstOrDefaultAsync(ct);
 

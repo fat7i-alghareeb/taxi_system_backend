@@ -10,6 +10,10 @@ public class CreateDriverCommandValidator : AbstractValidator<CreateDriverComman
         RuleFor(v => v.Phone)
             .NotEmpty().WithMessage(LocalizationKeys.Validation.RequiredField);
 
+        RuleFor(v => v.Name)
+            .NotEmpty().WithMessage(LocalizationKeys.User.NameRequired)
+            .MaximumLength(150);
+
         RuleFor(v => v.LicenseNumber)
             .NotEmpty().WithMessage(LocalizationKeys.Validation.RequiredField)
             .MaximumLength(50);

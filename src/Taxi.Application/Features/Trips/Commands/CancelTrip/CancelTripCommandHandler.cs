@@ -1,4 +1,5 @@
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -8,6 +9,7 @@ using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Payments;
 using Taxi.Domain.Trips;
+using Taxi.Domain.Users;
 
 namespace Taxi.Application.Features.Trips.Commands.CancelTrip;
 
@@ -32,7 +34,10 @@ public class CancelTripCommandHandler(
             return TripErrors.NotFound;
         }
 
-        if (trip.PassengerId != passengerId)
+        var user = await context.DomainUsers.FirstOrDefaultAsync(u => u.Id == passengerId, ct);
+        var isAdmin = user?.Role == UserRole.Admin;
+
+        if (!isAdmin && trip.PassengerId != passengerId)
         {
             return TripErrors.NotOwnedByPassenger;
         }
@@ -47,6 +52,14 @@ public class CancelTripCommandHandler(
         }
 
         var preCancelStatus = trip.Status;
+        var isWithinPassengerWindow = DateTimeOffset.UtcNow <= trip.CreatedAtUtc.AddHours(1);
+        var reason = isAdmin ? CancellationReason.AdminOverride : CancellationReason.PassengerWithinOneHour;
+        var actor = isAdmin ? CancellationActor.Admin : CancellationActor.Passenger;
+
+        if (!isAdmin && !isWithinPassengerWindow)
+        {
+            return TripErrors.CancellationWindowExpired;
+        }
 
         // Load the linked Payment (if any) so we know whether to refund or cancel the PaymentIntent.
         var payment = await context.Payments
@@ -57,6 +70,29 @@ public class CancelTripCommandHandler(
         {
             return cancelResult.Errors;
         }
+
+        var quote = await context.PricingQuotes.FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
+        var fare = quote?.FinalFare ?? 0;
+        var currency = quote?.CurrencyCode ?? "EUR";
+        var refundPercent = preCancelStatus == TripStatus.AwaitingPayment ? 0 : 100;
+        var refundAmount = Math.Round(fare * refundPercent / 100m, 2, MidpointRounding.AwayFromZero);
+
+        var cancellationResult = TripCancellation.Create(
+            Guid.NewGuid(),
+            trip.Id,
+            actor,
+            reason,
+            refundPercent,
+            refundAmount,
+            currency,
+            request.Note);
+
+        if (cancellationResult.IsError)
+        {
+            return cancellationResult.Errors;
+        }
+
+        context.TripCancellations.Add(cancellationResult.Value);
 
         var stripeEnabled = clientConfig.GetClientConfig().StripeEnabled;
 
@@ -75,14 +111,11 @@ public class CancelTripCommandHandler(
                         trip.Id);
                 }
             }
-            else if (payment.Status == PaymentStatus.Completed
-                && preCancelStatus is TripStatus.PendingDriver
-                    or TripStatus.Scheduled
-                    or TripStatus.DriverAssigned)
+            else if (payment.Status == PaymentStatus.Completed && refundAmount > 0)
             {
-                // Pre-dispatch refund per plan: auto-refund up to and including DriverAssigned.
+                // Passenger/admin policy cancellation refunds the online payment while preserving cancellation audit data.
                 // The charge.refunded webhook will then transition Payment→Refunded and Trip→Refunded.
-                var refundResult = await stripe.CreateRefundAsync(payment.StripePaymentIntentId, ct);
+                var refundResult = await stripe.CreateRefundAsync(payment.StripePaymentIntentId, refundAmount, ct);
                 if (refundResult.IsFailure)
                 {
                     logger.LogWarning(
@@ -95,11 +128,28 @@ public class CancelTripCommandHandler(
 
         await context.SaveChangesAsync(ct);
 
-        var quote = await context.PricingQuotes.FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
+        double? driverLatitude = null;
+        double? driverLongitude = null;
+
+        var vehicleType = await context.VehicleTypes.FirstOrDefaultAsync(v => v.Id == trip.VehicleTypeId, ct);
+        var vehicleTypeName = vehicleType?.Name.En ?? "Unknown";
+
+        if (trip.DriverId.HasValue)
+        {
+            var driver = await context.Drivers.FirstOrDefaultAsync(d => d.Id == trip.DriverId.Value, ct);
+            if (driver != null)
+            {
+                driverLatitude = driver.CurrentLat.HasValue ? (double)driver.CurrentLat.Value : null;
+                driverLongitude = driver.CurrentLng.HasValue ? (double)driver.CurrentLng.Value : null;
+            }
+        }
 
         var stopDtos = trip.Stops
             .OrderBy(s => s.Sequence)
-            .Select(s => new TripStopDto(s.Coordinate.Latitude, s.Coordinate.Longitude))
+            .Select(s => new TripStopDto(
+                s.Coordinate.Latitude,
+                s.Coordinate.Longitude,
+                s.AddressLabel))
             .ToList();
 
         return new TripDto(
@@ -113,6 +163,11 @@ public class CancelTripCommandHandler(
             quote?.CurrencyCode ?? "EUR",
             trip.CreatedAtUtc,
             trip.ScheduledAtUtc,
-            stopDtos);
+            stopDtos,
+            null,
+            driverLatitude,
+            driverLongitude,
+            vehicleTypeName,
+            cancellationResult.Value.ToDto());
     }
 }

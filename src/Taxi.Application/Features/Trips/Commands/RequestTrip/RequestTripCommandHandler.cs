@@ -26,10 +26,10 @@ public class RequestTripCommandHandler(
             return TripErrors.PassengerNotFound;
         }
 
-        var passengerExists = await _context.DomainUsers
-            .AnyAsync(u => u.Id == passengerId && u.Role == UserRole.Passenger, ct);
+        var passenger = await _context.DomainUsers
+            .FirstOrDefaultAsync(u => u.Id == passengerId && u.Role == UserRole.Passenger, ct);
 
-        if (!passengerExists)
+        if (passenger is null)
         {
             return TripErrors.PassengerNotFound;
         }
@@ -113,7 +113,12 @@ public class RequestTripCommandHandler(
                 currency: quote.CurrencyCode,
                 tripId: trip.Id,
                 passengerId: passengerId,
-                ct);
+                existingStripeCustomerId: passenger.StripeCustomerId,
+                passengerEmail: passenger.Email,
+                passengerPhone: passenger.Phone,
+                passengerName: passenger.Name,
+                passengerPreferredLanguage: passenger.PreferredLanguage,
+                ct: ct);
 
             if (intentResult.IsFailure)
             {
@@ -121,6 +126,11 @@ public class RequestTripCommandHandler(
             }
 
             var intent = intentResult.Value;
+
+            if (string.IsNullOrWhiteSpace(passenger.StripeCustomerId))
+            {
+                passenger.SetStripeCustomerId(intent.CustomerId);
+            }
 
             var paymentResult = Payment.CreateForStripe(
                 Guid.NewGuid(),
@@ -142,12 +152,20 @@ public class RequestTripCommandHandler(
             stripePaymentDto = new StripePaymentDto(
                 intent.PaymentIntentId,
                 intent.ClientSecret,
-                intent.PublishableKey);
+                intent.PublishableKey,
+                intent.CustomerId,
+                intent.EphemeralKeySecret);
         }
+
+        var vehicleType = await _context.VehicleTypes.FirstOrDefaultAsync(v => v.Id == trip.VehicleTypeId, ct);
+        var vehicleTypeName = vehicleType?.Name.En ?? "Unknown";
 
         var stopDtos = trip.Stops
             .OrderBy(s => s.Sequence)
-            .Select(s => new TripStopDto(s.Coordinate.Latitude, s.Coordinate.Longitude))
+            .Select(s => new TripStopDto(
+                s.Coordinate.Latitude,
+                s.Coordinate.Longitude,
+                s.AddressLabel))
             .ToList();
 
         return new TripDto(
@@ -162,6 +180,9 @@ public class RequestTripCommandHandler(
             trip.CreatedAtUtc,
             trip.ScheduledAtUtc,
             stopDtos,
-            stripePaymentDto);
+            stripePaymentDto,
+            null,
+            null,
+            vehicleTypeName);
     }
 }

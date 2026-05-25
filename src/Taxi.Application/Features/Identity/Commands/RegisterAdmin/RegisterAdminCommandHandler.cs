@@ -28,15 +28,7 @@ public class RegisterAdminCommandHandler(
         // 2. Create domain User
         var domainUserResult = User.Create(
             Guid.Parse(identityId),
-            request.NameEn,
-            request.NameAr,
-            request.NameNl,
-            request.NameDe,
-            request.NamePl,
-            request.NameUk,
-            request.NameFr,
-            request.NameEs,
-            request.NameRo,
+            request.Name,
             request.Phone,
             request.Email,
             UserRole.Admin);

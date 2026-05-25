@@ -31,7 +31,6 @@ public class CreateVehicleTypeCommandHandler(
             request.RatePerKm,
             request.RatePerMin,
             request.MinFare,
-            request.Currency,
             request.SortOrder);
 
         if (vehicleTypeResult.IsFailure)
@@ -52,7 +51,6 @@ public class CreateVehicleTypeCommandHandler(
             vehicleType.RatePerKm,
             vehicleType.RatePerMin,
             vehicleType.MinimumFare,
-            vehicleType.CurrencyCode,
             vehicleType.SortOrder);
     }
 }

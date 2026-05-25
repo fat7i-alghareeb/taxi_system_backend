@@ -32,17 +32,59 @@ public sealed class StripePaymentService : IStripePaymentService
         string currency,
         Guid tripId,
         Guid passengerId,
+        string? existingStripeCustomerId,
+        string? passengerEmail,
+        string? passengerPhone,
+        string passengerName,
+        string? passengerPreferredLanguage,
         CancellationToken ct = default)
     {
         try
         {
-            var service = new PaymentIntentService();
+            var customerService = new CustomerService();
+            string customerId;
+
+            if (!string.IsNullOrWhiteSpace(existingStripeCustomerId))
+            {
+                customerId = existingStripeCustomerId;
+            }
+            else
+            {
+                var customer = await customerService.CreateAsync(
+                    new CustomerCreateOptions
+                    {
+                        Name = passengerName,
+                        Email = passengerEmail,
+                        Phone = passengerPhone,
+                        Metadata = new Dictionary<string, string>
+                        {
+                            ["passengerId"] = passengerId.ToString(),
+                        },
+                    },
+                    cancellationToken: ct);
+                customerId = customer.Id;
+            }
+
+            var ekService = new EphemeralKeyService();
+            var ephemeralKey = await ekService.CreateAsync(
+                new EphemeralKeyCreateOptions { Customer = customerId },
+                cancellationToken: ct);
+
+            var intentService = new PaymentIntentService();
             var options = new PaymentIntentCreateOptions
             {
                 Amount = ToMinorUnits(amount),
                 Currency = currency.ToLowerInvariant(),
                 CaptureMethod = "automatic",
+                Customer = customerId,
                 AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions { Enabled = true },
+                PaymentMethodOptions = new PaymentIntentPaymentMethodOptionsOptions
+                {
+                    Klarna = new PaymentIntentPaymentMethodOptionsKlarnaOptions
+                    {
+                        PreferredLocale = ResolveKlarnaLocale(passengerPreferredLanguage),
+                    },
+                },
                 Metadata = new Dictionary<string, string>
                 {
                     ["tripId"] = tripId.ToString(),
@@ -53,14 +95,36 @@ public sealed class StripePaymentService : IStripePaymentService
 
             var requestOptions = new RequestOptions { IdempotencyKey = quoteId.ToString() };
 
-            var intent = await service.CreateAsync(options, requestOptions, ct);
-            return new StripePaymentIntentResult(intent.Id, intent.ClientSecret, this.settings.PublishableKey);
+            var intent = await intentService.CreateAsync(options, requestOptions, ct);
+            return new StripePaymentIntentResult(
+                intent.Id,
+                intent.ClientSecret,
+                this.settings.PublishableKey,
+                customerId,
+                ephemeralKey.Secret);
         }
         catch (StripeException ex)
         {
             this.logger.LogError(ex, "Stripe PaymentIntent creation failed for quote {QuoteId}", quoteId);
             return PaymentErrors.StripeInitiationFailed;
         }
+    }
+
+    private static string ResolveKlarnaLocale(string? preferredLanguage)
+    {
+        var lang = (preferredLanguage ?? "en").Trim().ToLowerInvariant();
+        return lang switch
+        {
+            "nl" => "nl-NL",
+            "de" => "de-DE",
+            "fr" => "fr-FR",
+            "es" => "es-ES",
+            "pl" => "pl-PL",
+            "ro" => "ro-RO",
+            "uk" => "uk-UA",
+            "ar" => "en-NL",
+            _ => "en-NL",
+        };
     }
 
     public async Task<Result<Success>> CancelPaymentIntentAsync(string paymentIntentId, CancellationToken ct = default)
@@ -78,16 +142,20 @@ public sealed class StripePaymentService : IStripePaymentService
         }
     }
 
-    public async Task<Result<StripeRefundResult>> CreateRefundAsync(string paymentIntentId, CancellationToken ct = default)
+    public async Task<Result<StripeRefundResult>> CreateRefundAsync(string paymentIntentId, decimal? refundAmount = null, CancellationToken ct = default)
     {
         try
         {
             var service = new RefundService();
             var refund = await service.CreateAsync(
-                new RefundCreateOptions { PaymentIntent = paymentIntentId },
+                new RefundCreateOptions
+                {
+                    PaymentIntent = paymentIntentId,
+                    Amount = refundAmount.HasValue ? ToMinorUnits(refundAmount.Value) : null,
+                },
                 cancellationToken: ct);
-            var amount = FromMinorUnits(refund.Amount);
-            return new StripeRefundResult(refund.Id, amount, (refund.Currency ?? string.Empty).ToUpperInvariant());
+            var refundedAmount = FromMinorUnits(refund.Amount);
+            return new StripeRefundResult(refund.Id, refundedAmount, (refund.Currency ?? string.Empty).ToUpperInvariant());
         }
         catch (StripeException ex)
         {

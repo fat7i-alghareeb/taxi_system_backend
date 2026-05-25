@@ -67,7 +67,7 @@ internal static class PaymentTestBuilders
     public static User CreatePassenger(Guid id)
         => User.Create(
             id,
-            "Test", "اختبار", "Test", "Test", "Test", "Test", "Test", "Test", "Test",
+            "Test",
             "+31612345678",
             null,
             UserRole.Passenger).Value;

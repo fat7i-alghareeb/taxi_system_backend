@@ -220,6 +220,8 @@ public class HandleStripeWebhookCommandHandlerTests
         var trip = PaymentTestBuilders.CreateAwaitingPaymentTrip(Guid.NewGuid(), Guid.NewGuid());
         trip.ConfirmPayment();
         trip.AssignDriver(Guid.NewGuid());
+        trip.DriverEnRoute();
+        trip.DriverArrived();
         trip.Start();
         trip.Complete();
         var payment = PaymentTestBuilders.CreatePendingStripePayment(trip.Id, "pi_test_123");

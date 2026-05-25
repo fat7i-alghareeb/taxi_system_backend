@@ -25,6 +25,16 @@ public sealed class SignalRTripNotifier(IHubContext<TripHub> hubContext) : ITrip
             .Group($"Trip_{tripId}")
             .SendAsync("DriverAssigned", new DriverAssignedNotification(tripId, passengerId, driverId), ct);
 
+    public Task NotifyDriverEnRouteAsync(Guid tripId, Guid passengerId, Guid driverId, CancellationToken ct = default) =>
+        _hubContext.Clients
+            .Group($"Trip_{tripId}")
+            .SendAsync("DriverEnRoute", new DriverEnRouteNotification(tripId, passengerId, driverId), ct);
+
+    public Task NotifyDriverArrivedAsync(Guid tripId, Guid passengerId, Guid driverId, CancellationToken ct = default) =>
+        _hubContext.Clients
+            .Group($"Trip_{tripId}")
+            .SendAsync("DriverArrived", new DriverArrivedNotification(tripId, passengerId, driverId), ct);
+
     public Task NotifyTripStartedAsync(Guid tripId, Guid passengerId, CancellationToken ct = default) =>
         _hubContext.Clients
             .Group($"Trip_{tripId}")

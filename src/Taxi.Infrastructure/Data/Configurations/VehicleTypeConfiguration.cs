@@ -22,10 +22,6 @@ public class VehicleTypeConfiguration : IEntityTypeConfiguration<VehicleType>
         builder.HasIndex(t => t.Code)
             .IsUnique();
 
-        builder.Property(t => t.CurrencyCode)
-            .HasMaxLength(3)
-            .HasDefaultValue("EUR");
-
         builder.Property(t => t.PassengerCapacity)
             .IsRequired();
 

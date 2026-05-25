@@ -37,6 +37,8 @@ public sealed class Trip : AuditableEntity
     public Guid QuoteId { get; private set; }
     public IReadOnlyCollection<TripStop> Stops => _stops.AsReadOnly();
     public DateTimeOffset? ScheduledAtUtc { get; private set; }
+    public DateTimeOffset? AssignedAtUtc { get; private set; }
+    public DateTimeOffset? ArrivedAtUtc { get; private set; }
     public DateTimeOffset? StartedAtUtc { get; private set; }
     public DateTimeOffset? CompletedAtUtc { get; private set; }
     public DateTimeOffset? DeletedAtUtc { get; private set; }
@@ -87,6 +89,7 @@ public sealed class Trip : AuditableEntity
 
         DriverId = driverId;
         Status = TripStatus.DriverAssigned;
+        AssignedAtUtc = DateTimeOffset.UtcNow;
 
         AddDomainEvent(new DriverAssigned
         {
@@ -98,9 +101,48 @@ public sealed class Trip : AuditableEntity
         return Result.Success;
     }
 
-    public Result<Success> Start()
+    public Result<Success> DriverEnRoute()
     {
         if (Status != TripStatus.DriverAssigned)
+        {
+            return TripErrors.InvalidStatus(Status);
+        }
+
+        Status = TripStatus.DriverEnRoute;
+
+        AddDomainEvent(new DriverEnRoute
+        {
+            TripId = Id,
+            DriverId = DriverId ?? Guid.Empty,
+            PassengerId = PassengerId,
+        });
+
+        return Result.Success;
+    }
+
+    public Result<Success> DriverArrived()
+    {
+        if (Status != TripStatus.DriverEnRoute)
+        {
+            return TripErrors.InvalidStatus(Status);
+        }
+
+        Status = TripStatus.DriverArrived;
+        ArrivedAtUtc = DateTimeOffset.UtcNow;
+
+        AddDomainEvent(new DriverArrived
+        {
+            TripId = Id,
+            DriverId = DriverId ?? Guid.Empty,
+            PassengerId = PassengerId,
+        });
+
+        return Result.Success;
+    }
+
+    public Result<Success> Start()
+    {
+        if (Status != TripStatus.DriverArrived)
         {
             return TripErrors.InvalidStatus(Status);
         }

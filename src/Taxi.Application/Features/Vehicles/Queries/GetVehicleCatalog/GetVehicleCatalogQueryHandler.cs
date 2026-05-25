@@ -38,7 +38,6 @@ public class GetVehicleCatalogQueryHandler(
                 t.RatePerKm,
                 t.RatePerMin,
                 t.MinimumFare,
-                t.CurrencyCode,
                 t.SortOrder))
             .ToListAsync(cancellationToken);
 

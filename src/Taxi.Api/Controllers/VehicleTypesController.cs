@@ -89,7 +89,6 @@ public class VehicleTypesController(ISender sender) : ApiController
             request.RatePerKm,
             request.RatePerMin,
             request.MinFare,
-            request.Currency,
             request.SortOrder);
 
         var result = await sender.Send(command, ct);

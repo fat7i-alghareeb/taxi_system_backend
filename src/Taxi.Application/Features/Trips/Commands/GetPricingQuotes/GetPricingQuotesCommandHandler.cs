@@ -38,9 +38,15 @@ public class GetPricingQuotesCommandHandler(
             .OrderBy(vt => vt.SortOrder)
             .ToListAsync(ct);
 
-        var discountConfig = await _context.AppConfigs
-            .FirstOrDefaultAsync(c => c.Key == AppConfigKeys.TripDiscountPercent, ct);
+        var configs = await _context.AppConfigs
+            .Where(c => c.Key == AppConfigKeys.TripDiscountPercent || c.Key == AppConfigKeys.Currency)
+            .ToListAsync(ct);
+
+        var discountConfig = configs.FirstOrDefault(c => c.Key == AppConfigKeys.TripDiscountPercent);
         var discountPercent = decimal.TryParse(discountConfig?.Value, out var d) && d > 0 ? d : 0m;
+
+        var currencyConfig = configs.FirstOrDefault(c => c.Key == AppConfigKeys.Currency);
+        var currencyCode = string.IsNullOrWhiteSpace(currencyConfig?.Value) ? "EUR" : currencyConfig!.Value;
 
         var validUntil = DateTime.UtcNow.AddMinutes(15);
         var quotes = new List<PricingQuote>();
@@ -66,7 +72,7 @@ public class GetPricingQuotesCommandHandler(
                 finalFare,
                 originalFare,
                 discountPercent,
-                vehicleType.CurrencyCode,
+                currencyCode,
                 validUntil,
                 domainCoordinates);
 

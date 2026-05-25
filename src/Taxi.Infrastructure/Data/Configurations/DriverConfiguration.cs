@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 using Taxi.Domain.Drivers;
 using Taxi.Domain.Users;
 using Taxi.Domain.Vehicles;
@@ -17,9 +18,9 @@ public class DriverConfiguration : IEntityTypeConfiguration<Driver>
             .HasForeignKey(d => d.UserId)
             .IsRequired();
 
-        builder.HasOne<Vehicle>()
+        builder.HasOne<VehicleType>()
             .WithMany()
-            .HasForeignKey(d => d.ActiveVehicleId);
+            .HasForeignKey(d => d.VehicleTypeId);
 
         builder.Property(d => d.LicenseNumber)
             .HasMaxLength(50)
@@ -28,6 +29,11 @@ public class DriverConfiguration : IEntityTypeConfiguration<Driver>
         builder.Property(d => d.Status)
             .HasConversion<string>()
             .HasMaxLength(20);
+
+        builder.Property(d => d.ApprovalStatus)
+            .HasConversion<string>()
+            .HasMaxLength(30)
+            .HasDefaultValue(DriverApprovalStatus.PendingDocuments);
 
         builder.Property(d => d.CurrentLat)
             .HasPrecision(18, 10);
@@ -61,4 +67,3 @@ public class DriverConfiguration : IEntityTypeConfiguration<Driver>
         builder.HasQueryFilter(d => d.DeletedAtUtc == null);
     }
 }
-

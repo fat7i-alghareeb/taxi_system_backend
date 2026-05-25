@@ -20,6 +20,7 @@ using Taxi.Infrastructure.Data;
 using Taxi.Infrastructure.Data.Interceptors;
 using Taxi.Infrastructure.Identity;
 using Taxi.Infrastructure.Maps;
+using Taxi.Infrastructure.Notifications;
 using Taxi.Infrastructure.Payments;
 using Taxi.Infrastructure.RealTime;
 using Taxi.Infrastructure.Settings;
@@ -140,6 +141,7 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(10);
         });
         services.AddScoped<ITripNotifier, SignalRTripNotifier>();
+        services.AddScoped<INotificationService, FcmNotificationService>();
         services.AddScoped<IFileStorage, LocalFileStorage>();
 
         services.AddScoped<IStripePaymentService, StripePaymentService>();

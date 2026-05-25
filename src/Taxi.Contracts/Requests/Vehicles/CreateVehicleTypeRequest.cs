@@ -47,9 +47,6 @@ public class CreateVehicleTypeRequest
     [Range(0, 1000, ErrorMessage = LocalizationKeys.Validation.InvalidFormat)]
     public decimal MinFare { get; set; }
 
-    [Required(ErrorMessage = LocalizationKeys.Validation.RequiredField)]
-    public string Currency { get; set; } = "USD";
-
     public int SortOrder { get; set; }
 }
 

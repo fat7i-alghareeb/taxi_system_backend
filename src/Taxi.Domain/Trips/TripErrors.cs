@@ -49,6 +49,34 @@ public static class TripErrors
         code: LocalizationKeys.Trip.CannotCancel,
         description: "This trip cannot be cancelled in its current status.");
 
+    public static readonly Error CancellationWindowExpired = Error.Validation(
+        code: LocalizationKeys.Trip.CancellationWindowExpired,
+        description: "Passenger cancellation is only available within 1 hour of booking.");
+
+    public static readonly Error DriverCancelTooEarly = Error.Validation(
+        code: LocalizationKeys.Trip.DriverCancelTooEarly,
+        description: "Driver cancellation is only available after arriving and waiting at least 10 minutes.");
+
+    public static readonly Error InvalidCancellationReason = Error.Validation(
+        code: LocalizationKeys.Trip.InvalidCancellationReason,
+        description: "The cancellation reason is not valid for this action.");
+
+    public static readonly Error CompensationClaimNoteRequired = Error.Validation(
+        code: LocalizationKeys.Trip.CompensationClaimNoteRequired,
+        description: "A compensation claim requires a note explaining the delay proof.");
+
+    public static readonly Error CompensationClaimAlreadyReviewed = Error.Validation(
+        code: LocalizationKeys.Trip.CompensationClaimAlreadyReviewed,
+        description: "This compensation claim has already been reviewed.");
+
+    public static readonly Error ActiveWaitingSessionExists = Error.Validation(
+        code: LocalizationKeys.Trip.ActiveWaitingSessionExists,
+        description: "This trip already has an active waiting session.");
+
+    public static readonly Error ActiveWaitingSessionNotFound = Error.NotFound(
+        code: LocalizationKeys.Trip.ActiveWaitingSessionNotFound,
+        description: "No active waiting session was found for this trip.");
+
     public static readonly Error NotOwnedByPassenger = Error.Validation(
         code: LocalizationKeys.Trip.NotOwnedByPassenger,
         description: "This trip does not belong to the current passenger.");

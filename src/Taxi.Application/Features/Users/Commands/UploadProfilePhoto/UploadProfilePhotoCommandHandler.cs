@@ -41,7 +41,7 @@ public class UploadProfilePhotoCommandHandler(
         var extension = request.ContentType == "image/png" ? ".png" : ".jpg";
         var storedUrl = await fileStorage.SaveAsync(request.FileStream, $"photos/{userId}{extension}", ct);
 
-        user.UpdateProfile(user.Name.En, storedUrl);
+        user.UpdateProfile(user.Name, storedUrl);
         await context.SaveChangesAsync(ct);
 
         return storedUrl;

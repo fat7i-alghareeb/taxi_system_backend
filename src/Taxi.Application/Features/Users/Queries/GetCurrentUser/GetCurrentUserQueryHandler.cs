@@ -28,8 +28,21 @@ public class GetCurrentUserQueryHandler(
             return Error.NotFound(LocalizationKeys.User.NotFound, "User not found.");
         }
 
-        var resolvedName = user.Name.GetTranslation(languageContext.Language);
-        var isPlaceholder = resolvedName.StartsWith("Passenger ") || resolvedName.StartsWith("راكب ") || resolvedName.StartsWith("Passagier ");
+        var resolvedName = user.Name;
+        var isPlaceholder = resolvedName.StartsWith("Passenger ");
+
+        Guid? driverId = null;
+        string? approvalStatus = null;
+
+        if (user.Role == UserRole.Driver)
+        {
+            var driver = await context.Drivers.FirstOrDefaultAsync(d => d.UserId == user.Id, ct);
+            if (driver != null)
+            {
+                driverId = driver.Id;
+                approvalStatus = driver.ApprovalStatus.ToString();
+            }
+        }
 
         return new UserDto
         {
@@ -39,6 +52,8 @@ public class GetCurrentUserQueryHandler(
             Email = user.Email,
             ProfilePhotoUrl = user.ProfilePhotoUrl,
             Name = isPlaceholder ? null : resolvedName,
+            DriverId = driverId,
+            ApprovalStatus = approvalStatus,
         };
     }
 }

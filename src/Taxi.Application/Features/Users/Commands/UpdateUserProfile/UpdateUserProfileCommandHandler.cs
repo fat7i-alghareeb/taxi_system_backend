@@ -50,7 +50,7 @@ public class UpdateUserProfileCommandHandler(
         }
 
         // 2. Update Profile
-        var nameToUpdate = request.Name ?? user.Name.En;
+        var nameToUpdate = request.Name ?? user.Name;
         var updateResult = user.UpdateProfile(nameToUpdate, photoUrl);
 
         if (updateResult.IsError)
@@ -67,7 +67,7 @@ public class UpdateUserProfileCommandHandler(
             Role = user.Role.ToString(),
             Email = user.Email,
             ProfilePhotoUrl = user.ProfilePhotoUrl,
-            Name = user.Name.GetTranslation(languageContext.Language),
+            Name = user.Name,
         };
     }
 }

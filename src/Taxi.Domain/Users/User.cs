@@ -11,7 +11,7 @@ public sealed class User : AuditableEntity
 
     private User(
         Guid id,
-        LocalizedText name,
+        string name,
         string phone,
         string? email,
         UserRole role)
@@ -22,76 +22,30 @@ public sealed class User : AuditableEntity
         Email = email;
         Role = role;
         IsActive = true;
+        PreferredLanguage = "en";
     }
 
-    public LocalizedText Name { get; private set; } = default!;
+    public string Name { get; private set; } = default!;
     public string Phone { get; private set; } = default!;
     public string? Email { get; private set; }
     public string? ProfilePhotoUrl { get; private set; }
     public UserRole Role { get; private set; }
     public bool IsActive { get; private set; }
-    public Guid? ActiveVehicleId { get; private set; }
     public DateTimeOffset? DeletedAtUtc { get; private set; }
     public string? FcmToken { get; private set; }
+    public string PreferredLanguage { get; private set; } = "en";
+    public string? StripeCustomerId { get; private set; }
 
     public static Result<User> Create(
         Guid id,
-        string nameEn,
-        string nameAr,
-        string nameNl,
-        string nameDe,
-        string namePl,
-        string nameUk,
-        string nameFr,
-        string nameEs,
-        string nameRo,
+        string name,
         string phone,
         string? email,
         UserRole role)
     {
-        if (string.IsNullOrWhiteSpace(nameEn))
+        if (string.IsNullOrWhiteSpace(name))
         {
-            return AuthErrors.NameEnRequired;
-        }
-
-        if (string.IsNullOrWhiteSpace(nameAr))
-        {
-            return AuthErrors.NameArRequired;
-        }
-
-        if (string.IsNullOrWhiteSpace(nameNl))
-        {
-            return AuthErrors.NameNlRequired;
-        }
-
-        if (string.IsNullOrWhiteSpace(nameDe))
-        {
-            return AuthErrors.NameDeRequired;
-        }
-
-        if (string.IsNullOrWhiteSpace(namePl))
-        {
-            return AuthErrors.NamePlRequired;
-        }
-
-        if (string.IsNullOrWhiteSpace(nameUk))
-        {
-            return AuthErrors.NameUkRequired;
-        }
-
-        if (string.IsNullOrWhiteSpace(nameFr))
-        {
-            return AuthErrors.NameFrRequired;
-        }
-
-        if (string.IsNullOrWhiteSpace(nameEs))
-        {
-            return AuthErrors.NameEsRequired;
-        }
-
-        if (string.IsNullOrWhiteSpace(nameRo))
-        {
-            return AuthErrors.NameRoRequired;
+            return AuthErrors.NameRequired;
         }
 
         if (string.IsNullOrWhiteSpace(phone) || !Regex.IsMatch(phone, @"^\+?\d{7,15}$"))
@@ -99,12 +53,7 @@ public sealed class User : AuditableEntity
             return AuthErrors.PhoneRequired;
         }
 
-        var localizedName = new LocalizedText(
-            nameEn.Trim(), nameAr.Trim(), nameNl.Trim(),
-            nameDe.Trim(), namePl.Trim(), nameUk.Trim(),
-            nameFr.Trim(), nameEs.Trim(), nameRo.Trim());
-
-        return new User(id, localizedName, phone, email, role);
+        return new User(id, name.Trim(), phone, email, role);
     }
 
     public Result<Success> Deactivate()
@@ -132,31 +81,13 @@ public sealed class User : AuditableEntity
             return Error.Validation(LocalizationKeys.User.ProfileNameRequired, "Name is required.");
         }
 
-        var trimmed = name.Trim();
-        Name = new LocalizedText(trimmed, trimmed, trimmed, trimmed, trimmed, trimmed, trimmed, trimmed, trimmed);
+        Name = name.Trim();
 
         if (profilePhotoUrl is not null)
         {
             ProfilePhotoUrl = profilePhotoUrl;
         }
 
-        return Result.Success;
-    }
-
-    public Result<Success> AssignVehicle(Guid vehicleId)
-    {
-        if (Role != UserRole.Driver)
-        {
-            return Error.Validation(LocalizationKeys.User.NotADriver, "Only users with the Driver role can be assigned a vehicle.");
-        }
-
-        ActiveVehicleId = vehicleId;
-        return Result.Success;
-    }
-
-    public Result<Success> UnassignVehicle()
-    {
-        ActiveVehicleId = null;
         return Result.Success;
     }
 
@@ -168,6 +99,34 @@ public sealed class User : AuditableEntity
         }
 
         FcmToken = string.IsNullOrWhiteSpace(fcmToken) ? null : fcmToken.Trim();
+        return Result.Success;
+    }
+
+    public Result<Success> SetStripeCustomerId(string stripeCustomerId)
+    {
+        if (string.IsNullOrWhiteSpace(stripeCustomerId))
+        {
+            return Error.Validation(LocalizationKeys.User.StripeCustomerIdRequired, "Stripe customer id is required.");
+        }
+
+        StripeCustomerId = stripeCustomerId.Trim();
+        return Result.Success;
+    }
+
+    public Result<Success> UpdatePreferredLanguage(string languageCode)
+    {
+        if (string.IsNullOrWhiteSpace(languageCode))
+        {
+            return Error.Validation(LocalizationKeys.User.PreferredLanguageRequired, "Preferred language is required.");
+        }
+
+        var normalized = languageCode.Trim().ToLower();
+        if (normalized != "en" && normalized != "ar" && normalized != "nl" && normalized != "de" && normalized != "pl" && normalized != "uk" && normalized != "fr" && normalized != "es" && normalized != "ro")
+        {
+            return Error.Validation(LocalizationKeys.User.PreferredLanguageInvalid, "Preferred language is invalid.");
+        }
+
+        PreferredLanguage = normalized;
         return Result.Success;
     }
 }

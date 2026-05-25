@@ -1,3 +1,4 @@
+using Taxi.Contracts.Common;
 using Taxi.Domain.Common;
 using Taxi.Domain.Common.Results;
 
@@ -9,6 +10,14 @@ public enum DriverStatus
     Online,
     OnTrip,
     Blocked
+}
+
+public enum DriverApprovalStatus
+{
+    PendingDocuments,
+    UnderReview,
+    Approved,
+    Suspended
 }
 
 public sealed class Driver : AuditableEntity
@@ -29,8 +38,9 @@ public sealed class Driver : AuditableEntity
 
     public Guid UserId { get; private set; }
     public string LicenseNumber { get; private set; } = default!;
-    public Guid? ActiveVehicleId { get; private set; }
+    public Guid? VehicleTypeId { get; private set; }
     public DriverStatus Status { get; private set; }
+    public DriverApprovalStatus ApprovalStatus { get; private set; } = DriverApprovalStatus.PendingDocuments;
     public decimal? CurrentLat { get; private set; }
     public decimal? CurrentLng { get; private set; }
     public DateTimeOffset? LocationUpdatedAt { get; private set; }
@@ -71,13 +81,42 @@ public sealed class Driver : AuditableEntity
 
     public Result<Success> SetStatus(DriverStatus status)
     {
+        if (status == DriverStatus.Online && ApprovalStatus != DriverApprovalStatus.Approved)
+        {
+            return Result.Failure<Success>(Error.Validation(LocalizationKeys.Driver.NotApproved, "Driver must be approved before going online."));
+        }
+
         Status = status;
         return Result.Success;
     }
 
-    public Result<Success> SetActiveVehicle(Guid vehicleId)
+    public Result<Success> SubmitForReview()
     {
-        ActiveVehicleId = vehicleId;
+        if (ApprovalStatus != DriverApprovalStatus.PendingDocuments)
+        {
+            return Result.Failure<Success>(Error.Validation(LocalizationKeys.Driver.InvalidApprovalTransition, $"Cannot submit for review from status {ApprovalStatus}."));
+        }
+
+        ApprovalStatus = DriverApprovalStatus.UnderReview;
+        return Result.Success;
+    }
+
+    public Result<Success> Approve()
+    {
+        ApprovalStatus = DriverApprovalStatus.Approved;
+        return Result.Success;
+    }
+
+    public Result<Success> Suspend()
+    {
+        ApprovalStatus = DriverApprovalStatus.Suspended;
+        Status = DriverStatus.Offline; // Force offline when suspended
+        return Result.Success;
+    }
+
+    public Result<Success> SetVehicleType(Guid vehicleTypeId)
+    {
+        VehicleTypeId = vehicleTypeId;
         return Result.Success;
     }
 
@@ -99,4 +138,3 @@ public sealed class Driver : AuditableEntity
         return Result.Success;
     }
 }
-

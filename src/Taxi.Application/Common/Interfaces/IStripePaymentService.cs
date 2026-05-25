@@ -10,13 +10,23 @@ public interface IStripePaymentService
         string currency,
         Guid tripId,
         Guid passengerId,
+        string? existingStripeCustomerId,
+        string? passengerEmail,
+        string? passengerPhone,
+        string passengerName,
+        string? passengerPreferredLanguage,
         CancellationToken ct = default);
 
     Task<Result<Success>> CancelPaymentIntentAsync(string paymentIntentId, CancellationToken ct = default);
 
-    Task<Result<StripeRefundResult>> CreateRefundAsync(string paymentIntentId, CancellationToken ct = default);
+    Task<Result<StripeRefundResult>> CreateRefundAsync(string paymentIntentId, decimal? amount = null, CancellationToken ct = default);
 }
 
-public sealed record StripePaymentIntentResult(string PaymentIntentId, string ClientSecret, string PublishableKey);
+public sealed record StripePaymentIntentResult(
+    string PaymentIntentId,
+    string ClientSecret,
+    string PublishableKey,
+    string CustomerId,
+    string EphemeralKeySecret);
 
 public sealed record StripeRefundResult(string RefundId, decimal Amount, string Currency);

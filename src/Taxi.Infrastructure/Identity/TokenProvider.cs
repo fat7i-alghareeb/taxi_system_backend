@@ -7,15 +7,17 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Identity;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Identity.Dtos;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Identity;
 
-public class TokenProvider(IConfiguration configuration, IAppDbContext context) : ITokenProvider
+public class TokenProvider(IConfiguration configuration, IAppDbContext context, UserManager<AppUser> userManager) : ITokenProvider
 {
     private readonly IConfiguration configuration = configuration;
     private readonly IAppDbContext context = context;
+    private readonly UserManager<AppUser> _userManager = userManager;
 
     public async Task<Result<TokenResponse>> GenerateJwtTokenAsync(AppUserDto user, CancellationToken ct = default)
     {
@@ -75,6 +77,12 @@ public class TokenProvider(IConfiguration configuration, IAppDbContext context) 
             new (JwtRegisteredClaimNames.Sub, user.UserId!),
             new (JwtRegisteredClaimNames.Email, user.Email!),
         };
+
+        var dbUser = await this._userManager.FindByIdAsync(user.UserId!);
+        if (dbUser != null && dbUser.RequiresPasswordReset)
+        {
+            claims.Add(new Claim("requires_password_reset", "true"));
+        }
 
         foreach (var role in user.Roles)
         {

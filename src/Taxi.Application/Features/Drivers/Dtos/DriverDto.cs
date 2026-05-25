@@ -6,5 +6,5 @@ public record DriverDto(
     string? FullName,
     string LicenseNumber,
     string Status,
-    Guid? ActiveVehicleId);
-
+    string ApprovalStatus,
+    Guid? VehicleTypeId);

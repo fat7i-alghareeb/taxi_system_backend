@@ -64,6 +64,12 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
         builder.Property(t => t.ScheduledAtUtc)
             .IsRequired(false);
 
+        builder.Property(t => t.AssignedAtUtc)
+            .IsRequired(false);
+
+        builder.Property(t => t.ArrivedAtUtc)
+            .IsRequired(false);
+
         builder.Property(t => t.StartedAtUtc)
             .IsRequired(false);
 

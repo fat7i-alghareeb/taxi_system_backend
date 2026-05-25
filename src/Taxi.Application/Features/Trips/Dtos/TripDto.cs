@@ -12,4 +12,10 @@ public record TripDto(
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset? ScheduledAtUtc,
     List<TripStopDto> Stops,
-    StripePaymentDto? StripePayment = null);
+    StripePaymentDto? StripePayment = null,
+    double? DriverLatitude = null,
+    double? DriverLongitude = null,
+    string? VehicleTypeName = null,
+    CancellationPolicyDto? Cancellation = null,
+    CompensationClaimDto? CompensationClaim = null,
+    WaitingSessionDto? ActiveWaitingSession = null);

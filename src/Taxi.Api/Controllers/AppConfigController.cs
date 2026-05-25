@@ -3,7 +3,9 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Taxi.Application.Features.Config.GetClientConfig;
+using Taxi.Application.Features.Config.GetCurrency;
 using Taxi.Application.Features.Config.GetTripDiscount;
+using Taxi.Application.Features.Config.UpdateCurrency;
 using Taxi.Application.Features.Config.UpdateTripDiscount;
 using Taxi.Contracts.Requests.Config;
 using Taxi.Contracts.Responses.Config;
@@ -51,6 +53,33 @@ public class AppConfigController(ISender sender) : ApiController
         CancellationToken ct)
     {
         var result = await sender.Send(new UpdateTripDiscountCommand(request.DiscountPercent), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpGet("currency")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(CurrencyDto), StatusCodes.Status200OK)]
+    [EndpointSummary("Gets the global currency (ISO 4217 code) used for Stripe payments.")]
+    [EndpointName("GetCurrency")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetCurrency(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetCurrencyQuery(), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpPut("currency")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(CurrencyDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [EndpointSummary("Updates the global currency (ISO 4217 3-letter code) used for Stripe payments.")]
+    [EndpointName("UpdateCurrency")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> UpdateCurrency(
+        [FromBody] UpdateCurrencyRequest request,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(new UpdateCurrencyCommand(request.CurrencyCode), ct);
         return result.Match(Ok, Problem);
     }
 }

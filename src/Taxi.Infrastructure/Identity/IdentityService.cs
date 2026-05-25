@@ -131,5 +131,47 @@ public class IdentityService(
 
         return user?.UserName;
     }
+
+    public async Task<Result<Success>> ResetPasswordAsync(string userId, string newPassword)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return Error.NotFound("User.NotFound", "User not found");
+        }
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+        if (!result.Succeeded)
+        {
+            return Error.Failure("Identity.ResetPasswordFailed", string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
+
+        return Result.Success;
+    }
+
+    public async Task<bool> RequiresPasswordResetAsync(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        return user != null && user.RequiresPasswordReset;
+    }
+
+    public async Task<Result<Success>> ClearPasswordResetFlagAsync(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return Error.NotFound("User.NotFound", "User not found");
+        }
+
+        user.RequiresPasswordReset = false;
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            return Error.Failure("Identity.UpdateFailed", string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
+
+        return Result.Success;
+    }
 }
 

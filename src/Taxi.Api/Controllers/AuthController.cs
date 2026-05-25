@@ -1,12 +1,11 @@
 using Asp.Versioning;
-
 using MediatR;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
 using Taxi.Application.Features.Auth.Commands.Login;
+using Taxi.Application.Features.Auth.Commands.ForceResetPassword;
 using Taxi.Application.Features.Auth.Dtos;
+using Taxi.Application.Features.Identity.Dtos;
 
 namespace Taxi.Api.Controllers;
 
@@ -31,4 +30,20 @@ public sealed class AuthController(ISender sender) : ApiController
             this.Ok,
             this.Problem);
     }
+
+    [HttpPost("force-reset-password")]
+    [Authorize]
+    [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [EndpointSummary("Resets password on first login for newly provisioned accounts.")]
+    [EndpointDescription("Enforces password reset for users carrying the requires_password_reset claim in their JWT.")]
+    [EndpointName("ForceResetPassword")]
+    public async Task<IActionResult> ForceResetPassword([FromBody] ForceResetPasswordRequest request, CancellationToken ct)
+    {
+        var result = await sender.Send(new ForceResetPasswordCommand(request.NewPassword), ct);
+        return result.Match(Ok, Problem);
+    }
 }
+
+public record ForceResetPasswordRequest(string NewPassword);

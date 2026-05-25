@@ -14,6 +14,10 @@ public static class Result
     public static Deleted Deleted => default;
 
     public static Updated Updated => default;
+
+    public static Result<TValue> Failure<TValue>(Error error) => error;
+
+    public static Result<TValue> Failure<TValue>(List<Error> errors) => errors;
 }
 
 public sealed class Result<TValue> : IResult<TValue>

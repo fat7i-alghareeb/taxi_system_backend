@@ -5,6 +5,10 @@ namespace Taxi.Domain.Users;
 
 public static class AuthErrors
 {
+    public static readonly Error NameRequired = Error.Validation(
+        code: LocalizationKeys.User.NameRequired,
+        description: "Name is required.");
+
     public static readonly Error NameEnRequired = Error.Validation(
         code: LocalizationKeys.User.NameEnRequired,
         description: "English name is required.");

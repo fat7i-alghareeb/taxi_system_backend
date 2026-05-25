@@ -211,57 +211,6 @@ Authorization: Bearer {{token}}
 
 
 ###############################################################################
-# VEHICLES  (GET|POST|PUT|DELETE /api/v1/vehicles/...)
-###############################################################################
-
-### Get all vehicles
-GET {{baseUrl}}/v1/vehicles
-Authorization: Bearer {{token}}
-
-###
-
-### Get vehicle by ID
-GET {{baseUrl}}/v1/vehicles/{{vehicleId}}
-Authorization: Bearer {{token}}
-
-###
-
-### Create a vehicle
-POST {{baseUrl}}/v1/vehicles
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-    "vehicleTypeId": "{{vehicleTypeId}}",
-    "driverId": "{{driverId}}",
-    "make": "Toyota",
-    "model": "Camry",
-    "year": "2024",
-    "color": "White",
-    "licensePlate": "NL-123-AB"
-}
-
-###
-
-### Update a vehicle (color, plate, active flag)
-PUT {{baseUrl}}/v1/vehicles/{{vehicleId}}
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-    "color": "Silver",
-    "licensePlate": "NL-456-CD",
-    "isActive": true
-}
-
-###
-
-### Delete a vehicle
-DELETE {{baseUrl}}/v1/vehicles/{{vehicleId}}
-Authorization: Bearer {{token}}
-
-
-###############################################################################
 # TRIPS  (GET|POST /api/v1/trips/...)
 ###############################################################################
 
@@ -352,13 +301,6 @@ GET https://localhost:7007/openapi/v1.json
 
 ### 404 — Driver not found
 GET {{baseUrl}}/v1/drivers/00000000-0000-0000-0000-000000000000
-Authorization: Bearer {{token}}
-Accept-Language: ar
-
-###
-
-### 404 — Vehicle not found
-GET {{baseUrl}}/v1/vehicles/00000000-0000-0000-0000-000000000000
 Authorization: Bearer {{token}}
 Accept-Language: ar
 

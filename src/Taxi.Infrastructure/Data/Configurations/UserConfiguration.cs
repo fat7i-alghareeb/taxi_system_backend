@@ -10,11 +10,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.HasKey(x => x.Id);
 
-        // Trilingual name stored as a single JSONB column: {"En":"...", "Ar":"...", "Nl":"..."}
-        builder.OwnsOne(x => x.Name, name =>
-        {
-            name.ToJson();
-        });
+        builder.Property(x => x.Name)
+            .IsRequired()
+            .HasMaxLength(150);
 
         builder.Property(x => x.Phone)
             .IsRequired()
@@ -32,9 +30,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.IsActive)
             .HasDefaultValue(true);
 
-        builder.Property(x => x.ActiveVehicleId)
-            .IsRequired(false);
-
         builder.Property(x => x.CreatedAtUtc)
             .IsRequired();
 
@@ -48,6 +43,17 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.FcmToken)
             .HasMaxLength(4096)
             .IsRequired(false);
+
+        builder.Property(x => x.PreferredLanguage)
+            .HasMaxLength(10)
+            .HasDefaultValue("en")
+            .IsRequired();
+
+        builder.Property(x => x.StripeCustomerId)
+            .HasMaxLength(64)
+            .IsRequired(false);
+
+        builder.HasIndex(x => x.StripeCustomerId);
 
         // Global query filter for soft delete
         builder.HasQueryFilter(x => x.DeletedAtUtc == null);

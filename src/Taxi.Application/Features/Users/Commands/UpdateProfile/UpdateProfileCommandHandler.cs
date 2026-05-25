@@ -41,7 +41,7 @@ public class UpdateProfileCommandHandler(
             Role = user.Role.ToString(),
             Email = user.Email,
             ProfilePhotoUrl = user.ProfilePhotoUrl,
-            Name = user.Name.GetTranslation(languageContext.Language),
+            Name = user.Name,
         };
     }
 }

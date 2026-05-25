@@ -16,7 +16,8 @@ public class ApplicationDbContextInitialiser(
     UserManager<AppUser> userManager,
     IHostEnvironment environment)
 {
-    private const string SuperAdminPhone = "+963900000000";
+    private const string SuperAdminPhone = "+31555555552";
+    private const string SuperAdminUserName = "admin";
     private const string SuperAdminPassword = "Admin@123!";
     private static readonly Guid SuperAdminUserId = new("00000000-0000-0000-0000-000000000000");
     private static readonly Guid AdminDriverUserId = new("11111111-1111-1111-1111-111111111111");
@@ -24,7 +25,7 @@ public class ApplicationDbContextInitialiser(
 
     public async Task InitialiseAsync()
     {
-        // await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureDeletedAsync();
         await context.Database.MigrateAsync();
     }
 
@@ -67,9 +68,9 @@ public class ApplicationDbContextInitialiser(
 
         var types = new List<VehicleType>
         {
-            VehicleType.Create(Guid.NewGuid(), "standard", "Standard", "عادي", "Standaard", "Standard", "Standard", "Standard", "Standard", "Standard", "Standard", 4, 2.8m, 0.20m, 5.0m, "EUR", 1).Value,
-            VehicleType.Create(Guid.NewGuid(), "xl", "XL Van", "فان كبير", "XL Van", "XL Van", "XL Van", "XL Van", "XL Van", "XL Van", "XL Van", 8, 3.20m, 0.25m, 8.0m, "EUR", 2).Value,
-            VehicleType.Create(Guid.NewGuid(), "wheelchair", "Wheelchair Taxi", "تاكسي ذوي الاحتياجات الخاصة", "Rolstoel Taxi", "Wheelchair Taxi", "Wheelchair Taxi", "Wheelchair Taxi", "Wheelchair Taxi", "Wheelchair Taxi", "Wheelchair Taxi", 4, 3.50m, 0.25m, 10.0m, "EUR", 3).Value
+            VehicleType.Create(Guid.NewGuid(), "standard", "Standard", "عادي", "Standaard", "Standard", "Standard", "Standard", "Standard", "Standard", "Standard", 4, 2.8m, 0.20m, 5.0m, 1).Value,
+            VehicleType.Create(Guid.NewGuid(), "xl", "XL Van", "فان كبير", "XL Van", "XL Van", "XL Van", "XL Van", "XL Van", "XL Van", "XL Van", 8, 3.20m, 0.25m, 8.0m, 2).Value,
+            VehicleType.Create(Guid.NewGuid(), "wheelchair", "Wheelchair Taxi", "تاكسي ذوي الاحتياجات الخاصة", "Rolstoel Taxi", "Wheelchair Taxi", "Wheelchair Taxi", "Wheelchair Taxi", "Wheelchair Taxi", "Wheelchair Taxi", "Wheelchair Taxi", 4, 3.50m, 0.25m, 10.0m, 3).Value
         };
 
         foreach (var type in types)
@@ -112,6 +113,22 @@ public class ApplicationDbContextInitialiser(
             await context.SaveChangesAsync();
         }
 
+        if (!await context.AppConfigs.AnyAsync(c => c.Key == AppConfigKeys.Currency))
+        {
+            var currencyResult = AppConfig.Create(
+                AppConfigKeys.Currency,
+                "EUR",
+                "Global ISO 4217 currency code used for all Stripe payments (assumes a 2-decimal currency).");
+
+            if (currencyResult.IsFailure)
+            {
+                throw new InvalidOperationException($"Failed to create app config: {currencyResult.Error.Description}");
+            }
+
+            context.AppConfigs.Add(currencyResult.Value);
+            await context.SaveChangesAsync();
+        }
+
         // 4. Seed super admin
         await SeedSuperAdminAsync();
 
@@ -136,11 +153,12 @@ public class ApplicationDbContextInitialiser(
         adminUser = new AppUser
         {
             Id = SuperAdminUserId.ToString(),
-            UserName = SuperAdminPhone,
+            UserName = SuperAdminUserName,
             PhoneNumber = SuperAdminPhone,
             Email = "admin@fat7i.dev",
             EmailConfirmed = true,
-            PhoneNumberConfirmed = true
+            PhoneNumberConfirmed = true,
+            RequiresPasswordReset = false
         };
         var identityResult = await userManager.CreateAsync(adminUser, SuperAdminPassword);
         if (!identityResult.Succeeded)
@@ -157,8 +175,7 @@ public class ApplicationDbContextInitialiser(
         // 3. Create domain User
         var domainUserResult = User.Create(
             SuperAdminUserId,
-            "Super Admin", "مدير النظام", "Super Administrateur",
-            "Super Admin", "Super Admin", "Super Admin", "Super Admin", "Super Admin", "Super Admin",
+            "Super Admin",
             SuperAdminPhone,
             adminUser.Email,
             UserRole.Admin);
@@ -186,7 +203,8 @@ public class ApplicationDbContextInitialiser(
         {
             Id = AdminDriverUserId.ToString(),
             UserName = phone,
-            PhoneNumber = phone
+            PhoneNumber = phone,
+            RequiresPasswordReset = false
         };
         var identityResult = await userManager.CreateAsync(identityUser, "Driver@123!");
         if (!identityResult.Succeeded)
@@ -200,8 +218,7 @@ public class ApplicationDbContextInitialiser(
         // Create domain User
         var domainUserResult = User.Create(
             AdminDriverUserId,
-            "Admin Driver", "السائق الإداري", "Admin Chauffeur",
-            "Admin Driver", "Admin Driver", "Admin Driver", "Admin Driver", "Admin Driver", "Admin Driver",
+            "Admin Driver",
             phone,
             null,
             UserRole.Driver);

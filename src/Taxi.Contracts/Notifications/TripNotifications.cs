@@ -15,6 +15,16 @@ public sealed record DriverAssignedNotification(
     Guid PassengerId,
     Guid DriverId);
 
+public sealed record DriverEnRouteNotification(
+    Guid TripId,
+    Guid PassengerId,
+    Guid DriverId);
+
+public sealed record DriverArrivedNotification(
+    Guid TripId,
+    Guid PassengerId,
+    Guid DriverId);
+
 public sealed record TripStartedNotification(
     Guid TripId,
     Guid PassengerId);

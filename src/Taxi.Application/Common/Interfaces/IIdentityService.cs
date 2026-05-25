@@ -15,5 +15,8 @@ public interface IIdentityService
     Task<Result<string>> GetOrCreateUserByPhoneAsync(string phone, string role);
     Task<Result<string>> CreateUserAsync(string phone, string email, string password, string role);
     Task<string?> GetUserNameAsync(string userId);
+    Task<Result<Success>> ResetPasswordAsync(string userId, string newPassword);
+    Task<bool> RequiresPasswordResetAsync(string userId);
+    Task<Result<Success>> ClearPasswordResetFlagAsync(string userId);
 }
 

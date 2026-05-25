@@ -1,5 +1,7 @@
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Drivers.Dtos;
 using Taxi.Domain.Common;
@@ -16,6 +18,12 @@ public class CreateDriverCommandHandler(
 
     public async Task<Result<DriverDto>> Handle(CreateDriverCommand request, CancellationToken ct)
     {
+        var vehicleTypeExists = await _context.VehicleTypes.AnyAsync(t => t.Id == request.VehicleTypeId, ct);
+        if (!vehicleTypeExists)
+        {
+            return Error.NotFound("VehicleType.NotFound", $"Vehicle type with ID {request.VehicleTypeId} was not found.");
+        }
+
         // Check if user exists by phone
         var user = await _context.DomainUsers.FirstOrDefaultAsync(u => u.Phone == request.Phone, ct);
 
@@ -23,15 +31,7 @@ public class CreateDriverCommandHandler(
         {
             var userResult = User.Create(
                 Guid.NewGuid(),
-                request.NameEn,
-                request.NameAr,
-                request.NameNl,
-                request.NameDe,
-                request.NamePl,
-                request.NameUk,
-                request.NameFr,
-                request.NameEs,
-                request.NameRo,
+                request.Name,
                 request.Phone,
                 null,
                 UserRole.Driver);
@@ -62,6 +62,7 @@ public class CreateDriverCommandHandler(
         }
 
         var driver = driverResult.Value;
+        driver.SetVehicleType(request.VehicleTypeId);
 
         _context.Drivers.Add(driver);
         await _context.SaveChangesAsync(ct);
@@ -69,10 +70,10 @@ public class CreateDriverCommandHandler(
         return new DriverDto(
             driver.Id,
             driver.UserId,
-            user.Name?.En,
+            user.Name,
             driver.LicenseNumber,
             driver.Status.ToString(),
-            driver.ActiveVehicleId);
+            driver.ApprovalStatus.ToString(),
+            driver.VehicleTypeId);
     }
 }
-

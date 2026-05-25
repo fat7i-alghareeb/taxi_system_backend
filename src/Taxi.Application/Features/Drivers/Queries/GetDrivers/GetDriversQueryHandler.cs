@@ -1,6 +1,8 @@
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Drivers.Dtos;
 using Taxi.Contracts.Common;
@@ -22,9 +24,8 @@ public class GetDriversQueryHandler(
         var lang = _languageContext.Language;
 
         _logger.LogInformation(
-            "[Projection] {QueryName} — Language='{Language}'. " +
-            "PostgreSQL will extract Name->>'{JsonKey}' from the JSONB column. Full trilingual load: DISABLED.",
-            nameof(GetDriversQuery), lang, lang == Languages.Ar ? "Ar" : (lang == Languages.Nl ? "Nl" : "En"));
+            "[Projection] {QueryName} — Language='{Language}'.",
+            nameof(GetDriversQuery), lang);
 
         var dtos = await _context.Drivers
             .AsNoTracking()
@@ -32,13 +33,13 @@ public class GetDriversQueryHandler(
             .Select(x => new DriverDto(
                 x.d.Id,
                 x.d.UserId,
-                lang == Languages.Ar ? x.u.Name.Ar : (lang == Languages.Nl ? x.u.Name.Nl : x.u.Name.En),
+                x.u.Name,
                 x.d.LicenseNumber,
                 x.d.Status.ToString(),
-                x.d.ActiveVehicleId))
+                x.d.ApprovalStatus.ToString(),
+                x.d.VehicleTypeId))
             .ToListAsync(ct);
 
         return dtos;
     }
 }
-

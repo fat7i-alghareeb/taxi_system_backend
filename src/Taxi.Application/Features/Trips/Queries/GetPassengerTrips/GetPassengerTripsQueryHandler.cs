@@ -45,7 +45,10 @@ public class GetPassengerTripsQueryHandler(
                 x.t.ScheduledAtUtc,
                 x.t.Stops
                     .OrderBy(s => s.Sequence)
-                    .Select(s => new TripStopDto(s.Coordinate.Latitude, s.Coordinate.Longitude))
+                    .Select(s => new TripStopDto(
+                        s.Coordinate.Latitude,
+                        s.Coordinate.Longitude,
+                        s.AddressLabel))
                     .ToList()))
             .ToListAsync(ct);
 

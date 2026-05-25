@@ -1,5 +1,7 @@
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Drivers.Dtos;
 using Taxi.Domain.Common.Results;
@@ -31,10 +33,10 @@ public class GetDriverByIdQueryHandler(
         return new DriverDto(
             driver.Id,
             driver.UserId,
-            user?.Name?.GetTranslation(_languageContext.Language),
+            user?.Name,
             driver.LicenseNumber,
             driver.Status.ToString(),
-            driver.ActiveVehicleId);
+            driver.ApprovalStatus.ToString(),
+            driver.VehicleTypeId);
     }
 }
-
