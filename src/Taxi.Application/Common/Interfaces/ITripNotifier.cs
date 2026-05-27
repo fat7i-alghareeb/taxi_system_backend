@@ -35,5 +35,12 @@ public interface ITripNotifier
 
     /// <summary>Sends to the trip group that the trip has been refunded.</summary>
     Task NotifyTripRefundedAsync(Guid tripId, Guid passengerId, decimal amount, CancellationToken ct = default);
+
+    /// <summary>
+    /// Sends to the trip group that an intermediate stop has just been completed
+    /// during a multi-stop trip. The passenger UI uses this to advance the
+    /// route progress indicator; admins see it on the live fleet map.
+    /// </summary>
+    Task NotifyTripStopCompletedAsync(Guid tripId, Guid passengerId, Guid? driverId, int sequence, CancellationToken ct = default);
 }
 

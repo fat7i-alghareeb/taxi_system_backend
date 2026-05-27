@@ -1,8 +1,9 @@
 using MediatR;
-
 using Taxi.Domain.Common.Results;
 
 namespace Taxi.Application.Features.Drivers.Queries.GetAllDriversWithStatus;
+
+public record GetAllDriversWithStatusQuery() : IRequest<Result<List<DriverWithStatusDto>>>;
 
 public record DriverWithStatusDto(
     Guid DriverId,
@@ -15,5 +16,3 @@ public record DriverWithStatusDto(
     DateTimeOffset? LocationUpdatedAt,
     Guid? VehicleTypeId,
     string? VehicleTypeName);
-
-public record GetAllDriversWithStatusQuery() : IRequest<Result<List<DriverWithStatusDto>>>;

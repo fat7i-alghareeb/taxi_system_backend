@@ -179,6 +179,50 @@ public sealed class Trip : AuditableEntity
         return Result.Success;
     }
 
+    /// <summary>
+    /// Marks an intermediate stop as completed during an in-progress trip.
+    /// Stops must be completed in order. The first stop (pickup, sequence 0)
+    /// and the last stop (dropoff) are not completed via this method — pickup
+    /// is implicit when the trip starts; dropoff is implicit in
+    /// <see cref="Complete"/>.
+    /// </summary>
+    public Result<Success> CompleteStop(int sequence)
+    {
+        if (Status != TripStatus.InProgress)
+        {
+            return TripErrors.InvalidStatus(Status);
+        }
+
+        var stop = _stops.FirstOrDefault(s => s.Sequence == sequence);
+        if (stop is null)
+        {
+            return TripErrors.StopNotFound(sequence);
+        }
+
+        if (stop.IsCompleted)
+        {
+            return TripErrors.StopAlreadyCompleted(sequence);
+        }
+
+        // Reject completing a stop while any earlier stop is still pending.
+        if (_stops.Any(s => s.Sequence < sequence && !s.IsCompleted))
+        {
+            return TripErrors.StopOutOfOrder(sequence);
+        }
+
+        stop.MarkCompleted();
+
+        AddDomainEvent(new TripStopCompleted
+        {
+            TripId = Id,
+            PassengerId = PassengerId,
+            DriverId = DriverId,
+            Sequence = sequence,
+        });
+
+        return Result.Success;
+    }
+
     public Result<Success> Cancel()
     {
         if (Status == TripStatus.Completed || Status == TripStatus.Cancelled || Status == TripStatus.Refunded)

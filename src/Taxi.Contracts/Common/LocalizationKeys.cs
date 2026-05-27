@@ -150,6 +150,9 @@ public static class LocalizationKeys
         public const string ActiveWaitingSessionNotFound = "Trip.Waiting.ActiveSessionNotFound";
         public const string NotOwnedByPassenger = "Trip.NotOwnedByPassenger";
         public const string DriverMismatch = "Trip.DriverMismatch";
+        public const string StopNotFound = "Trip.Stop.NotFound";
+        public const string StopOutOfOrder = "Trip.Stop.OutOfOrder";
+        public const string StopAlreadyCompleted = "Trip.Stop.AlreadyCompleted";
     }
 
     public static class Maps
@@ -182,6 +185,27 @@ public static class LocalizationKeys
     {
         public const string TitleRequired = "Notification.Title.Required";
         public const string BodyRequired = "Notification.Body.Required";
+
+        public const string DriverArrivedTitle = "Notification.DriverArrived.Title";
+        public const string DriverArrivedBody = "Notification.DriverArrived.Body";
+
+        public const string DriverEnRouteTitle = "Notification.DriverEnRoute.Title";
+        public const string DriverEnRouteBody = "Notification.DriverEnRoute.Body";
+
+        public const string DriverAssignedTitle = "Notification.DriverAssigned.Title";
+        public const string DriverAssignedBody = "Notification.DriverAssigned.Body";
+
+        public const string TripStartedTitle = "Notification.TripStarted.Title";
+        public const string TripStartedBody = "Notification.TripStarted.Body";
+
+        public const string TripCompletedTitle = "Notification.TripCompleted.Title";
+        public const string TripCompletedBody = "Notification.TripCompleted.Body";
+
+        public const string TripCancelledTitle = "Notification.TripCancelled.Title";
+        public const string TripCancelledBody = "Notification.TripCancelled.Body";
+
+        public const string TripRequestedTitle = "Notification.TripRequested.Title";
+        public const string TripRequestedBody = "Notification.TripRequested.Body";
     }
 }
 

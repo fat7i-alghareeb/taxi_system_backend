@@ -11,10 +11,12 @@ using Taxi.Application.Features.Drivers.Commands.CreateDriver;
 using Taxi.Application.Features.Drivers.Commands.DeleteDriver;
 using Taxi.Application.Features.Drivers.Commands.SetDriverStatus;
 using Taxi.Application.Features.Drivers.Commands.SuspendDriver;
+using Taxi.Application.Features.Drivers.Commands.UpdateCurrentDriverProfile;
 using Taxi.Application.Features.Drivers.Commands.UpdateDriver;
 using Taxi.Application.Features.Drivers.Commands.UpdateDriverLocation;
 using Taxi.Application.Features.Drivers.Dtos;
 using Taxi.Application.Features.Drivers.Queries.GetAllDriversWithStatus;
+using Taxi.Application.Features.Drivers.Queries.GetCurrentDriverProfile;
 using Taxi.Application.Features.Drivers.Queries.GetDriverById;
 using Taxi.Application.Features.Drivers.Queries.GetDriverEarnings;
 using Taxi.Application.Features.Drivers.Queries.GetDrivers;
@@ -165,6 +167,36 @@ public class DriversController(ISender sender) : ApiController
         return result.Match(Ok, Problem);
     }
 
+    [HttpGet("me")]
+    [Authorize(Roles = "Driver,Admin")]
+    [ProducesResponseType(typeof(DriverCurrentProfileDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Driver retrieves their own profile.")]
+    [EndpointName("GetCurrentDriverProfile")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetCurrentDriverProfile(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetCurrentDriverProfileQuery(), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpPut("me")]
+    [Authorize(Roles = "Driver,Admin")]
+    [ProducesResponseType(typeof(DriverCurrentProfileDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Driver updates their own profile (name, email).")]
+    [EndpointName("UpdateCurrentDriverProfile")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> UpdateCurrentDriverProfile(
+        [FromBody] UpdateCurrentDriverProfileRequest request,
+        CancellationToken ct)
+    {
+        var command = new UpdateCurrentDriverProfileCommand(request.Name, request.Email);
+        var result = await sender.Send(command, ct);
+        return result.Match(Ok, Problem);
+    }
+
     [HttpPost("{id:guid}/approve")]
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -205,3 +237,5 @@ public class DriversController(ISender sender) : ApiController
 }
 
 public record DriverLocationRequest(double Latitude, double Longitude);
+
+public record UpdateCurrentDriverProfileRequest(string Name, string? Email);

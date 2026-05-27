@@ -3,6 +3,8 @@ using Taxi.Domain.Common.Results;
 
 namespace Taxi.Application.Features.Users.Queries.GetAllUsers;
 
+public record GetAllUsersQuery(int PageNumber = 1, int PageSize = 15) : IRequest<Result<List<UserDto>>>;
+
 public record UserDto(
     Guid Id,
     string Name,
@@ -11,5 +13,3 @@ public record UserDto(
     string Role,
     bool IsActive,
     DateTimeOffset CreatedAtUtc);
-
-public record GetAllUsersQuery(int PageNumber = 1, int PageSize = 15) : IRequest<Result<List<UserDto>>>;

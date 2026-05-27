@@ -10,8 +10,7 @@ namespace Taxi.Application.Features.Users.Commands.UpdateUserProfile;
 public class UpdateUserProfileCommandHandler(
     IAppDbContext context,
     IUser currentUser,
-    IFileStorage fileStorage,
-    ILanguageContext languageContext) : IRequestHandler<UpdateUserProfileCommand, Result<UserDto>>
+    IFileStorage fileStorage) : IRequestHandler<UpdateUserProfileCommand, Result<UserDto>>
 {
     private const long MaxFileSizeBytes = 5 * 1024 * 1024;
     private static readonly string[] AllowedContentTypes = ["image/jpeg", "image/png"];

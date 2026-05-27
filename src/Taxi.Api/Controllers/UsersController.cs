@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Taxi.Api.Contracts;
 using Taxi.Application.Features.Auth.Dtos;
-using Taxi.Application.Features.Users.Commands.UpdateUserProfile;
 using Taxi.Application.Features.Users.Commands.UpdateFcmToken;
 using Taxi.Application.Features.Users.Commands.UpdatePreferredLanguage;
-using Taxi.Application.Features.Users.Queries.GetCurrentUser;
+using Taxi.Application.Features.Users.Commands.UpdateUserProfile;
 using Taxi.Application.Features.Users.Queries.GetAllUsers;
+using Taxi.Application.Features.Users.Queries.GetCurrentUser;
 
 namespace Taxi.Api.Controllers;
 

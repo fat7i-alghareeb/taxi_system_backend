@@ -4,6 +4,8 @@ using Taxi.Domain.Common.Results;
 
 namespace Taxi.Application.Features.Trips.Queries.GetTripDetails;
 
+public record GetTripDetailsQuery(Guid TripId) : IRequest<Result<TripDetailsDto>>;
+
 public record TripDetailsDto(
     Guid TripId,
     string ReferenceCode,
@@ -28,5 +30,3 @@ public record TripDetailsDto(
     CancellationPolicyDto? Cancellation = null,
     CompensationClaimDto? CompensationClaim = null,
     WaitingSessionDto? ActiveWaitingSession = null);
-
-public record GetTripDetailsQuery(Guid TripId) : IRequest<Result<TripDetailsDto>>;

@@ -1,5 +1,6 @@
 using MediatR;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Contracts.Common;
 using Taxi.Domain.Trips.Events;
 
 namespace Taxi.Application.Features.Trips.EventHandlers;
@@ -20,8 +21,8 @@ public sealed class DriverEnRouteEventHandler(ITripNotifier notifier, INotificat
 
         await _notificationService.SendPushNotificationAsync(
             notification.PassengerId,
-            "Notification.DriverEnRoute.Title",
-            "Notification.DriverEnRoute.Body",
+            LocalizationKeys.Notification.DriverEnRouteTitle,
+            LocalizationKeys.Notification.DriverEnRouteBody,
             new Dictionary<string, string>
             {
                 { "tripId", notification.TripId.ToString() },

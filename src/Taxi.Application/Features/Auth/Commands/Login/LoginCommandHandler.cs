@@ -11,8 +11,7 @@ public sealed class LoginCommandHandler(
     IFirebaseAuthService firebaseAuth,
     IIdentityService identityService,
     ITokenProvider tokenProvider,
-    IAppDbContext dbContext,
-    ILanguageContext languageContext) : IRequestHandler<LoginCommand, Result<AuthResponse>>
+    IAppDbContext dbContext) : IRequestHandler<LoginCommand, Result<AuthResponse>>
 {
     public async Task<Result<AuthResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {

@@ -10,14 +10,30 @@ namespace Taxi.Application.Features.Users.Queries.GetCurrentUser;
 
 public class GetCurrentUserQueryHandler(
     IAppDbContext context,
-    IUser currentUser,
-    ILanguageContext languageContext) : IRequestHandler<GetCurrentUserQuery, Result<UserDto>>
+    IIdentityService identityService,
+    IUser currentUser) : IRequestHandler<GetCurrentUserQuery, Result<UserDto>>
 {
     public async Task<Result<UserDto>> Handle(GetCurrentUserQuery request, CancellationToken ct)
     {
         if (!Guid.TryParse(currentUser.Id, out var userId))
         {
             return Error.Unauthorized(LocalizationKeys.Auth.UserIdClaimInvalid, "Invalid user ID claim.");
+        }
+
+        var requiresPasswordReset = await identityService.RequiresPasswordResetAsync(userId.ToString());
+
+        var adminProfile = await context.AdminProfiles.FirstOrDefaultAsync(a => a.Id == userId, ct);
+        if (adminProfile is not null)
+        {
+            return new UserDto
+            {
+                Id = adminProfile.Id,
+                Phone = adminProfile.Phone1 ?? string.Empty,
+                Role = UserRole.Admin.ToString(),
+                Email = adminProfile.Email,
+                Name = adminProfile.Name,
+                RequiresPasswordReset = requiresPasswordReset,
+            };
         }
 
         var user = await context.DomainUsers
@@ -54,6 +70,7 @@ public class GetCurrentUserQueryHandler(
             Name = isPlaceholder ? null : resolvedName,
             DriverId = driverId,
             ApprovalStatus = approvalStatus,
+            RequiresPasswordReset = requiresPasswordReset,
         };
     }
 }

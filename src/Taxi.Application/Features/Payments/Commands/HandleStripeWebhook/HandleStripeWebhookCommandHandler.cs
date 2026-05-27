@@ -84,20 +84,15 @@ public class HandleStripeWebhookCommandHandler(
 
         payment.MarkAsCompleted(evt.ChargeId);
 
-        // If the trip is still AwaitingPayment, confirm + dispatch.
-        // If it's already in a later state (e.g. webhook replay after another path moved it), no-op.
+        // If the trip is still AwaitingPayment, just confirm payment so the trip
+        // moves to PendingDriver. Admins/drivers receive the TripRequested event
+        // via SignalR and pick it up themselves — no auto-dispatch.
         if (trip.Status == TripStatus.AwaitingPayment)
         {
             var confirmResult = trip.ConfirmPayment();
             if (confirmResult.IsFailure)
             {
                 return confirmResult.Error;
-            }
-
-            var dispatchResult = await TripDispatchHelper.AssignDefaultDriverAsync(trip, context, ct);
-            if (dispatchResult.IsFailure)
-            {
-                return dispatchResult.Error;
             }
         }
 

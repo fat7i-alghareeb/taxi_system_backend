@@ -2,9 +2,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 
+using Taxi.Domain.Admins;
 using Taxi.Domain.Configuration;
-using Taxi.Domain.Drivers;
-using Taxi.Domain.Users;
 using Taxi.Domain.Vehicles;
 using Taxi.Infrastructure.Identity;
 
@@ -16,29 +15,29 @@ public class ApplicationDbContextInitialiser(
     UserManager<AppUser> userManager,
     IHostEnvironment environment)
 {
-    private const string SuperAdminPhone = "+31555555552";
-    private const string SuperAdminUserName = "admin";
-    private const string SuperAdminPassword = "Admin@123!";
-    private static readonly Guid SuperAdminUserId = new("00000000-0000-0000-0000-000000000000");
-    private static readonly Guid AdminDriverUserId = new("11111111-1111-1111-1111-111111111111");
-    private static readonly Guid AdminDriverId = new("22222222-2222-2222-2222-222222222222");
-
-    public async Task InitialiseAsync()
-    {
-        await context.Database.EnsureDeletedAsync();
-        await context.Database.MigrateAsync();
-    }
+    private const string AdminUserName = "admin";
+    private const string AdminPassword = "admin";
+    private const string AdminDisplayName = "Admin";
+    private const string AdminEmail = "admin@fat7i.dev";
+    private const string SecondAdminUserName = "admin2";
+    private const string SecondAdminPassword = "admin2";
+    private const string SecondAdminDisplayName = "Second Admin";
+    private const string SecondAdminEmail = "admin2@fat7i.dev";
 
     public async Task SeedAsync()
     {
-        try
-        {
-            await TrySeedAsync();
-        }
-        catch (Exception)
-        {
-            throw;
-        }
+        await TrySeedAsync();
+    }
+
+    /// <summary>
+    /// Drops the entire database and re-applies all migrations.
+    /// DESTRUCTIVE — only meant for local development resets.
+    /// Caller is responsible for gating this behind an environment / config check.
+    /// </summary>
+    public async Task ResetDatabaseAsync()
+    {
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.MigrateAsync();
     }
 
     public async Task TrySeedAsync()
@@ -129,11 +128,9 @@ public class ApplicationDbContextInitialiser(
             await context.SaveChangesAsync();
         }
 
-        // 4. Seed super admin
-        await SeedSuperAdminAsync();
-
-        // 4. Seed admin driver (fixed GUID so idempotent)
-        await SeedAdminDriverAsync();
+        // 4. Seed admin users
+        await SeedAdminAsync(AdminUserName, AdminPassword, AdminDisplayName, AdminEmail);
+        await SeedAdminAsync(SecondAdminUserName, SecondAdminPassword, SecondAdminDisplayName, SecondAdminEmail);
 
         if (environment.IsDevelopment())
         {
@@ -141,107 +138,92 @@ public class ApplicationDbContextInitialiser(
         }
     }
 
-    private async Task SeedSuperAdminAsync()
+    private async Task SeedAdminAsync(string userName, string password, string displayName, string email)
     {
-        var adminUser = await userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == SuperAdminPhone);
-        if (adminUser != null)
+        var adminUser = await userManager.FindByNameAsync(userName);
+
+        if (adminUser == null)
         {
-            return;
+            adminUser = new AppUser
+            {
+                UserName = userName,
+                Email = email,
+                EmailConfirmed = true,
+                RequiresPasswordReset = true,
+            };
+
+            var identityResult = await userManager.CreateAsync(adminUser, password);
+            if (!identityResult.Succeeded)
+            {
+                var errors = string.Join(", ", identityResult.Errors.Select(e => e.Description));
+                throw new InvalidOperationException($"Failed to create admin identity user '{userName}': {errors}");
+            }
         }
 
-        // 1. Create Identity user for Super Admin
-        adminUser = new AppUser
+        if (adminUser.Email != email || !adminUser.EmailConfirmed)
         {
-            Id = SuperAdminUserId.ToString(),
-            UserName = SuperAdminUserName,
-            PhoneNumber = SuperAdminPhone,
-            Email = "admin@fat7i.dev",
-            EmailConfirmed = true,
-            PhoneNumberConfirmed = true,
-            RequiresPasswordReset = false
-        };
-        var identityResult = await userManager.CreateAsync(adminUser, SuperAdminPassword);
-        if (!identityResult.Succeeded)
-        {
-            var errors = string.Join(", ", identityResult.Errors.Select(e => e.Description));
-            throw new InvalidOperationException($"Failed to create super admin identity user: {errors}");
+            adminUser.Email = email;
+            adminUser.EmailConfirmed = true;
+            var updateResult = await userManager.UpdateAsync(adminUser);
+            if (!updateResult.Succeeded)
+            {
+                var errors = string.Join(", ", updateResult.Errors.Select(e => e.Description));
+                throw new InvalidOperationException($"Failed to update admin identity user '{userName}': {errors}");
+            }
         }
 
-        // 2. Assign roles: Admin, Driver, Passenger
-        await userManager.AddToRoleAsync(adminUser, "Admin");
-        await userManager.AddToRoleAsync(adminUser, "Driver");
-        await userManager.AddToRoleAsync(adminUser, "Passenger");
-
-        // 3. Create domain User
-        var domainUserResult = User.Create(
-            SuperAdminUserId,
-            "Super Admin",
-            SuperAdminPhone,
-            adminUser.Email,
-            UserRole.Admin);
-
-        if (domainUserResult.IsFailure)
+        var usesSeedPassword = await userManager.CheckPasswordAsync(adminUser, password);
+        if (usesSeedPassword && !adminUser.RequiresPasswordReset)
         {
-            throw new InvalidOperationException($"Failed to create super admin domain user: {domainUserResult.Error.Description}");
+            adminUser.RequiresPasswordReset = true;
+            var updateResult = await userManager.UpdateAsync(adminUser);
+            if (!updateResult.Succeeded)
+            {
+                var errors = string.Join(", ", updateResult.Errors.Select(e => e.Description));
+                throw new InvalidOperationException($"Failed to update admin identity user '{userName}': {errors}");
+            }
         }
 
-        context.DomainUsers.Add(domainUserResult.Value);
-        await context.SaveChangesAsync();
-    }
-
-    private async Task SeedAdminDriverAsync()
-    {
-        var driverExists = await context.Drivers.AnyAsync(d => d.Id == AdminDriverId);
-        if (driverExists)
+        if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
         {
-            return;
+            await userManager.AddToRoleAsync(adminUser, "Admin");
         }
 
-        // Create Identity user for the admin driver
-        var phone = "+10000000000";
-        var identityUser = new AppUser
+        var roles = await userManager.GetRolesAsync(adminUser);
+        var rolesToRemove = roles.Where(role => role != "Admin").ToArray();
+        if (rolesToRemove.Length > 0)
         {
-            Id = AdminDriverUserId.ToString(),
-            UserName = phone,
-            PhoneNumber = phone,
-            RequiresPasswordReset = false
-        };
-        var identityResult = await userManager.CreateAsync(identityUser, "Driver@123!");
-        if (!identityResult.Succeeded)
-        {
-            var errors = string.Join(", ", identityResult.Errors.Select(e => e.Description));
-            throw new InvalidOperationException($"Failed to create admin driver identity user: {errors}");
+            var removeResult = await userManager.RemoveFromRolesAsync(adminUser, rolesToRemove);
+            if (!removeResult.Succeeded)
+            {
+                var errors = string.Join(", ", removeResult.Errors.Select(e => e.Description));
+                throw new InvalidOperationException($"Failed to remove non-admin roles from '{userName}': {errors}");
+            }
         }
 
-        await userManager.AddToRoleAsync(identityUser, "Driver");
-
-        // Create domain User
-        var domainUserResult = User.Create(
-            AdminDriverUserId,
-            "Admin Driver",
-            phone,
-            null,
-            UserRole.Driver);
-
-        if (domainUserResult.IsFailure)
+        var adminUserId = Guid.Parse(adminUser.Id);
+        var adminProfile = await context.AdminProfiles.FirstOrDefaultAsync(a => a.Id == adminUserId);
+        if (adminProfile is null)
         {
-            throw new InvalidOperationException($"Failed to create admin driver domain user: {domainUserResult.Error.Description}");
+            var adminProfileResult = AdminProfile.Create(adminUserId, displayName, email);
+            if (adminProfileResult.IsFailure)
+            {
+                throw new InvalidOperationException($"Failed to create admin profile '{userName}': {adminProfileResult.Error.Description}");
+            }
+
+            context.AdminProfiles.Add(adminProfileResult.Value);
+            await context.SaveChangesAsync();
         }
-
-        context.DomainUsers.Add(domainUserResult.Value);
-        await context.SaveChangesAsync();
-
-        // Create Driver profile
-        var driverResult = Driver.Create(AdminDriverId, AdminDriverUserId, "ADMIN-LIC-0001");
-
-        if (driverResult.IsFailure)
+        else if (adminProfile.Email != email || adminProfile.Name != displayName)
         {
-            throw new InvalidOperationException($"Failed to create admin driver profile: {driverResult.Error.Description}");
-        }
+            var updateResult = adminProfile.Update(displayName, email, adminProfile.Phone1, adminProfile.Phone2);
+            if (updateResult.IsError)
+            {
+                throw new InvalidOperationException($"Failed to update admin profile '{userName}': {updateResult.Error.Description}");
+            }
 
-        driverResult.Value.Activate();
-        context.Drivers.Add(driverResult.Value);
-        await context.SaveChangesAsync();
+            await context.SaveChangesAsync();
+        }
     }
 
     private Task SeedDevelopmentOnlyAsync()

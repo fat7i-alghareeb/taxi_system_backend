@@ -15,10 +15,15 @@ public sealed class SignalRTripNotifier(IHubContext<TripHub> hubContext) : ITrip
 {
     private readonly IHubContext<TripHub> _hubContext = hubContext;
 
-    public Task NotifyTripRequestedAsync(Guid tripId, Guid vehicleTypeId, Guid passengerId, CancellationToken ct = default) =>
-        _hubContext.Clients
-            .Group($"VehicleType_{vehicleTypeId}")
-            .SendAsync("TripRequested", new TripRequestedNotification(tripId, vehicleTypeId, passengerId), ct);
+    public Task NotifyTripRequestedAsync(Guid tripId, Guid vehicleTypeId, Guid passengerId, CancellationToken ct = default)
+    {
+        var payload = new TripRequestedNotification(tripId, vehicleTypeId, passengerId);
+
+        // Notify the matching drivers (subscribed to this vehicle type) AND every admin.
+        return Task.WhenAll(
+            _hubContext.Clients.Group($"VehicleType_{vehicleTypeId}").SendAsync("TripRequested", payload, ct),
+            _hubContext.Clients.Group("Admins").SendAsync("TripRequested", payload, ct));
+    }
 
     public Task NotifyDriverAssignedAsync(Guid tripId, Guid passengerId, Guid driverId, CancellationToken ct = default) =>
         _hubContext.Clients
@@ -64,4 +69,9 @@ public sealed class SignalRTripNotifier(IHubContext<TripHub> hubContext) : ITrip
         _hubContext.Clients
             .Group($"Trip_{tripId}")
             .SendAsync("TripRefunded", new TripRefundedNotification(tripId, passengerId, amount), ct);
+
+    public Task NotifyTripStopCompletedAsync(Guid tripId, Guid passengerId, Guid? driverId, int sequence, CancellationToken ct = default) =>
+        _hubContext.Clients
+            .Group($"Trip_{tripId}")
+            .SendAsync("TripStopCompleted", new TripStopCompletedNotification(tripId, passengerId, driverId, sequence), ct);
 }

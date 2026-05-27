@@ -10,5 +10,6 @@ public class UserDto
     public string? ProfilePhotoUrl { get; set; }
     public Guid? DriverId { get; set; }
     public string? ApprovalStatus { get; set; }
+    public bool RequiresPasswordReset { get; set; }
 }
 

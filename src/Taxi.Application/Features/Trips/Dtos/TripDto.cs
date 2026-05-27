@@ -18,4 +18,6 @@ public record TripDto(
     string? VehicleTypeName = null,
     CancellationPolicyDto? Cancellation = null,
     CompensationClaimDto? CompensationClaim = null,
-    WaitingSessionDto? ActiveWaitingSession = null);
+    WaitingSessionDto? ActiveWaitingSession = null,
+    string? PassengerName = null,
+    string? PassengerPhone = null);

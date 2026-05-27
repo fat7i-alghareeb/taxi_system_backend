@@ -11,9 +11,12 @@ public interface IIdentityService
 
     Task<Result<AppUserDto>> AuthenticateAsync(string email, string password);
 
+    Task<Result<AppUserDto>> AuthenticateByUserNameAsync(string userName, string password);
+
     Task<Result<AppUserDto>> GetUserByIdAsync(string userId);
     Task<Result<string>> GetOrCreateUserByPhoneAsync(string phone, string role);
     Task<Result<string>> CreateUserAsync(string phone, string email, string password, string role);
+    Task<Result<string>> CreateAdminUserAsync(string userName, string email, string password);
     Task<string?> GetUserNameAsync(string userId);
     Task<Result<Success>> ResetPasswordAsync(string userId, string newPassword);
     Task<bool> RequiresPasswordResetAsync(string userId);

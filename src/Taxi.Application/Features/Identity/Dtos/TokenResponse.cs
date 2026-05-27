@@ -7,5 +7,7 @@ public class TokenResponse
     public string RefreshToken { get; set; } = string.Empty;
 
     public DateTimeOffset ExpiresOnUtc { get; set; }
+
+    public bool RequiresPasswordReset { get; set; }
 }
 

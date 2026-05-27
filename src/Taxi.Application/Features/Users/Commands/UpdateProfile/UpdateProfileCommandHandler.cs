@@ -9,8 +9,7 @@ namespace Taxi.Application.Features.Users.Commands.UpdateProfile;
 
 public class UpdateProfileCommandHandler(
     IAppDbContext context,
-    IUser currentUser,
-    ILanguageContext languageContext) : IRequestHandler<UpdateProfileCommand, Result<UserDto>>
+    IUser currentUser) : IRequestHandler<UpdateProfileCommand, Result<UserDto>>
 {
     public async Task<Result<UserDto>> Handle(UpdateProfileCommand request, CancellationToken ct)
     {

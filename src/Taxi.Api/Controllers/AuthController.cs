@@ -2,19 +2,20 @@ using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Taxi.Application.Features.Auth.Commands.Login;
 using Taxi.Application.Features.Auth.Commands.ForceResetPassword;
+using Taxi.Application.Features.Auth.Commands.Login;
 using Taxi.Application.Features.Auth.Dtos;
 using Taxi.Application.Features.Identity.Dtos;
+using Taxi.Application.Features.Identity.Queries.GenerateTokens;
 
 namespace Taxi.Api.Controllers;
 
-[AllowAnonymous]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/auth")]
 public sealed class AuthController(ISender sender) : ApiController
 {
     [HttpPost("login")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -29,6 +30,20 @@ public sealed class AuthController(ISender sender) : ApiController
         return result.Match(
             this.Ok,
             this.Problem);
+    }
+
+    [HttpPost("admin/login")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [EndpointSummary("Authenticates an admin using username and password.")]
+    [EndpointDescription("Returns a JWT token pair. If RequiresPasswordReset is true, the admin must change their password before accessing the system.")]
+    [EndpointName("AdminLogin")]
+    public async Task<IActionResult> AdminLogin([FromBody] GenerateTokenQuery request, CancellationToken ct)
+    {
+        var result = await sender.Send(request, ct);
+        return result.Match(Ok, Problem);
     }
 
     [HttpPost("force-reset-password")]

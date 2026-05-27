@@ -6,6 +6,6 @@ using Taxi.Domain.Common.Results;
 namespace Taxi.Application.Features.Identity.Queries.GenerateTokens;
 
 public record GenerateTokenQuery(
-    string Email,
+    string UserName,
     string Password) : IRequest<Result<TokenResponse>>;
 

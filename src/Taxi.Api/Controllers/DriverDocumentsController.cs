@@ -31,7 +31,7 @@ public class DriverDocumentsController(ISender sender, IFileStorage fileStorage)
 
         var extension = Path.GetExtension(file.FileName);
         using var stream = file.OpenReadStream();
-        
+
         // Save using IFileStorage
         var fileUrl = await fileStorage.SaveAsync(stream, $"documents/{id}_{type}{extension}", ct);
 

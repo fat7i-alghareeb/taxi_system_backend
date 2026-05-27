@@ -4,8 +4,10 @@ using Taxi.Domain.Common.Results;
 namespace Taxi.Application.Features.Identity.Commands.RegisterAdmin;
 
 public record RegisterAdminCommand(
-    string Phone,
+    string UserName,
     string Password,
     string Name,
-    string? Email) : IRequest<Result<Guid>>;
+    string Email,
+    string? Phone1,
+    string? Phone2) : IRequest<Result<Guid>>;
 

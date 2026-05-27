@@ -80,5 +80,17 @@ public static class TripErrors
     public static readonly Error NotOwnedByPassenger = Error.Validation(
         code: LocalizationKeys.Trip.NotOwnedByPassenger,
         description: "This trip does not belong to the current passenger.");
+
+    public static Error StopNotFound(int sequence) => Error.NotFound(
+        code: LocalizationKeys.Trip.StopNotFound,
+        description: $"Trip stop with sequence '{sequence}' was not found.");
+
+    public static Error StopOutOfOrder(int sequence) => Error.Validation(
+        code: LocalizationKeys.Trip.StopOutOfOrder,
+        description: $"Cannot complete stop '{sequence}' because earlier stops are not yet completed.");
+
+    public static Error StopAlreadyCompleted(int sequence) => Error.Validation(
+        code: LocalizationKeys.Trip.StopAlreadyCompleted,
+        description: $"Trip stop with sequence '{sequence}' has already been completed.");
 }
 

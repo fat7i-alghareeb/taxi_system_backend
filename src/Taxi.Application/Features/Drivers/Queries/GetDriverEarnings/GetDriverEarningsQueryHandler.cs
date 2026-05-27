@@ -26,7 +26,8 @@ public class GetDriverEarningsQueryHandler(IAppDbContext context, IUser currentU
 
         var completedTrips = await _context.Trips
             .Where(t => t.DriverId == driver.Id && t.Status == TripStatus.Completed && t.DeletedAtUtc == null)
-            .Join(_context.PricingQuotes,
+            .Join(
+                _context.PricingQuotes,
                 t => t.QuoteId,
                 q => q.Id,
                 (t, q) => new DriverTripEarningDto(

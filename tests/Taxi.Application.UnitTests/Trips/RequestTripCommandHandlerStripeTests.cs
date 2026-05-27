@@ -126,7 +126,7 @@ public class RequestTripCommandHandlerStripeTests
         Assert.Equal(TripErrors.QuoteAlreadyUsed.Code, result.Error.Code);
     }
 
-    private (IAppDbContext, Guid) BuildContext(Guid passengerId, Guid vehicleTypeId, bool quoteUsed = false)
+    private (IAppDbContext Context, Guid QuoteId) BuildContext(Guid passengerId, Guid vehicleTypeId, bool quoteUsed = false)
     {
         var quoteId = Guid.NewGuid();
         var quote = PricingQuote.Create(

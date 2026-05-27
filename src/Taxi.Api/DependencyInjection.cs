@@ -291,6 +291,20 @@ public static class DependencyInjection
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var initialiser = scope.ServiceProvider.GetRequiredService<ApplicationDbContextInitialiser>();
+        var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+
+        // Opt-in destructive reset — only honored in Development to prevent
+        // accidental data loss in production even if the flag is misconfigured.
+        var resetOnStartup = configuration.GetValue<bool>("Database:ResetOnStartup");
+        if (resetOnStartup && app.Environment.IsDevelopment())
+        {
+            logger.LogWarning("Database:ResetOnStartup=true — dropping and recreating database.");
+            await initialiser.ResetDatabaseAsync();
+        }
+        else if (resetOnStartup)
+        {
+            logger.LogWarning("Database:ResetOnStartup=true ignored — only allowed in Development environment.");
+        }
 
         const int maxAttempts = 5;
         var delay = TimeSpan.FromSeconds(3);

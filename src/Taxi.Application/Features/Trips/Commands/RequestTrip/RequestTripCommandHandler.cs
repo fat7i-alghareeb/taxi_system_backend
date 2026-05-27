@@ -88,18 +88,13 @@ public class RequestTripCommandHandler(
 
         if (!stripeEnabled)
         {
-            // Legacy paymentless flow: immediately confirm payment and assign a driver
-            // so the existing client UX (no PaymentSheet) keeps working.
+            // Legacy paymentless flow: confirm payment so the trip moves to
+            // PendingDriver. We DO NOT auto-assign — admins/drivers receive the
+            // TripRequested event via SignalR and pick it up from their app.
             var confirmResult = trip.ConfirmPayment();
             if (confirmResult.IsFailure)
             {
                 return confirmResult.Error;
-            }
-
-            var dispatchResult = await TripDispatchHelper.AssignDefaultDriverAsync(trip, _context, ct);
-            if (dispatchResult.IsFailure)
-            {
-                return dispatchResult.Error;
             }
 
             _context.Trips.Add(trip);

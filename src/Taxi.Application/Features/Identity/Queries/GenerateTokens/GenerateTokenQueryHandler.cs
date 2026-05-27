@@ -18,11 +18,11 @@ public class GenerateTokenQueryHandler(
 
     public async Task<Result<TokenResponse>> Handle(GenerateTokenQuery request, CancellationToken ct)
     {
-        var checkPasswordResult = await this.identityService.AuthenticateAsync(request.Email, request.Password);
+        var checkPasswordResult = await this.identityService.AuthenticateByUserNameAsync(request.UserName, request.Password);
 
         if (checkPasswordResult.IsError)
         {
-            this.logger.LogError("Check password error occurred for email {Email}: {ErrorDescription}", request.Email, checkPasswordResult.TopError.Description);
+            this.logger.LogError("Check password error occurred for userName {UserName}: {ErrorDescription}", request.UserName, checkPasswordResult.TopError.Description);
             return checkPasswordResult.Errors;
         }
 
@@ -30,7 +30,7 @@ public class GenerateTokenQueryHandler(
 
         if (generateTokenResult.IsError)
         {
-            this.logger.LogError("Generate token error occurred for email {Email}: {ErrorDescription}", request.Email, generateTokenResult.TopError.Description);
+            this.logger.LogError("Generate token error occurred for userName {UserName}: {ErrorDescription}", request.UserName, generateTokenResult.TopError.Description);
             return generateTokenResult.Errors;
         }
 

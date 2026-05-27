@@ -1,7 +1,7 @@
 using MediatR;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Domain.Admins;
 using Taxi.Domain.Common.Results;
-using Taxi.Domain.Users;
 
 namespace Taxi.Application.Features.Identity.Commands.RegisterAdmin;
 
@@ -11,12 +11,10 @@ public class RegisterAdminCommandHandler(
 {
     public async Task<Result<Guid>> Handle(RegisterAdminCommand request, CancellationToken cancellationToken)
     {
-        // 1. Create Identity user via service
-        var identityResult = await identityService.CreateUserAsync(
-            request.Phone,
-            request.Email ?? string.Empty,
-            request.Password,
-            "Admin");
+        var identityResult = await identityService.CreateAdminUserAsync(
+            request.UserName,
+            request.Email,
+            request.Password);
 
         if (identityResult.IsFailure)
         {
@@ -25,23 +23,22 @@ public class RegisterAdminCommandHandler(
 
         var identityId = identityResult.Value;
 
-        // 2. Create domain User
-        var domainUserResult = User.Create(
+        var adminProfileResult = AdminProfile.Create(
             Guid.Parse(identityId),
             request.Name,
-            request.Phone,
             request.Email,
-            UserRole.Admin);
+            request.Phone1,
+            request.Phone2);
 
-        if (domainUserResult.IsFailure)
+        if (adminProfileResult.IsFailure)
         {
-            return domainUserResult.Errors;
+            return adminProfileResult.Errors;
         }
 
-        dbContext.DomainUsers.Add(domainUserResult.Value);
+        dbContext.AdminProfiles.Add(adminProfileResult.Value);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return domainUserResult.Value.Id;
+        return adminProfileResult.Value.Id;
     }
 }
 

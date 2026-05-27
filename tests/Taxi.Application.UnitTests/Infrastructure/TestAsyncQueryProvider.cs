@@ -34,8 +34,15 @@ internal sealed class TestAsyncQueryProvider<TEntity>(IQueryProvider inner) : IA
 
 internal sealed class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
 {
-    public TestAsyncEnumerable(IEnumerable<T> enumerable) : base(enumerable) { }
-    public TestAsyncEnumerable(Expression expression) : base(expression) { }
+    public TestAsyncEnumerable(IEnumerable<T> enumerable)
+        : base(enumerable)
+    {
+    }
+
+    public TestAsyncEnumerable(Expression expression)
+        : base(expression)
+    {
+    }
 
     IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
 
@@ -46,6 +53,12 @@ internal sealed class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumera
 internal sealed class TestAsyncEnumerator<T>(IEnumerator<T> inner) : IAsyncEnumerator<T>
 {
     public T Current => inner.Current;
+
     public ValueTask<bool> MoveNextAsync() => ValueTask.FromResult(inner.MoveNext());
-    public ValueTask DisposeAsync() { inner.Dispose(); return ValueTask.CompletedTask; }
+
+    public ValueTask DisposeAsync()
+    {
+        inner.Dispose();
+        return ValueTask.CompletedTask;
+    }
 }

@@ -1,13 +1,13 @@
 using FirebaseAdmin.Messaging;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
 using Taxi.Application.Common.Interfaces;
 
 namespace Taxi.Infrastructure.Notifications;
 
 public class FcmNotificationService(
-    IAppDbContext context, 
+    IAppDbContext context,
     ILogger<FcmNotificationService> logger,
     IStringLocalizerFactory localizerFactory) : INotificationService
 {
@@ -42,8 +42,15 @@ public class FcmNotificationService(
             var titleLoc = localizer[title];
             var bodyLoc = localizer[body];
 
-            if (!titleLoc.ResourceNotFound) localizedTitle = titleLoc.Value;
-            if (!bodyLoc.ResourceNotFound) localizedBody = bodyLoc.Value;
+            if (!titleLoc.ResourceNotFound)
+            {
+                localizedTitle = titleLoc.Value;
+            }
+
+            if (!bodyLoc.ResourceNotFound)
+            {
+                localizedBody = bodyLoc.Value;
+            }
         }
         catch (Exception ex)
         {
@@ -62,9 +69,9 @@ public class FcmNotificationService(
                 Notification = new Notification
                 {
                     Title = localizedTitle,
-                    Body = localizedBody
+                    Body = localizedBody,
                 },
-                Data = data
+                Data = data,
             };
 
             var response = await FirebaseMessaging.DefaultInstance.SendAsync(message, ct);
@@ -96,9 +103,9 @@ public class FcmNotificationService(
                 Notification = new Notification
                 {
                     Title = title,
-                    Body = body
+                    Body = body,
                 },
-                Data = data
+                Data = data,
             };
 
             var response = await FirebaseMessaging.DefaultInstance.SendAsync(message, ct);

@@ -1,8 +1,10 @@
 namespace Taxi.Contracts.Requests.Identity;
 
 public record RegisterAdminRequest(
-    string Phone,
+    string UserName,
     string Password,
     string Name,
-    string? Email);
+    string Email,
+    string? Phone1,
+    string? Phone2);
 

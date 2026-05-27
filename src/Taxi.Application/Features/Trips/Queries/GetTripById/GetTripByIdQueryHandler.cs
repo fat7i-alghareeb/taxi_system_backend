@@ -63,6 +63,9 @@ public class GetTripByIdQueryHandler(
             }
         }
 
+        var passenger = await _context.DomainUsers
+            .FirstOrDefaultAsync(u => u.Id == trip.PassengerId, ct);
+
         return new TripDto(
             trip.Id,
             trip.ReferenceCode,
@@ -81,6 +84,8 @@ public class GetTripByIdQueryHandler(
             vehicleTypeName,
             cancellation?.ToDto(),
             compensationClaim?.ToDto(),
-            activeWaitingSession?.ToDto());
+            activeWaitingSession?.ToDto(),
+            passenger?.Name,
+            passenger?.Phone);
     }
 }

@@ -1,17 +1,17 @@
-namespace Taxi.Infrastructure.Identity;
-
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Identity;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Identity.Dtos;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Identity;
+
+namespace Taxi.Infrastructure.Identity;
 
 public class TokenProvider(IConfiguration configuration, IAppDbContext context, UserManager<AppUser> userManager) : ITokenProvider
 {
@@ -129,7 +129,8 @@ public class TokenProvider(IConfiguration configuration, IAppDbContext context, 
         {
             AccessToken = tokenHandler.WriteToken(securityToken),
             RefreshToken = refreshToken.Token!,
-            ExpiresOnUtc = expires
+            ExpiresOnUtc = expires,
+            RequiresPasswordReset = dbUser?.RequiresPasswordReset ?? false,
         };
     }
 }

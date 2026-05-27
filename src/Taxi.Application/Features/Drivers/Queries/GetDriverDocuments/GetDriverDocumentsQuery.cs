@@ -4,6 +4,8 @@ using Taxi.Domain.Drivers;
 
 namespace Taxi.Application.Features.Drivers.Queries.GetDriverDocuments;
 
+public record GetDriverDocumentsQuery(Guid DriverId) : IRequest<Result<List<DriverDocumentDto>>>;
+
 public record DriverDocumentDto(
     Guid Id,
     string Type,
@@ -11,5 +13,3 @@ public record DriverDocumentDto(
     string Status,
     string? ReviewNotes,
     DateTimeOffset? ReviewedAtUtc);
-
-public record GetDriverDocumentsQuery(Guid DriverId) : IRequest<Result<List<DriverDocumentDto>>>;

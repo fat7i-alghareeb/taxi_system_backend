@@ -61,6 +61,44 @@ public class IdentityService(
         return new AppUserDto(user.Id, user.Email!, await _userManager.GetRolesAsync(user), await _userManager.GetClaimsAsync(user));
     }
 
+    public async Task<Result<AppUserDto>> AuthenticateByUserNameAsync(string userName, string password)
+    {
+        var user = await _userManager.FindByNameAsync(userName);
+
+        if (user is null)
+        {
+            return Error.NotFound("User_Not_Found", "User not found");
+        }
+
+        if (!await _userManager.CheckPasswordAsync(user, password))
+        {
+            return Error.Conflict("Invalid_Login_Attempt", "Username / Password are incorrect");
+        }
+
+        return new AppUserDto(user.Id, user.Email ?? string.Empty, await _userManager.GetRolesAsync(user), await _userManager.GetClaimsAsync(user));
+    }
+
+    public async Task<Result<string>> CreateAdminUserAsync(string userName, string email, string password)
+    {
+        var user = new AppUser
+        {
+            UserName = userName,
+            Email = string.IsNullOrWhiteSpace(email) ? null : email,
+            EmailConfirmed = true,
+            RequiresPasswordReset = true,
+        };
+
+        var result = await _userManager.CreateAsync(user, password);
+        if (!result.Succeeded)
+        {
+            return Error.Failure("Identity.CreateFailed", string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
+
+        await _userManager.AddToRoleAsync(user, "Admin");
+
+        return user.Id;
+    }
+
     public async Task<Result<string>> GetOrCreateUserByPhoneAsync(string phone, string role)
     {
         var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == phone);

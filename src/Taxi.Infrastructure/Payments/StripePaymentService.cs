@@ -110,23 +110,6 @@ public sealed class StripePaymentService : IStripePaymentService
         }
     }
 
-    private static string ResolveKlarnaLocale(string? preferredLanguage)
-    {
-        var lang = (preferredLanguage ?? "en").Trim().ToLowerInvariant();
-        return lang switch
-        {
-            "nl" => "nl-NL",
-            "de" => "de-DE",
-            "fr" => "fr-FR",
-            "es" => "es-ES",
-            "pl" => "pl-PL",
-            "ro" => "ro-RO",
-            "uk" => "uk-UA",
-            "ar" => "en-NL",
-            _ => "en-NL",
-        };
-    }
-
     public async Task<Result<Success>> CancelPaymentIntentAsync(string paymentIntentId, CancellationToken ct = default)
     {
         try
@@ -162,6 +145,23 @@ public sealed class StripePaymentService : IStripePaymentService
             this.logger.LogError(ex, "Stripe refund failed for {PaymentIntentId}", paymentIntentId);
             return PaymentErrors.StripeInitiationFailed;
         }
+    }
+
+    private static string ResolveKlarnaLocale(string? preferredLanguage)
+    {
+        var lang = (preferredLanguage ?? "en").Trim().ToLowerInvariant();
+        return lang switch
+        {
+            "nl" => "nl-NL",
+            "de" => "de-DE",
+            "fr" => "fr-FR",
+            "es" => "es-ES",
+            "pl" => "pl-PL",
+            "ro" => "ro-RO",
+            "uk" => "uk-UA",
+            "ar" => "en-NL",
+            _ => "en-NL",
+        };
     }
 
     private static long ToMinorUnits(decimal amount)

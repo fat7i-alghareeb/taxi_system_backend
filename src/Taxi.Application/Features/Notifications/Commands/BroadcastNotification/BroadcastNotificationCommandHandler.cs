@@ -23,7 +23,6 @@ public class BroadcastNotificationCommandHandler(INotificationService notificati
             return Result.Failure<Success>(Error.Validation(LocalizationKeys.Notification.BodyRequired, "Notification body is required."));
         }
 
-
         // Implicitly map strongly-typed client inputs to secure FCM topics.
         // The client only sends 0 (Customers), 1 (Drivers), or 2 (Admins) which
         // prevents any arbitrary, unsecured topic names from being passed.
@@ -36,10 +35,10 @@ public class BroadcastNotificationCommandHandler(INotificationService notificati
         };
 
         await _notificationService.SendPushNotificationToTopicAsync(
-            topic, 
-            request.Title, 
-            request.Body, 
-            request.Data, 
+            topic,
+            request.Title,
+            request.Body,
+            request.Data,
             ct);
 
         return Result.Success;

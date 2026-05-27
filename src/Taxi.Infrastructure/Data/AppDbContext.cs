@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Domain.Admins;
 using Taxi.Domain.Audit;
 using Taxi.Domain.Common;
 using Taxi.Domain.Configuration;
@@ -19,6 +20,7 @@ namespace Taxi.Infrastructure.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options, IMediator mediator) : IdentityDbContext<AppUser>(options), IAppDbContext
 {
+    public DbSet<AdminProfile> AdminProfiles => this.Set<AdminProfile>();
     public DbSet<RefreshToken> RefreshTokens => this.Set<RefreshToken>();
     public DbSet<User> DomainUsers => this.Set<User>();
     public DbSet<VehicleType> VehicleTypes => this.Set<VehicleType>();

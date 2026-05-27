@@ -3,6 +3,8 @@ using Taxi.Domain.Common.Results;
 
 namespace Taxi.Application.Features.Drivers.Queries.GetDriverEarnings;
 
+public record GetDriverEarningsQuery() : IRequest<Result<DriverEarningsDto>>;
+
 public record DriverEarningsDto(
     int TotalTrips,
     decimal TotalEarnings,
@@ -15,5 +17,3 @@ public record DriverTripEarningDto(
     decimal Fare,
     string CurrencyCode,
     DateTimeOffset CompletedAt);
-
-public record GetDriverEarningsQuery() : IRequest<Result<DriverEarningsDto>>;

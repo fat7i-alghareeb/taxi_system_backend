@@ -2,26 +2,28 @@ using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Taxi.Application.Features.Trips.Commands.AdminTakeTrip;
+using Taxi.Application.Features.Trips.Commands.ArriveTrip;
+using Taxi.Application.Features.Trips.Commands.AssignDriverToTrip;
 using Taxi.Application.Features.Trips.Commands.CancelTrip;
+using Taxi.Application.Features.Trips.Commands.CompleteStop;
+using Taxi.Application.Features.Trips.Commands.CompleteTrip;
+using Taxi.Application.Features.Trips.Commands.DriverCancelTrip;
+using Taxi.Application.Features.Trips.Commands.EnRouteTrip;
 using Taxi.Application.Features.Trips.Commands.GetPricingQuotes;
 using Taxi.Application.Features.Trips.Commands.RequestTrip;
-using Taxi.Application.Features.Trips.Commands.EnRouteTrip;
-using Taxi.Application.Features.Trips.Commands.ArriveTrip;
-using Taxi.Application.Features.Trips.Commands.StartTrip;
-using Taxi.Application.Features.Trips.Commands.CompleteTrip;
-using Taxi.Application.Features.Trips.Commands.AssignDriverToTrip;
-using Taxi.Application.Features.Trips.Commands.DriverCancelTrip;
 using Taxi.Application.Features.Trips.Commands.ReviewCompensationClaim;
+using Taxi.Application.Features.Trips.Commands.StartTrip;
 using Taxi.Application.Features.Trips.Commands.StartTripWaiting;
 using Taxi.Application.Features.Trips.Commands.StopTripWaiting;
 using Taxi.Application.Features.Trips.Commands.SubmitCompensationClaim;
+using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Application.Features.Trips.Queries.GetAllTrips;
 using Taxi.Application.Features.Trips.Queries.GetCompensationClaims;
-using Taxi.Application.Features.Trips.Queries.GetTripDetails;
 using Taxi.Application.Features.Trips.Queries.GetPassengerTripCount;
 using Taxi.Application.Features.Trips.Queries.GetPassengerTrips;
 using Taxi.Application.Features.Trips.Queries.GetTripById;
-using Taxi.Application.Features.Trips.Dtos;
+using Taxi.Application.Features.Trips.Queries.GetTripDetails;
 using Taxi.Contracts.Requests.Trips;
 
 namespace Taxi.Api.Controllers;
@@ -256,6 +258,21 @@ public class TripsController(ISender sender) : ApiController
         return result.Match(_ => NoContent(), Problem);
     }
 
+    [HttpPost("{id:guid}/stops/{sequence:int}/complete")]
+    [Authorize(Roles = "Driver,Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Driver marks an intermediate stop as completed on a multi-stop trip.")]
+    [EndpointDescription("Stops must be completed in ascending sequence order. The final dropoff is reached via /complete, not this endpoint.")]
+    [EndpointName("CompleteTripStop")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> CompleteStop(Guid id, int sequence, CancellationToken ct)
+    {
+        var result = await sender.Send(new CompleteStopCommand(id, sequence), ct);
+        return result.Match(_ => NoContent(), Problem);
+    }
+
     [HttpPost("{id:guid}/assign")]
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -266,6 +283,20 @@ public class TripsController(ISender sender) : ApiController
     public async Task<IActionResult> Assign(Guid id, [FromBody] Guid driverId, CancellationToken ct)
     {
         var result = await sender.Send(new AssignDriverToTripCommand(id, driverId), ct);
+        return result.Match(_ => NoContent(), Problem);
+    }
+
+    [HttpPost("{id:guid}/admin-take")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Admin takes a trip and acts as its driver.")]
+    [EndpointDescription("Ensures the admin has a backing Driver record (creating one on first use), then assigns the trip to it.")]
+    [EndpointName("AdminTakeTrip")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> AdminTake(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new AdminTakeTripCommand(id), ct);
         return result.Match(_ => NoContent(), Problem);
     }
 

@@ -50,3 +50,9 @@ public sealed record TripRefundedNotification(
     Guid TripId,
     Guid PassengerId,
     decimal Amount);
+
+public sealed record TripStopCompletedNotification(
+    Guid TripId,
+    Guid PassengerId,
+    Guid? DriverId,
+    int Sequence);

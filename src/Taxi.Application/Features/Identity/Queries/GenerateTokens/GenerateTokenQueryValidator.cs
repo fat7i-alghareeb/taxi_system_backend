@@ -7,9 +7,8 @@ public sealed class GenerateTokenQueryValidator : AbstractValidator<GenerateToke
 {
     public GenerateTokenQueryValidator()
     {
-        RuleFor(x => x.Email)
-            .NotEmpty().WithMessage(LocalizationKeys.Validation.EmailRequired)
-            .EmailAddress().WithMessage(LocalizationKeys.Validation.EmailInvalid);
+        RuleFor(x => x.UserName)
+            .NotEmpty().WithMessage("Username is required.");
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage(LocalizationKeys.Validation.PasswordRequired);

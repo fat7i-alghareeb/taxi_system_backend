@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Taxi.Domain.Admins;
 using Taxi.Domain.Audit;
 using Taxi.Domain.Configuration;
 using Taxi.Domain.Drivers;
@@ -14,6 +15,7 @@ namespace Taxi.Application.Common.Interfaces;
 
 public interface IAppDbContext
 {
+    public DbSet<AdminProfile> AdminProfiles { get; }
     public DbSet<User> DomainUsers { get; }
     public DbSet<RefreshToken> RefreshTokens { get; }
     public DbSet<VehicleType> VehicleTypes { get; }

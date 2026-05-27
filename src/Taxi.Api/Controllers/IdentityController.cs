@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Taxi.Application.Features.Identity.Commands.RegisterAdmin;
 using Taxi.Application.Features.Identity.Dtos;
-using Taxi.Application.Features.Identity.Queries.GenerateTokens;
 using Taxi.Application.Features.Identity.Queries.GetUserInfo;
 using Taxi.Application.Features.Identity.Queries.RefreshTokens;
 using Taxi.Contracts.Requests.Identity;
@@ -16,22 +15,6 @@ namespace Taxi.Api.Controllers;
 [Route("api/v{version:apiVersion}/identity")]
 public sealed class IdentityController(ISender sender) : ApiController
 {
-    [HttpPost("tokens")]
-    [AllowAnonymous]
-    [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    [EndpointSummary("Generates an access and refresh token for a valid user.")]
-    [EndpointDescription("Authenticates a user using provided credentials and returns a JWT token pair.")]
-    [EndpointName("GenerateToken")]
-    public async Task<IActionResult> GenerateToken([FromBody] GenerateTokenQuery request, CancellationToken ct)
-    {
-        var result = await sender.Send(request, ct);
-        return result.Match(
-            response => this.Ok(response),
-            this.Problem);
-    }
-
     [HttpPost("tokens/refresh")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
@@ -83,10 +66,12 @@ public sealed class IdentityController(ISender sender) : ApiController
     public async Task<IActionResult> RegisterAdmin([FromBody] RegisterAdminRequest request, CancellationToken ct)
     {
         var command = new RegisterAdminCommand(
-            request.Phone,
+            request.UserName,
             request.Password,
             request.Name,
-            request.Email);
+            request.Email,
+            request.Phone1,
+            request.Phone2);
 
         var result = await sender.Send(command, ct);
         return result.Match(

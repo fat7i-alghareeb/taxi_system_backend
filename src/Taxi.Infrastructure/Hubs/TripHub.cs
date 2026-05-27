@@ -7,6 +7,7 @@ namespace Taxi.Infrastructure.Hubs;
 public sealed class TripHub : Hub
 {
     public const string HubUrl = "/hubs/trips";
+    public const string AdminsGroup = "Admins";
 
     public override async Task OnConnectedAsync()
     {
@@ -14,6 +15,12 @@ public sealed class TripHub : Hub
         if (!string.IsNullOrWhiteSpace(userId))
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{userId}");
+        }
+
+        // Auto-join the Admins group so admins receive TripRequested broadcasts.
+        if (Context.User?.IsInRole("Admin") == true)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, AdminsGroup);
         }
 
         await base.OnConnectedAsync();

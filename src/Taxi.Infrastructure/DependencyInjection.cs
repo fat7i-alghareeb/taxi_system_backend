@@ -65,7 +65,16 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>((sp, options) =>
         {
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
-            options.UseNpgsql(connectionString);
+            options.UseNpgsql(
+                connectionString,
+                npgsqlOptions =>
+                {
+                    npgsqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                        errorCodesToAdd: null);
+                    npgsqlOptions.CommandTimeout(60);
+                });
         });
 
         services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
@@ -107,6 +116,7 @@ public static class DependencyInjection
                     {
                         context.Token = accessToken;
                     }
+
                     return Task.CompletedTask;
                 }
             };
@@ -115,7 +125,7 @@ public static class DependencyInjection
         services
         .AddIdentityCore<AppUser>(options =>
         {
-            options.Password.RequiredLength = 6;
+            options.Password.RequiredLength = 5;
             options.Password.RequireDigit = false;
             options.Password.RequireNonAlphanumeric = false;
             options.Password.RequireUppercase = false;
@@ -124,7 +134,8 @@ public static class DependencyInjection
             options.SignIn.RequireConfirmedAccount = false;
         })
         .AddRoles<IdentityRole>()
-        .AddEntityFrameworkStores<AppDbContext>();
+        .AddEntityFrameworkStores<AppDbContext>()
+        .AddDefaultTokenProviders();
 
         services.AddTransient<IIdentityService, IdentityService>();
         services.AddTransient<ITokenProvider, TokenProvider>();
@@ -157,4 +168,3 @@ public static class DependencyInjection
         return services;
     }
 }
-

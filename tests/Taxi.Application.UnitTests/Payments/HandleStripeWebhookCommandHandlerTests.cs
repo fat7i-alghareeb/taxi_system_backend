@@ -15,9 +15,6 @@ public class HandleStripeWebhookCommandHandlerTests
     private readonly ILogger<HandleStripeWebhookCommandHandler> _logger =
         Substitute.For<ILogger<HandleStripeWebhookCommandHandler>>();
 
-    private HandleStripeWebhookCommandHandler CreateHandler(IAppDbContext context)
-        => new(context, _validator, _logger);
-
     // ── Signature validation ─────────────────────────────────────────────────
 
     [Fact]
@@ -283,4 +280,7 @@ public class HandleStripeWebhookCommandHandlerTests
 
         Assert.True(result.IsSuccess);
     }
+
+    private HandleStripeWebhookCommandHandler CreateHandler(IAppDbContext context)
+        => new(context, _validator, _logger);
 }

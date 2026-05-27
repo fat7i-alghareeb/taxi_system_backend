@@ -139,5 +139,15 @@
   "Trip.CompensationClaim.NoteRequired": "Please add a note explaining the driver delay claim.",
   "Trip.CompensationClaim.AlreadyReviewed": "This compensation claim has already been reviewed.",
   "Trip.Waiting.ActiveSessionExists": "A waiting session is already active for this trip.",
-  "Trip.Waiting.ActiveSessionNotFound": "No active waiting session was found for this trip."
+  "Trip.Waiting.ActiveSessionNotFound": "No active waiting session was found for this trip.",
+  "Notification.DriverAssigned.Title": "Driver Found",
+  "Notification.DriverAssigned.Body": "A driver has been assigned to your trip.",
+  "Notification.TripStarted.Title": "Trip Started",
+  "Notification.TripStarted.Body": "Your trip has started. Enjoy the ride!",
+  "Notification.TripCompleted.Title": "Trip Completed",
+  "Notification.TripCompleted.Body": "You have arrived at your destination. Thanks for riding with us!",
+  "Notification.TripCancelled.Title": "Trip Cancelled",
+  "Notification.TripCancelled.Body": "Your trip has been cancelled.",
+  "Notification.TripRequested.Title": "New Trip Booked",
+  "Notification.TripRequested.Body": "A new trip is available for dispatch."
 }
