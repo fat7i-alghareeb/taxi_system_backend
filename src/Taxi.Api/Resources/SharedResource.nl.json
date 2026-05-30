@@ -147,5 +147,11 @@
   "Notification.TripCompleted.Title": "Rit voltooid",
   "Notification.TripCompleted.Body": "U bent op uw bestemming aangekomen. Bedankt voor het rijden met ons!",
   "Notification.TripCancelled.Title": "Rit geannuleerd",
-  "Notification.TripCancelled.Body": "Uw rit is geannuleerd."
+  "Notification.TripCancelled.Body": "Uw rit is geannuleerd.",
+  "Notification.TripRequested.Title": "Nieuwe rit geboekt",
+  "Notification.TripRequested.Body": "Er is een nieuwe rit beschikbaar voor verzending.",
+  "Notification.TripScheduledConfirmed.Title": "Rit gepland",
+  "Notification.TripScheduledConfirmed.Body": "Uw rit is bevestigd. We laten het u weten als we een chauffeur hebben gevonden.",
+  "Notification.TripScheduledActivated.Title": "Uw geplande rit begint",
+  "Notification.TripScheduledActivated.Body": "We zoeken nu een chauffeur voor uw rit."
 }

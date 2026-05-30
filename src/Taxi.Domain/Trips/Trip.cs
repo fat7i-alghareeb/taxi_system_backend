@@ -166,6 +166,16 @@ public sealed class Trip : AuditableEntity
             return TripErrors.InvalidStatus(Status);
         }
 
+        // Reject completion while intermediate stops (sequence 0 = pickup is
+        // implicit when the trip starts; the final stop is implicit on
+        // complete) are still pending. Drivers must walk through each stop in
+        // order via CompleteStop before finishing the trip.
+        var lastSequence = _stops.Count == 0 ? -1 : _stops.Max(s => s.Sequence);
+        if (_stops.Any(s => s.Sequence > 0 && s.Sequence < lastSequence && !s.IsCompleted))
+        {
+            return TripErrors.PendingStopsRemaining;
+        }
+
         Status = TripStatus.Completed;
         CompletedAtUtc = DateTimeOffset.UtcNow;
 
@@ -256,6 +266,7 @@ public sealed class Trip : AuditableEntity
             TripId = Id,
             VehicleTypeId = VehicleTypeId,
             PassengerId = PassengerId,
+            WasScheduled = true,
         });
 
         return Result.Success;

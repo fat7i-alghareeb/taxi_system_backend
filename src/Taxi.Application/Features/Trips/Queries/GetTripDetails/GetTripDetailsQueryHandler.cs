@@ -50,7 +50,10 @@ public class GetTripDetailsQueryHandler(IAppDbContext context)
             .Select(s => new TripStopDto(
                 s.Coordinate.Latitude,
                 s.Coordinate.Longitude,
-                s.AddressLabel))
+                s.AddressLabel,
+                s.Sequence,
+                s.IsCompleted,
+                s.CompletedAtUtc))
             .ToList();
 
         var cancellation = await _context.TripCancellations

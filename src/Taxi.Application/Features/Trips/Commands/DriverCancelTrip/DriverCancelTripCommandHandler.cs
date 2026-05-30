@@ -113,7 +113,7 @@ public sealed class DriverCancelTripCommandHandler(
             currency,
             trip.CreatedAtUtc,
             trip.ScheduledAtUtc,
-            trip.Stops.OrderBy(s => s.Sequence).Select(s => new TripStopDto(s.Coordinate.Latitude, s.Coordinate.Longitude, s.AddressLabel)).ToList(),
+            trip.Stops.OrderBy(s => s.Sequence).Select(s => new TripStopDto(s.Coordinate.Latitude, s.Coordinate.Longitude, s.AddressLabel, s.Sequence, s.IsCompleted, s.CompletedAtUtc)).ToList(),
             Cancellation: cancellationResult.Value.ToDto());
     }
 }

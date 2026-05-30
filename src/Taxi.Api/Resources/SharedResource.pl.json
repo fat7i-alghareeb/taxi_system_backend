@@ -147,5 +147,11 @@
   "Notification.TripCompleted.Title": "Kurs zakończony",
   "Notification.TripCompleted.Body": "Dotarłeś do celu. Dziękujemy za podróż z nami!",
   "Notification.TripCancelled.Title": "Kurs anulowany",
-  "Notification.TripCancelled.Body": "Twój kurs został anulowany."
+  "Notification.TripCancelled.Body": "Twój kurs został anulowany.",
+  "Notification.TripRequested.Title": "Zarezerwowano nowy kurs",
+  "Notification.TripRequested.Body": "Nowy kurs jest dostępny do przypisania.",
+  "Notification.TripScheduledConfirmed.Title": "Kurs zaplanowany",
+  "Notification.TripScheduledConfirmed.Body": "Twój kurs został potwierdzony. Powiadomimy Cię, gdy znajdziemy kierowcę.",
+  "Notification.TripScheduledActivated.Title": "Twój zaplanowany kurs właśnie się rozpoczyna",
+  "Notification.TripScheduledActivated.Body": "Wyszukujemy teraz kierowcę dla Twojego kursu."
 }

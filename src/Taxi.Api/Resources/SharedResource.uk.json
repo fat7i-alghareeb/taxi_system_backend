@@ -147,5 +147,11 @@
   "Notification.TripCompleted.Title": "Поїздку завершено",
   "Notification.TripCompleted.Body": "Ви прибули до пункту призначення. Дякуємо за подорож з нами!",
   "Notification.TripCancelled.Title": "Поїздку скасовано",
-  "Notification.TripCancelled.Body": "Вашу поїздку скасовано."
+  "Notification.TripCancelled.Body": "Вашу поїздку скасовано.",
+  "Notification.TripRequested.Title": "Заброньовано нову поїздку",
+  "Notification.TripRequested.Body": "Нова поїздка доступна для призначення.",
+  "Notification.TripScheduledConfirmed.Title": "Поїздку заплановано",
+  "Notification.TripScheduledConfirmed.Body": "Вашу поїздку підтверджено. Ми повідомимо вас, коли знайдемо водія.",
+  "Notification.TripScheduledActivated.Title": "Ваша запланована поїздка розпочинається",
+  "Notification.TripScheduledActivated.Body": "Ми шукаємо водія для вашої поїздки."
 }

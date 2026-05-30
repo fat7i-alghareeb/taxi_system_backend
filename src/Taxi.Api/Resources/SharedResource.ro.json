@@ -147,5 +147,11 @@
   "Notification.TripCompleted.Title": "Cursa finalizată",
   "Notification.TripCompleted.Body": "Ai ajuns la destinație. Mulțumim că ai călătorit cu noi!",
   "Notification.TripCancelled.Title": "Cursa anulată",
-  "Notification.TripCancelled.Body": "Cursa ta a fost anulată."
+  "Notification.TripCancelled.Body": "Cursa ta a fost anulată.",
+  "Notification.TripRequested.Title": "Cursă nouă rezervată",
+  "Notification.TripRequested.Body": "O cursă nouă este disponibilă pentru alocare.",
+  "Notification.TripScheduledConfirmed.Title": "Cursă programată",
+  "Notification.TripScheduledConfirmed.Body": "Cursa dumneavoastră a fost confirmată. Vă vom anunța când vom găsi un șofer.",
+  "Notification.TripScheduledActivated.Title": "Cursa dumneavoastră programată începe",
+  "Notification.TripScheduledActivated.Body": "Căutăm un șofer pentru cursa dumneavoastră acum."
 }

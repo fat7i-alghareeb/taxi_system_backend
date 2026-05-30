@@ -153,6 +153,8 @@ public static class LocalizationKeys
         public const string StopNotFound = "Trip.Stop.NotFound";
         public const string StopOutOfOrder = "Trip.Stop.OutOfOrder";
         public const string StopAlreadyCompleted = "Trip.Stop.AlreadyCompleted";
+        public const string PendingStopsRemaining = "Trip.Stop.PendingStopsRemaining";
+        public const string TooManyStops = "Trip.Stops.TooMany";
     }
 
     public static class Maps

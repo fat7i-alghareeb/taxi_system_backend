@@ -147,5 +147,11 @@
   "Notification.TripCompleted.Title": "Fahrt abgeschlossen",
   "Notification.TripCompleted.Body": "Sie sind angekommen. Danke, dass Sie mit uns gefahren sind!",
   "Notification.TripCancelled.Title": "Fahrt storniert",
-  "Notification.TripCancelled.Body": "Ihre Fahrt wurde storniert."
+  "Notification.TripCancelled.Body": "Ihre Fahrt wurde storniert.",
+  "Notification.TripRequested.Title": "Neue Fahrt gebucht",
+  "Notification.TripRequested.Body": "Eine neue Fahrt ist zur Vermittlung verfügbar.",
+  "Notification.TripScheduledConfirmed.Title": "Fahrt geplant",
+  "Notification.TripScheduledConfirmed.Body": "Ihre Fahrt wurde bestätigt. Wir benachrichtigen Sie, wenn wir einen Fahrer finden.",
+  "Notification.TripScheduledActivated.Title": "Ihre geplante Fahrt beginnt",
+  "Notification.TripScheduledActivated.Body": "Wir suchen jetzt nach einem Fahrer für Ihre Fahrt."
 }

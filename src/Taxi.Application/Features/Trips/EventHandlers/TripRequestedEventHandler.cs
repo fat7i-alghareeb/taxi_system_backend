@@ -35,5 +35,22 @@ public sealed class TripRequestedEventHandler(
                 { "status", "TripRequested" }
             },
             ct);
+
+        // Scheduled-trip activation: also tell the passenger their pre-booked
+        // trip just went live and is now searching for a driver.
+        if (notification.WasScheduled)
+        {
+            await _notificationService.SendPushNotificationAsync(
+                notification.PassengerId,
+                LocalizationKeys.Notification.TripScheduledActivatedTitle,
+                LocalizationKeys.Notification.TripScheduledActivatedBody,
+                new Dictionary<string, string>
+                {
+                    { "tripId", notification.TripId.ToString() },
+                    { "status", "ScheduledTripActivated" },
+                    { "sound", "default" }
+                },
+                ct);
+        }
     }
 }

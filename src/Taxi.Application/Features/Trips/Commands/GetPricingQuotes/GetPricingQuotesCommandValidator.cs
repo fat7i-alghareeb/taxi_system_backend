@@ -12,6 +12,11 @@ public class GetPricingQuotesCommandValidator : AbstractValidator<GetPricingQuot
             .Must(s => s.Count >= 2)
             .WithMessage(LocalizationKeys.Trip.InvalidStops);
 
+        RuleFor(v => v.Stops)
+            .Must(s => s.Count <= 25)
+            .WithErrorCode(LocalizationKeys.Trip.TooManyStops)
+            .WithMessage(LocalizationKeys.Trip.TooManyStops);
+
         RuleForEach(v => v.Stops).ChildRules(stop =>
         {
             stop.RuleFor(s => s.Latitude)

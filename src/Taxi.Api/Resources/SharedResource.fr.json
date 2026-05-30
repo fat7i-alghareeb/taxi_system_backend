@@ -147,5 +147,11 @@
   "Notification.TripCompleted.Title": "Course terminée",
   "Notification.TripCompleted.Body": "Vous êtes arrivé à destination. Merci d'avoir voyagé avec nous !",
   "Notification.TripCancelled.Title": "Course annulée",
-  "Notification.TripCancelled.Body": "Votre course a été annulée."
+  "Notification.TripCancelled.Body": "Votre course a été annulée.",
+  "Notification.TripRequested.Title": "Nouvelle course réservée",
+  "Notification.TripRequested.Body": "Une nouvelle course est disponible pour attribution.",
+  "Notification.TripScheduledConfirmed.Title": "Course planifiée",
+  "Notification.TripScheduledConfirmed.Body": "Votre course a été confirmée. Nous vous informerons dès que nous aurons trouvé un chauffeur.",
+  "Notification.TripScheduledActivated.Title": "Votre course planifiée commence",
+  "Notification.TripScheduledActivated.Body": "Nous recherchons un chauffeur pour votre course actuellement."
 }

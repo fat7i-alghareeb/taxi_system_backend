@@ -147,5 +147,11 @@
   "Notification.TripCompleted.Title": "Viaje completado",
   "Notification.TripCompleted.Body": "Has llegado a tu destino. ¡Gracias por viajar con nosotros!",
   "Notification.TripCancelled.Title": "Viaje cancelado",
-  "Notification.TripCancelled.Body": "Tu viaje ha sido cancelado."
+  "Notification.TripCancelled.Body": "Tu viaje ha sido cancelado.",
+  "Notification.TripRequested.Title": "Nuevo viaje reservado",
+  "Notification.TripRequested.Body": "Un nuevo viaje está disponible para su asignación.",
+  "Notification.TripScheduledConfirmed.Title": "Viaje programado",
+  "Notification.TripScheduledConfirmed.Body": "Su viaje ha sido confirmado. Le notificaremos cuando encontremos un conductor.",
+  "Notification.TripScheduledActivated.Title": "Su viaje programado está comenzando",
+  "Notification.TripScheduledActivated.Body": "Estamos buscando un conductor para su viaje ahora."
 }

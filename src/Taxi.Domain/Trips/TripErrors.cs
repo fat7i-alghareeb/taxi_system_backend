@@ -92,5 +92,13 @@ public static class TripErrors
     public static Error StopAlreadyCompleted(int sequence) => Error.Validation(
         code: LocalizationKeys.Trip.StopAlreadyCompleted,
         description: $"Trip stop with sequence '{sequence}' has already been completed.");
+
+    public static readonly Error PendingStopsRemaining = Error.Validation(
+        code: LocalizationKeys.Trip.PendingStopsRemaining,
+        description: "Cannot complete the trip while intermediate stops are still pending.");
+
+    public static readonly Error TooManyStops = Error.Validation(
+        code: LocalizationKeys.Trip.TooManyStops,
+        description: "A trip cannot have more than 25 stops.");
 }
 
