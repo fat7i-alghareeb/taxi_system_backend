@@ -242,6 +242,25 @@ public sealed class Trip : AuditableEntity
         return Result.Success;
     }
 
+    public Result<Success> ActivateScheduled()
+    {
+        if (Status != TripStatus.Scheduled)
+        {
+            return TripErrors.InvalidStatus(Status);
+        }
+
+        Status = TripStatus.PendingDriver;
+
+        AddDomainEvent(new TripRequested
+        {
+            TripId = Id,
+            VehicleTypeId = VehicleTypeId,
+            PassengerId = PassengerId,
+        });
+
+        return Result.Success;
+    }
+
     public Result<Success> ConfirmPayment()
     {
         if (Status != TripStatus.AwaitingPayment)
@@ -255,6 +274,7 @@ public sealed class Trip : AuditableEntity
         {
             TripId = Id,
             PassengerId = PassengerId,
+            ScheduledAtUtc = ScheduledAtUtc,
         });
 
         return Result.Success;

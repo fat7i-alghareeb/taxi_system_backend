@@ -7,4 +7,6 @@ public sealed class PaymentConfirmed : DomainEvent
     public Guid TripId { get; init; }
 
     public Guid PassengerId { get; init; }
+
+    public DateTimeOffset? ScheduledAtUtc { get; init; }
 }

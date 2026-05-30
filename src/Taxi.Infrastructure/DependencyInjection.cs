@@ -15,6 +15,7 @@ using Microsoft.IdentityModel.Tokens;
 
 using Taxi.Application.Common.Interfaces;
 using Taxi.Infrastructure.Auth;
+using Taxi.Infrastructure.BackgroundJobs;
 using Taxi.Infrastructure.Common;
 using Taxi.Infrastructure.Data;
 using Taxi.Infrastructure.Data.Interceptors;
@@ -164,6 +165,8 @@ public static class DependencyInjection
             Expiration = TimeSpan.FromMinutes(10),
             LocalCacheExpiration = TimeSpan.FromSeconds(30),
         });
+
+        services.AddHostedService<ScheduledTripActivationService>();
 
         return services;
     }

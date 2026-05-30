@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.OutputCaching;
 using Taxi.Application.Features.Vehicles.Commands.CreateVehicleType;
 using Taxi.Application.Features.Vehicles.Commands.RemoveVehicleType;
 using Taxi.Application.Features.Vehicles.Commands.UpdateVehicleType;
+using Taxi.Application.Features.Vehicles.Queries.GetAllVehicleTypes;
 using Taxi.Application.Features.Vehicles.Queries.GetVehicleCatalog;
 using Taxi.Application.Features.Vehicles.Queries.GetVehicleTypeByCode;
 using Taxi.Application.Features.Vehicles.Queries.GetVehicleTypeById;
@@ -29,6 +30,22 @@ public class VehicleTypesController(ISender sender) : ApiController
     public async Task<IActionResult> GetCatalog(CancellationToken ct)
     {
         var result = await sender.Send(new GetVehicleCatalogQuery(), ct);
+
+        return result.Match(
+            Ok,
+            Problem);
+    }
+
+    [HttpGet("admin")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(List<VehicleTypeDto>), StatusCodes.Status200OK)]
+    [EndpointSummary("Retrieves every vehicle type, including deactivated ones.")]
+    [EndpointDescription("Admin-only. Returns all vehicle types (active and inactive) with their IsActive state for management.")]
+    [EndpointName("GetAllVehicleTypes")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetAll(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetAllVehicleTypesQuery(), ct);
 
         return result.Match(
             Ok,

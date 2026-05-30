@@ -149,5 +149,9 @@
   "Notification.TripCancelled.Title": "تم إلغاء الرحلة",
   "Notification.TripCancelled.Body": "تم إلغاء رحلتك.",
   "Notification.TripRequested.Title": "رحلة جديدة محجوزة",
-  "Notification.TripRequested.Body": "هناك رحلة جديدة معلقة بانتظار التعيين."
+  "Notification.TripRequested.Body": "هناك رحلة جديدة معلقة بانتظار التعيين.",
+  "Notification.TripScheduledConfirmed.Title": "Trip Scheduled",
+  "Notification.TripScheduledConfirmed.Body": "Your trip has been confirmed. We'll notify you when we find a driver.",
+  "Notification.TripScheduledActivated.Title": "Your Scheduled Trip Is Starting",
+  "Notification.TripScheduledActivated.Body": "We're finding a driver for your trip now."
 }

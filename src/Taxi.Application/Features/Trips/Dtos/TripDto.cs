@@ -20,4 +20,8 @@ public record TripDto(
     CompensationClaimDto? CompensationClaim = null,
     WaitingSessionDto? ActiveWaitingSession = null,
     string? PassengerName = null,
-    string? PassengerPhone = null);
+    string? PassengerPhone = null,
+    DateTimeOffset? AssignedAtUtc = null,
+    DateTimeOffset? ArrivedAtUtc = null,
+    DateTimeOffset? StartedAtUtc = null,
+    DateTimeOffset? CompletedAtUtc = null);

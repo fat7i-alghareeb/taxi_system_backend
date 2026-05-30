@@ -43,6 +43,23 @@ public sealed class AdminsController(ISender sender) : ApiController
         var result = await sender.Send(command, ct);
         return result.Match(Ok, Problem);
     }
+
+    [HttpPost("change-password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [EndpointSummary("Changes the password of the currently authenticated admin.")]
+    [EndpointName("ChangeAdminPassword")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> ChangeAdminPassword([FromBody] ChangeAdminPasswordRequest request, CancellationToken ct)
+    {
+        var command = new Taxi.Application.Features.Admins.Commands.ChangeAdminPassword.ChangeAdminPasswordCommand(
+            request.CurrentPassword,
+            request.NewPassword);
+
+        var result = await sender.Send(command, ct);
+        return result.Match(_ => Ok(), Problem);
+    }
 }
 
 public record UpdateAdminProfileRequest(
@@ -50,3 +67,7 @@ public record UpdateAdminProfileRequest(
     string Email,
     string? Phone1,
     string? Phone2);
+
+public record ChangeAdminPasswordRequest(
+    string CurrentPassword,
+    string NewPassword);

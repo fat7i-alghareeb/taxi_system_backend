@@ -206,6 +206,12 @@ public static class LocalizationKeys
 
         public const string TripRequestedTitle = "Notification.TripRequested.Title";
         public const string TripRequestedBody = "Notification.TripRequested.Body";
+
+        public const string TripScheduledConfirmedTitle = "Notification.TripScheduledConfirmed.Title";
+        public const string TripScheduledConfirmedBody = "Notification.TripScheduledConfirmed.Body";
+
+        public const string TripScheduledActivatedTitle = "Notification.TripScheduledActivated.Title";
+        public const string TripScheduledActivatedBody = "Notification.TripScheduledActivated.Body";
     }
 }
 

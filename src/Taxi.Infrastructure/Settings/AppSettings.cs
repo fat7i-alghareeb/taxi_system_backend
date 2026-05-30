@@ -18,6 +18,12 @@ public class AppSettings
 
     public string FirebaseCredentials { get; set; } = default!;
 
+    /// <summary>
+    /// The public base URL of this API (e.g. https://api.fat7i.dev).
+    /// Used to construct absolute URLs for stored files.
+    /// </summary>
+    public string ApiBaseUrl { get; set; } = string.Empty;
+
     public StripeSettings Stripe { get; set; } = new();
 
     public FeatureFlags Features { get; set; } = new();

@@ -18,21 +18,25 @@ public sealed class StartTripWaitingCommandHandler(IAppDbContext context, IUser 
             return Error.Unauthorized(LocalizationKeys.Auth.UserIdClaimInvalid, "Invalid user ID claim.");
         }
 
-        var driver = await context.Drivers.FirstOrDefaultAsync(d => d.UserId == driverUserId, ct);
-        if (driver is null)
-        {
-            return TripErrors.DriverNotFound;
-        }
-
         var trip = await context.Trips.FirstOrDefaultAsync(t => t.Id == request.TripId, ct);
         if (trip is null)
         {
             return TripErrors.NotFound;
         }
 
-        if (trip.DriverId != driver.Id)
+        // Admins can act on any trip; drivers only on trips assigned to them.
+        if (!currentUser.IsAdmin)
         {
-            return Error.Validation(LocalizationKeys.Trip.DriverMismatch, "This trip is not assigned to you.");
+            var driver = await context.Drivers.FirstOrDefaultAsync(d => d.UserId == driverUserId, ct);
+            if (driver is null)
+            {
+                return TripErrors.DriverNotFound;
+            }
+
+            if (trip.DriverId != driver.Id)
+            {
+                return Error.Validation(LocalizationKeys.Trip.DriverMismatch, "This trip is not assigned to you.");
+            }
         }
 
         if (trip.Status != TripStatus.DriverArrived)
@@ -46,7 +50,12 @@ public sealed class StartTripWaitingCommandHandler(IAppDbContext context, IUser 
             return TripErrors.ActiveWaitingSessionExists;
         }
 
-        var sessionResult = TripWaitingSession.Start(Guid.NewGuid(), trip.Id, driver.Id);
+        if (trip.DriverId is null)
+        {
+            return Error.Validation(LocalizationKeys.Trip.DriverMismatch, "Trip has no assigned driver.");
+        }
+
+        var sessionResult = TripWaitingSession.Start(Guid.NewGuid(), trip.Id, trip.DriverId.Value);
         if (sessionResult.IsError)
         {
             return sessionResult.Errors;

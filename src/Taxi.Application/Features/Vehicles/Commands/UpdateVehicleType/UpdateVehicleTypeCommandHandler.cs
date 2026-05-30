@@ -48,7 +48,8 @@ public class UpdateVehicleTypeCommandHandler(
             vehicleType.RatePerKm,
             vehicleType.RatePerMin,
             vehicleType.MinimumFare,
-            vehicleType.SortOrder);
+            vehicleType.SortOrder,
+            vehicleType.IsActive);
     }
 }
 

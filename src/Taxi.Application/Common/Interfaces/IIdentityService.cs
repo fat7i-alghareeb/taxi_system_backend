@@ -19,6 +19,7 @@ public interface IIdentityService
     Task<Result<string>> CreateAdminUserAsync(string userName, string email, string password);
     Task<string?> GetUserNameAsync(string userId);
     Task<Result<Success>> ResetPasswordAsync(string userId, string newPassword);
+    Task<Result<Success>> ChangePasswordAsync(string userId, string currentPassword, string newPassword);
     Task<bool> RequiresPasswordResetAsync(string userId);
     Task<Result<Success>> ClearPasswordResetFlagAsync(string userId);
 }

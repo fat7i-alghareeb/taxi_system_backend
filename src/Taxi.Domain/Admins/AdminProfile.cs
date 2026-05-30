@@ -89,11 +89,6 @@ public sealed class AdminProfile : AuditableEntity
             return Error.Validation(LocalizationKeys.Validation.EmailRequired, "Email is required.");
         }
 
-        if (!IsValidOptionalPhone(phone1) || !IsValidOptionalPhone(phone2))
-        {
-            return Error.Validation(LocalizationKeys.User.PhoneRequired, "Phone number is invalid.");
-        }
-
         return Result.Success;
     }
 

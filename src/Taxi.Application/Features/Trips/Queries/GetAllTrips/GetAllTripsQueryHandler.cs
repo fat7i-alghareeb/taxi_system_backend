@@ -103,7 +103,11 @@ public class GetAllTripsQueryHandler(IAppDbContext context)
                 vehicleTypeName,
                 cancellation?.ToDto(),
                 compensationClaim?.ToDto(),
-                activeWaitingSession?.ToDto()));
+                activeWaitingSession?.ToDto(),
+                AssignedAtUtc: trip.AssignedAtUtc,
+                ArrivedAtUtc: trip.ArrivedAtUtc,
+                StartedAtUtc: trip.StartedAtUtc,
+                CompletedAtUtc: trip.CompletedAtUtc));
         }
 
         return tripDtos;

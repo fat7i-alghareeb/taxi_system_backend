@@ -17,7 +17,9 @@ namespace Taxi.Api.Controllers;
 public class UsersController(ISender sender) : ApiController
 {
     [HttpGet("me")]
+    [Authorize]
     [ProducesResponseType(typeof(Taxi.Application.Features.Auth.Dtos.UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Returns the current authenticated user's profile.")]
     [EndpointName("GetCurrentUser")]
@@ -29,8 +31,10 @@ public class UsersController(ISender sender) : ApiController
     }
 
     [HttpPost("me")]
+    [Authorize]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(Taxi.Application.Features.Auth.Dtos.UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [EndpointSummary("Updates the current user's profile info and photo.")]
     [EndpointDescription("Accepts multipart/form-data. Both name and photo are optional.")]
@@ -48,7 +52,9 @@ public class UsersController(ISender sender) : ApiController
     }
 
     [HttpPut("me/fcm-token")]
+    [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [EndpointSummary("Updates the current user's FCM device token.")]
     [EndpointName("UpdateFcmToken")]
@@ -60,7 +66,9 @@ public class UsersController(ISender sender) : ApiController
     }
 
     [HttpPut("me/language")]
+    [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [EndpointSummary("Updates the current user's preferred language code.")]
     [EndpointName("UpdatePreferredLanguage")]

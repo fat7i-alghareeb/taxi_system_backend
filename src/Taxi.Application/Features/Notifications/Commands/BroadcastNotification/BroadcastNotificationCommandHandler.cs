@@ -28,9 +28,9 @@ public class BroadcastNotificationCommandHandler(INotificationService notificati
         // prevents any arbitrary, unsecured topic names from being passed.
         string topic = request.Audience switch
         {
-            NotificationAudience.Customers => "customers",
-            NotificationAudience.Drivers => "drivers",
-            NotificationAudience.Admins => "admins",
+            NotificationAudience.Customers => NotificationTopics.Customers,
+            NotificationAudience.Drivers => NotificationTopics.Drivers,
+            NotificationAudience.Admins => NotificationTopics.Admins,
             _ => throw new ArgumentOutOfRangeException(nameof(request.Audience), "Invalid target audience group.")
         };
 

@@ -9,5 +9,7 @@ public class CurrentUser(IHttpContextAccessor httpContextAccessor) : IUser
     private readonly IHttpContextAccessor httpContextAccessor = httpContextAccessor;
 
     public string? Id => this.httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+    public bool IsAdmin => this.httpContextAccessor.HttpContext?.User?.IsInRole("Admin") ?? false;
 }
 

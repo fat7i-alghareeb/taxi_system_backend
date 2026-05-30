@@ -188,6 +188,23 @@ public class IdentityService(
         return Result.Success;
     }
 
+    public async Task<Result<Success>> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return Error.NotFound("User.NotFound", "User not found");
+        }
+
+        var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+        if (!result.Succeeded)
+        {
+            return Error.Failure("Identity.ChangePasswordFailed", string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
+
+        return Result.Success;
+    }
+
     public async Task<bool> RequiresPasswordResetAsync(string userId)
     {
         var user = await _userManager.FindByIdAsync(userId);

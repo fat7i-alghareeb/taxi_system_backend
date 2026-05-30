@@ -51,7 +51,8 @@ public class CreateVehicleTypeCommandHandler(
             vehicleType.RatePerKm,
             vehicleType.RatePerMin,
             vehicleType.MinimumFare,
-            vehicleType.SortOrder);
+            vehicleType.SortOrder,
+            vehicleType.IsActive);
     }
 }
 

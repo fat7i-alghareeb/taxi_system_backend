@@ -9,7 +9,6 @@ using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Payments;
 using Taxi.Domain.Trips;
-using Taxi.Domain.Users;
 
 namespace Taxi.Application.Features.Trips.Commands.CancelTrip;
 
@@ -34,8 +33,8 @@ public class CancelTripCommandHandler(
             return TripErrors.NotFound;
         }
 
-        var user = await context.DomainUsers.FirstOrDefaultAsync(u => u.Id == passengerId, ct);
-        var isAdmin = user?.Role == UserRole.Admin;
+        // Admins are identified by JWT role (they have no DomainUsers row).
+        var isAdmin = currentUser.IsAdmin;
 
         if (!isAdmin && trip.PassengerId != passengerId)
         {

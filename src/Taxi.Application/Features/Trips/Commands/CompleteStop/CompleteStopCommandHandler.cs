@@ -19,12 +19,6 @@ public class CompleteStopCommandHandler(IAppDbContext context, IUser currentUser
             return Result.Failure<Success>(Error.Validation(LocalizationKeys.Auth.Unauthorized, "Unauthorized user."));
         }
 
-        var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.UserId == driverUserId, ct);
-        if (driver is null)
-        {
-            return Result.Failure<Success>(Error.NotFound(LocalizationKeys.Driver.NotFound, "Driver profile not found."));
-        }
-
         // Stops are an owned collection — include them so the aggregate has
         // them loaded before we mutate.
         var trip = await _context.Trips
@@ -36,9 +30,19 @@ public class CompleteStopCommandHandler(IAppDbContext context, IUser currentUser
             return Result.Failure<Success>(Error.NotFound(LocalizationKeys.Trip.NotFound, "Trip not found."));
         }
 
-        if (trip.DriverId != driver.Id)
+        // Admins can act on any trip; drivers only on trips assigned to them.
+        if (!currentUser.IsAdmin)
         {
-            return Result.Failure<Success>(Error.Validation(LocalizationKeys.Trip.DriverMismatch, "This trip is not assigned to you."));
+            var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.UserId == driverUserId, ct);
+            if (driver is null)
+            {
+                return Result.Failure<Success>(Error.NotFound(LocalizationKeys.Driver.NotFound, "Driver profile not found."));
+            }
+
+            if (trip.DriverId != driver.Id)
+            {
+                return Result.Failure<Success>(Error.Validation(LocalizationKeys.Trip.DriverMismatch, "This trip is not assigned to you."));
+            }
         }
 
         var transitionResult = trip.CompleteStop(request.Sequence);

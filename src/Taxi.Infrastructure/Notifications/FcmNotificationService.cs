@@ -1,7 +1,9 @@
 using FirebaseAdmin.Messaging;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+
 using Taxi.Application.Common.Interfaces;
 
 namespace Taxi.Infrastructure.Notifications;
@@ -11,30 +13,137 @@ public class FcmNotificationService(
     ILogger<FcmNotificationService> logger,
     IStringLocalizerFactory localizerFactory) : INotificationService
 {
+    private const string DefaultAndroidChannelId = "high_importance";
+    private const string DefaultSound = "default";
+    private const string DefaultTopicCulture = "en";
+
     private readonly IAppDbContext _context = context;
     private readonly ILogger<FcmNotificationService> _logger = logger;
 
     public async Task SendPushNotificationAsync(Guid userId, string title, string body, Dictionary<string, string>? data = null, CancellationToken ct = default)
     {
+        _logger.LogInformation("[FCM] SendPushNotification called. UserId={UserId} TitleKey={TitleKey} BodyKey={BodyKey} DataKeys=[{DataKeys}]",
+            userId, title, body, data != null ? string.Join(",", data.Keys) : "none");
+
         var user = await _context.DomainUsers.FirstOrDefaultAsync(u => u.Id == userId, ct);
         if (user == null)
         {
-            _logger.LogWarning("User {UserId} not found. Cannot send push notification.", userId);
+            _logger.LogWarning("[FCM] User {UserId} not found in database. Cannot send push notification.", userId);
             return;
         }
+
+        _logger.LogInformation("[FCM] User found. UserId={UserId} PreferredLanguage={Lang} HasFcmToken={HasToken}",
+            userId, user.PreferredLanguage ?? "null", !string.IsNullOrWhiteSpace(user.FcmToken));
 
         if (string.IsNullOrWhiteSpace(user.FcmToken))
         {
-            _logger.LogInformation("User {UserId} does not have an FCM token registered. Skipping push notification.", userId);
+            _logger.LogWarning("[FCM] User {UserId} has no FCM token stored. Skipping. " +
+                "(App must call /auth/fcm-token after login to register a token.)", userId);
             return;
         }
 
-        var lang = string.IsNullOrWhiteSpace(user.PreferredLanguage) ? "en" : user.PreferredLanguage;
-        var localizer = localizerFactory.Create("Taxi.Api.SharedResource", "Taxi.Api");
+        var tokenPreview = user.FcmToken.Length > 12
+            ? $"{user.FcmToken[..8]}…(len={user.FcmToken.Length})"
+            : user.FcmToken;
 
+        var lang = string.IsNullOrWhiteSpace(user.PreferredLanguage) ? "en" : user.PreferredLanguage;
+        var (localizedTitle, localizedBody) = Localize(title, body, lang);
+
+        _logger.LogInformation("[FCM] Sending to user {UserId}. TokenPreview={TokenPreview} Lang={Lang} Title=\"{Title}\" Body=\"{Body}\" Data={Data}",
+            userId, tokenPreview, lang, localizedTitle, localizedBody,
+            data != null ? string.Join(", ", data.Select(kv => $"{kv.Key}={kv.Value}")) : "none");
+
+        try
+        {
+            var message = new Message
+            {
+                Token = user.FcmToken,
+                Notification = new Notification
+                {
+                    Title = localizedTitle,
+                    Body = localizedBody,
+                },
+                Data = data,
+                Android = CreateAndroidConfig(),
+                Apns = CreateApnsConfig(localizedTitle, localizedBody),
+            };
+
+            var response = await FirebaseMessaging.DefaultInstance.SendAsync(message, ct);
+            _logger.LogInformation("[FCM] SUCCESS. UserId={UserId} TokenPreview={TokenPreview} Response={Response}",
+                userId, tokenPreview, response);
+        }
+        catch (FirebaseMessagingException ex)
+        {
+            _logger.LogError(ex, "[FCM] FirebaseMessagingException for user {UserId}. ErrorCode={ErrorCode} HttpCode={HttpCode} TokenPreview={TokenPreview}",
+                userId, ex.MessagingErrorCode, ex.HttpResponse?.StatusCode, tokenPreview);
+            if (IsInvalidUserToken(ex))
+            {
+                _logger.LogWarning("[FCM] Token is invalid/unregistered for user {UserId}. Clearing token.", userId);
+                await ClearInvalidTokenAsync(user, ct);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[FCM] Unexpected error sending push to user {UserId}.", userId);
+        }
+    }
+
+    public async Task SendPushNotificationToTopicAsync(string topic, string title, string body, Dictionary<string, string>? data = null, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(topic))
+        {
+            _logger.LogWarning("[FCM] Cannot send push notification to topic: topic is empty.");
+            return;
+        }
+
+        _logger.LogInformation("[FCM] SendPushNotificationToTopic called. Topic={Topic} TitleKey={TitleKey} BodyKey={BodyKey} DataKeys=[{DataKeys}]",
+            topic, title, body, data != null ? string.Join(",", data.Keys) : "none");
+
+        // Topic broadcasts have no per-recipient language, so resolve any
+        // localization keys in a single default culture. Free-text titles/bodies
+        // (e.g. admin broadcasts) are left untouched when no resource matches.
+        var (localizedTitle, localizedBody) = Localize(title, body, DefaultTopicCulture);
+
+        _logger.LogInformation("[FCM] Sending to topic={Topic} Title=\"{Title}\" Body=\"{Body}\" Data={Data}",
+            topic, localizedTitle, localizedBody,
+            data != null ? string.Join(", ", data.Select(kv => $"{kv.Key}={kv.Value}")) : "none");
+
+        try
+        {
+            var message = new Message
+            {
+                Topic = topic,
+                Notification = new Notification
+                {
+                    Title = localizedTitle,
+                    Body = localizedBody,
+                },
+                Data = data,
+                Android = CreateAndroidConfig(),
+                Apns = CreateApnsConfig(localizedTitle, localizedBody),
+            };
+
+            var response = await FirebaseMessaging.DefaultInstance.SendAsync(message, ct);
+            _logger.LogInformation("[FCM] SUCCESS to topic={Topic}. Response={Response}", topic, response);
+        }
+        catch (FirebaseMessagingException ex)
+        {
+            _logger.LogError(ex, "[FCM] FirebaseMessagingException for topic={Topic}. ErrorCode={ErrorCode} HttpCode={HttpCode}",
+                topic, ex.MessagingErrorCode, ex.HttpResponse?.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[FCM] Unexpected error sending push to topic={Topic}.", topic);
+        }
+    }
+
+    private (string Title, string Body) Localize(string title, string body, string lang)
+    {
+        var localizer = localizerFactory.Create("Taxi.Api.SharedResource", "Taxi.Api");
         var originalCulture = System.Globalization.CultureInfo.CurrentUICulture;
-        string localizedTitle = title;
-        string localizedBody = body;
+
+        var localizedTitle = title;
+        var localizedBody = body;
 
         try
         {
@@ -61,63 +170,61 @@ public class FcmNotificationService(
             System.Globalization.CultureInfo.CurrentUICulture = originalCulture;
         }
 
-        try
-        {
-            var message = new Message
-            {
-                Token = user.FcmToken,
-                Notification = new Notification
-                {
-                    Title = localizedTitle,
-                    Body = localizedBody,
-                },
-                Data = data,
-            };
-
-            var response = await FirebaseMessaging.DefaultInstance.SendAsync(message, ct);
-            _logger.LogInformation("Push notification successfully sent to user {UserId}. Response: {Response}", userId, response);
-        }
-        catch (FirebaseMessagingException ex)
-        {
-            _logger.LogError(ex, "Failed to send FCM push notification to user {UserId}.", userId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error sending FCM push notification to user {UserId}.", userId);
-        }
+        return (localizedTitle, localizedBody);
     }
 
-    public async Task SendPushNotificationToTopicAsync(string topic, string title, string body, Dictionary<string, string>? data = null, CancellationToken ct = default)
+    private static AndroidConfig CreateAndroidConfig()
     {
-        if (string.IsNullOrWhiteSpace(topic))
+        return new AndroidConfig
         {
-            _logger.LogWarning("Cannot send push notification: topic is empty.");
-            return;
-        }
-
-        try
-        {
-            var message = new Message
+            Priority = Priority.High,
+            Notification = new AndroidNotification
             {
-                Topic = topic,
-                Notification = new Notification
+                ChannelId = DefaultAndroidChannelId,
+                Sound = DefaultSound,
+            },
+        };
+    }
+
+    private static ApnsConfig CreateApnsConfig(string title, string body)
+    {
+        return new ApnsConfig
+        {
+            Headers = new Dictionary<string, string>
+            {
+                { "apns-priority", "10" },
+            },
+            Aps = new Aps
+            {
+                Alert = new ApsAlert
                 {
                     Title = title,
                     Body = body,
                 },
-                Data = data,
-            };
+                Sound = DefaultSound,
+            },
+        };
+    }
 
-            var response = await FirebaseMessaging.DefaultInstance.SendAsync(message, ct);
-            _logger.LogInformation("Push notification successfully sent to topic {Topic}. Response: {Response}", topic, response);
-        }
-        catch (FirebaseMessagingException ex)
+    private static bool IsInvalidUserToken(FirebaseMessagingException ex)
+    {
+        return ex.MessagingErrorCode is MessagingErrorCode.Unregistered
+            or MessagingErrorCode.InvalidArgument;
+    }
+
+    private async Task ClearInvalidTokenAsync(Taxi.Domain.Users.User user, CancellationToken ct)
+    {
+        var updateResult = user.UpdateFcmToken(null);
+        if (updateResult.IsFailure)
         {
-            _logger.LogError(ex, "Failed to send FCM push notification to topic {Topic}.", topic);
+            _logger.LogWarning(
+                "Failed to clear invalid FCM token for user {UserId}: {Error}",
+                user.Id,
+                updateResult.Error);
+            return;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error sending FCM push notification to topic {Topic}.", topic);
-        }
+
+        await _context.SaveChangesAsync(ct);
+        _logger.LogInformation("Cleared invalid FCM token for user {UserId}.", user.Id);
     }
 }

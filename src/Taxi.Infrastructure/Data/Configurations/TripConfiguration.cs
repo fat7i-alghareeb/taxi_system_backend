@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Taxi.Domain.Drivers;
 using Taxi.Domain.Trips;
 using Taxi.Domain.Users;
 using Taxi.Domain.Vehicles;
@@ -17,7 +18,10 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
             .HasForeignKey(t => t.PassengerId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<User>()
+        // DriverId references the Drivers table (the Drivers PK), matching how
+        // the whole codebase assigns/queries it. (It previously referenced
+        // DomainUsers, which broke every driver assignment with an FK violation.)
+        builder.HasOne<Driver>()
             .WithMany()
             .HasForeignKey(t => t.DriverId)
             .OnDelete(DeleteBehavior.Restrict);

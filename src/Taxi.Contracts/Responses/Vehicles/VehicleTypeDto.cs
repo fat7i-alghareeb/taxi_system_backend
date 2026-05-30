@@ -8,5 +8,6 @@ public record VehicleTypeDto(
     decimal RatePerKm,
     decimal RatePerMin,
     decimal MinFare,
-    int SortOrder);
+    int SortOrder,
+    bool IsActive);
 
