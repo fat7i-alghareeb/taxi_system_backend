@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
@@ -52,6 +53,18 @@ public class GetPricingQuotesCommandHandler(
         var quotes = new List<PricingQuote>();
         var domainCoordinates = stops.Select(s => new Domain.Trips.Coordinate(s.Latitude, s.Longitude)).ToList();
 
+        var routeSegmentsJson = JsonSerializer.Serialize(
+            directionResponse.Legs.Select(leg => new
+            {
+                distanceMeters = leg.DistanceMeters,
+                durationSeconds = leg.DurationSeconds,
+                encodedPolyline = leg.EncodedPolyline,
+                startLatitude = leg.StartCoordinate.Latitude,
+                startLongitude = leg.StartCoordinate.Longitude,
+                endLatitude = leg.EndCoordinate.Latitude,
+                endLongitude = leg.EndCoordinate.Longitude,
+            }).ToList());
+
         foreach (var vehicleType in vehicleTypes)
         {
             var originalFare = pricingService.CalculateFare(
@@ -74,7 +87,9 @@ public class GetPricingQuotesCommandHandler(
                 discountPercent,
                 currencyCode,
                 validUntil,
-                domainCoordinates);
+                domainCoordinates,
+                directionResponse.OverviewPolyline,
+                routeSegmentsJson);
 
             if (quoteResult.IsFailure)
             {

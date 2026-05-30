@@ -21,7 +21,9 @@ public sealed class PricingQuote : Entity
         decimal discountPercent,
         string currencyCode,
         DateTime validUntil,
-        IEnumerable<Coordinate> stops)
+        IEnumerable<Coordinate> stops,
+        string? encodedOverviewPolyline,
+        string? routeSegmentsJson)
         : base(id)
     {
         PassengerId = passengerId;
@@ -35,6 +37,8 @@ public sealed class PricingQuote : Entity
         ValidUntil = validUntil;
         Used = false;
         CreatedAtUtc = DateTime.UtcNow;
+        EncodedOverviewPolyline = encodedOverviewPolyline;
+        RouteSegmentsJson = routeSegmentsJson;
         _stops.AddRange(stops);
     }
 
@@ -49,7 +53,9 @@ public sealed class PricingQuote : Entity
         decimal discountPercent,
         string currencyCode,
         DateTime validUntil,
-        IEnumerable<Coordinate> stops)
+        IEnumerable<Coordinate> stops,
+        string? encodedOverviewPolyline = null,
+        string? routeSegmentsJson = null)
     {
         if (passengerId == Guid.Empty)
         {
@@ -92,7 +98,9 @@ public sealed class PricingQuote : Entity
             discountPercent,
             currencyCode,
             validUntil,
-            stops);
+            stops,
+            encodedOverviewPolyline,
+            routeSegmentsJson);
     }
 
     public Guid PassengerId { get; private set; }
@@ -106,6 +114,8 @@ public sealed class PricingQuote : Entity
     public DateTime ValidUntil { get; private set; }
     public bool Used { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
+    public string? EncodedOverviewPolyline { get; private set; }
+    public string? RouteSegmentsJson { get; private set; }
     public IReadOnlyCollection<Coordinate> Stops => _stops.AsReadOnly();
 
     public bool IsExpired() => DateTime.UtcNow > ValidUntil;

@@ -12,6 +12,7 @@ using Taxi.Application.Features.Trips.Commands.DriverCancelTrip;
 using Taxi.Application.Features.Trips.Commands.EnRouteTrip;
 using Taxi.Application.Features.Trips.Commands.GetPricingQuotes;
 using Taxi.Application.Features.Trips.Commands.RequestTrip;
+using Taxi.Application.Features.Trips.Commands.ResendArrivedNotification;
 using Taxi.Application.Features.Trips.Commands.ReviewCompensationClaim;
 using Taxi.Application.Features.Trips.Commands.StartTrip;
 using Taxi.Application.Features.Trips.Commands.StartTripWaiting;
@@ -229,6 +230,20 @@ public class TripsController(ISender sender) : ApiController
     public async Task<IActionResult> Arrive(Guid id, CancellationToken ct)
     {
         var result = await sender.Send(new ArriveTripCommand(id), ct);
+        return result.Match(_ => NoContent(), Problem);
+    }
+
+    [HttpPost("{id:guid}/arrive/resend")]
+    [Authorize(Roles = "Driver,Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [EndpointSummary("Re-broadcasts the driver-arrived notification (FCM + SignalR) without changing trip state.")]
+    [EndpointName("ResendArrivedNotification")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> ResendArriveNotification(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new ResendArrivedNotificationCommand(id), ct);
         return result.Match(_ => NoContent(), Problem);
     }
 

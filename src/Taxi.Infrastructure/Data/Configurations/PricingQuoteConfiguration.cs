@@ -50,6 +50,11 @@ public class PricingQuoteConfiguration : IEntityTypeConfiguration<PricingQuote>
             stops.Property(c => c.Latitude).HasPrecision(18, 10);
             stops.Property(c => c.Longitude).HasPrecision(18, 10);
         });
+
+        builder.Property(q => q.EncodedOverviewPolyline);
+
+        builder.Property(q => q.RouteSegmentsJson)
+            .HasColumnType("jsonb");
     }
 }
 

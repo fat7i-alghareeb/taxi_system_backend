@@ -98,6 +98,7 @@ public class RequestTripCommandHandler(
             }
 
             _context.Trips.Add(trip);
+            AddTripRouteIfAvailable(trip, quote);
             await _context.SaveChangesAsync(ct);
         }
         else
@@ -142,6 +143,7 @@ public class RequestTripCommandHandler(
 
             _context.Trips.Add(trip);
             _context.Payments.Add(paymentResult.Value);
+            AddTripRouteIfAvailable(trip, quote);
             await _context.SaveChangesAsync(ct);
 
             stripePaymentDto = new StripePaymentDto(
@@ -178,6 +180,32 @@ public class RequestTripCommandHandler(
             stripePaymentDto,
             null,
             null,
-            vehicleTypeName);
+            vehicleTypeName,
+            EncodedOverviewPolyline: quote.EncodedOverviewPolyline,
+            RouteSegments: TripRouteSegmentMapper.FromJson(quote.RouteSegmentsJson));
+    }
+
+    private void AddTripRouteIfAvailable(Trip trip, PricingQuote quote)
+    {
+        if (string.IsNullOrEmpty(quote.EncodedOverviewPolyline) || string.IsNullOrEmpty(quote.RouteSegmentsJson))
+        {
+            return;
+        }
+
+        var totalDistanceMeters = (int)Math.Round(quote.TotalDistanceKm * 1000m);
+        var totalDurationSeconds = (int)Math.Round(quote.TotalDurationMin * 60m);
+
+        var routeResult = TripRoute.Create(
+            Guid.NewGuid(),
+            trip.Id,
+            quote.EncodedOverviewPolyline,
+            totalDistanceMeters,
+            totalDurationSeconds,
+            quote.RouteSegmentsJson);
+
+        if (routeResult.IsSuccess)
+        {
+            _context.TripRoutes.Add(routeResult.Value);
+        }
     }
 }

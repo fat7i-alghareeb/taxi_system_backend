@@ -53,6 +53,9 @@ public class GetTripByIdQueryHandler(
             .OrderByDescending(w => w.StartedAtUtc)
             .FirstOrDefaultAsync(ct);
 
+        var tripRoute = await _context.TripRoutes
+            .FirstOrDefaultAsync(r => r.TripId == trip.Id, ct);
+
         if (trip.DriverId.HasValue)
         {
             var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.Id == trip.DriverId.Value, ct);
@@ -86,6 +89,12 @@ public class GetTripByIdQueryHandler(
             compensationClaim?.ToDto(),
             activeWaitingSession?.ToDto(),
             passenger?.Name,
-            passenger?.Phone);
+            passenger?.Phone,
+            AssignedAtUtc: trip.AssignedAtUtc,
+            ArrivedAtUtc: trip.ArrivedAtUtc,
+            StartedAtUtc: trip.StartedAtUtc,
+            CompletedAtUtc: trip.CompletedAtUtc,
+            EncodedOverviewPolyline: tripRoute?.EncodedPolyline,
+            RouteSegments: TripRouteSegmentMapper.FromJson(tripRoute?.SegmentsJson));
     }
 }
