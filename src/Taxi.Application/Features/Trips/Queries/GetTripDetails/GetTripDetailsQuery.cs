@@ -29,4 +29,9 @@ public record TripDetailsDto(
     List<TripStopDto> Stops,
     CancellationPolicyDto? Cancellation = null,
     CompensationClaimDto? CompensationClaim = null,
-    WaitingSessionDto? ActiveWaitingSession = null);
+    WaitingSessionDto? ActiveWaitingSession = null,
+
+    // Route geometry mirrors TripDto so the admin dashboard can draw the same
+    // multi-stop polyline the customer/driver apps render from /trips/{id}.
+    string? EncodedOverviewPolyline = null,
+    List<TripRouteSegmentDto>? RouteSegments = null);

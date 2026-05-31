@@ -89,6 +89,7 @@
   "User.Profile.NameRequired": "Name is required.",
   "User.Profile.PhotoInvalid": "Photo must be a JPEG or PNG image under 5MB.",
   "Trip.ScheduledAt.TooSoon": "Scheduled time must be at least 15 minutes in the future.",
+  "Trip.Scheduled.NotReady": "This trip is scheduled and cannot be assigned until its scheduled time.",
   "Trip.CannotCancel": "This trip cannot be cancelled in its current status.",
   "Trip.NotOwnedByPassenger": "This trip does not belong to you.",
   "Maps.Search.QueryRequired": "Search query is required.",

@@ -140,6 +140,7 @@ public static class LocalizationKeys
         public const string VehicleTypeNotFound = "Trip.VehicleType.NotFound";
         public const string DriverNotFound = "Trip.Driver.NotFound";
         public const string ScheduledAtTooSoon = "Trip.ScheduledAt.TooSoon";
+        public const string ScheduledNotReady = "Trip.Scheduled.NotReady";
         public const string CannotCancel = "Trip.CannotCancel";
         public const string CancellationWindowExpired = "Trip.Cancellation.WindowExpired";
         public const string DriverCancelTooEarly = "Trip.Cancellation.DriverTooEarly";

@@ -89,6 +89,7 @@
   "User.Profile.NameRequired": "Ім'я обов'язкове.",
   "User.Profile.PhotoInvalid": "Фото повинно бути зображенням JPEG або PNG розміром до 5 МБ.",
   "Trip.ScheduledAt.TooSoon": "Запланований час повинен бути принаймні через 15 хвилин.",
+  "Trip.Scheduled.NotReady": "Цю поїздку заплановано — її не можна призначити до настання запланованого часу.",
   "Trip.CannotCancel": "Цю поїздку неможливо скасувати в її поточному статусі.",
   "Trip.NotOwnedByPassenger": "Ця поїздка вам не належить.",
   "Maps.Search.QueryRequired": "Пошуковий запит обов'язковий.",

@@ -89,6 +89,7 @@
   "User.Profile.NameRequired": "Numele este obligatoriu.",
   "User.Profile.PhotoInvalid": "Fotografia trebuie să fie o imagine JPEG sau PNG sub 5MB.",
   "Trip.ScheduledAt.TooSoon": "Ora programată trebuie să fie cu cel puțin 15 minute în viitor.",
+  "Trip.Scheduled.NotReady": "Această cursă este programată și nu poate fi alocată înainte de ora programată.",
   "Trip.CannotCancel": "Această călătorie nu poate fi anulată în statusul actual.",
   "Trip.NotOwnedByPassenger": "Această călătorie nu vă aparține.",
   "Maps.Search.QueryRequired": "Interogarea de căutare este obligatorie.",

@@ -71,6 +71,9 @@ public class GetTripDetailsQueryHandler(IAppDbContext context)
             .OrderByDescending(s => s.StartedAtUtc)
             .FirstOrDefaultAsync(ct);
 
+        var tripRoute = await _context.TripRoutes
+            .FirstOrDefaultAsync(r => r.TripId == trip.Id, ct);
+
         return new TripDetailsDto(
             trip.Id,
             trip.ReferenceCode,
@@ -94,6 +97,8 @@ public class GetTripDetailsQueryHandler(IAppDbContext context)
             stops,
             cancellation?.ToDto(),
             claim?.ToDto(),
-            waitingSession?.ToDto());
+            waitingSession?.ToDto(),
+            EncodedOverviewPolyline: tripRoute?.EncodedPolyline,
+            RouteSegments: TripRouteSegmentMapper.FromJson(tripRoute?.SegmentsJson));
     }
 }

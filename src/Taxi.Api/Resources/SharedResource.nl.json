@@ -89,6 +89,7 @@
   "User.Profile.NameRequired": "Naam is vereist.",
   "User.Profile.PhotoInvalid": "Foto moet een JPEG- of PNG-afbeelding zijn van minder dan 5MB.",
   "Trip.ScheduledAt.TooSoon": "De geplande tijd moet minimaal 15 minuten in de toekomst liggen.",
+  "Trip.Scheduled.NotReady": "Deze rit is gepland en kan pas op de geplande tijd worden toegewezen.",
   "Trip.CannotCancel": "Deze rit kan niet worden geannuleerd in de huidige status.",
   "Trip.NotOwnedByPassenger": "Deze rit behoort niet aan u toe.",
   "Maps.Search.QueryRequired": "Zoekopdracht is vereist.",

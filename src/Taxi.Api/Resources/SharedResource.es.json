@@ -89,6 +89,7 @@
   "User.Profile.NameRequired": "El nombre es obligatorio.",
   "User.Profile.PhotoInvalid": "La foto debe ser una imagen JPEG o PNG de menos de 5MB.",
   "Trip.ScheduledAt.TooSoon": "La hora programada debe ser al menos 15 minutos en el futuro.",
+  "Trip.Scheduled.NotReady": "Este viaje está programado y no puede asignarse hasta su hora programada.",
   "Trip.CannotCancel": "Este viaje no se puede cancelar en su estado actual.",
   "Trip.NotOwnedByPassenger": "Este viaje no le pertenece.",
   "Maps.Search.QueryRequired": "La consulta de búsqueda es obligatoria.",

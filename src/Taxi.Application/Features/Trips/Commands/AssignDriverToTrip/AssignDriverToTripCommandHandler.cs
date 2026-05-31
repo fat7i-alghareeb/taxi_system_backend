@@ -23,6 +23,16 @@ public class AssignDriverToTripCommandHandler(IAppDbContext context)
             return Result.Failure<Success>(Error.NotFound(LocalizationKeys.Trip.NotFound, "Trip not found."));
         }
 
+        // Scheduled trips are locked until their start time arrives, even for admin
+        // assignment. Clients enforce the same gate, but we re-check here so a stale
+        // client or a direct API call cannot beat the schedule.
+        if (trip.ScheduledAtUtc.HasValue && trip.ScheduledAtUtc.Value > DateTimeOffset.UtcNow)
+        {
+            return Result.Failure<Success>(Error.Validation(
+                LocalizationKeys.Trip.ScheduledNotReady,
+                "This trip is scheduled and cannot be assigned until its scheduled time."));
+        }
+
         var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.Id == request.DriverId, ct);
         if (driver == null)
         {
