@@ -99,6 +99,7 @@ public class GetTripDetailsQueryHandler(IAppDbContext context)
             claim?.ToDto(),
             waitingSession?.ToDto(),
             EncodedOverviewPolyline: tripRoute?.EncodedPolyline,
-            RouteSegments: TripRouteSegmentMapper.FromJson(tripRoute?.SegmentsJson));
+            RouteSegments: TripRouteSegmentMapper.FromJson(tripRoute?.SegmentsJson),
+            PassengerNote: trip.PassengerNote);
     }
 }

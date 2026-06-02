@@ -59,6 +59,10 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
             .HasMaxLength(20)
             .IsRequired();
 
+        builder.Property(t => t.PassengerNote)
+            .HasMaxLength(500)
+            .IsRequired(false);
+
         builder.Property(t => t.CreatedAtUtc)
             .IsRequired();
 

@@ -17,7 +17,8 @@ public sealed class Trip : AuditableEntity
         Guid vehicleTypeId,
         Guid quoteId,
         IEnumerable<TripStop> stops,
-        DateTimeOffset? scheduledAtUtc)
+        DateTimeOffset? scheduledAtUtc,
+        string? passengerNote)
         : base(id)
     {
         PassengerId = passengerId;
@@ -25,6 +26,7 @@ public sealed class Trip : AuditableEntity
         VehicleTypeId = vehicleTypeId;
         QuoteId = quoteId;
         ScheduledAtUtc = scheduledAtUtc;
+        PassengerNote = NormalizePassengerNote(passengerNote);
         Status = TripStatus.AwaitingPayment;
         _stops.AddRange(stops);
     }
@@ -36,6 +38,7 @@ public sealed class Trip : AuditableEntity
     public TripStatus Status { get; private set; }
     public Guid QuoteId { get; private set; }
     public IReadOnlyCollection<TripStop> Stops => _stops.AsReadOnly();
+    public string? PassengerNote { get; private set; }
     public DateTimeOffset? ScheduledAtUtc { get; private set; }
     public DateTimeOffset? AssignedAtUtc { get; private set; }
     public DateTimeOffset? ArrivedAtUtc { get; private set; }
@@ -49,7 +52,8 @@ public sealed class Trip : AuditableEntity
         Guid passengerId,
         PricingQuote quote,
         IEnumerable<TripStop> stops,
-        DateTimeOffset? scheduledAtUtc = null)
+        DateTimeOffset? scheduledAtUtc = null,
+        string? passengerNote = null)
     {
         if (quote.IsExpired())
         {
@@ -68,7 +72,8 @@ public sealed class Trip : AuditableEntity
             quote.VehicleTypeId,
             quote.Id,
             stops,
-            scheduledAtUtc);
+            scheduledAtUtc,
+            passengerNote);
 
         trip.AddDomainEvent(new TripRequested
         {
@@ -78,6 +83,21 @@ public sealed class Trip : AuditableEntity
         });
 
         return trip;
+    }
+
+    public Result<Success> UpdatePassengerNote(string? passengerNote)
+    {
+        if (Status is TripStatus.InProgress
+            or TripStatus.Completed
+            or TripStatus.Cancelled
+            or TripStatus.PaymentFailed
+            or TripStatus.Refunded)
+        {
+            return TripErrors.CannotUpdatePassengerNote;
+        }
+
+        PassengerNote = NormalizePassengerNote(passengerNote);
+        return Result.Success;
     }
 
     public Result<Success> AssignDriver(Guid driverId)
@@ -333,6 +353,12 @@ public sealed class Trip : AuditableEntity
     {
         DeletedAtUtc = DateTimeOffset.UtcNow;
         return Result.Success;
+    }
+
+    private static string? NormalizePassengerNote(string? passengerNote)
+    {
+        var normalized = passengerNote?.Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
     }
 }
 

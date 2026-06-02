@@ -8,5 +8,6 @@ public record TripSummaryDto(
     string CurrencyCode,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset? ScheduledAtUtc,
-    List<TripStopDto> Stops);
+    List<TripStopDto> Stops,
+    string? PassengerNote = null);
 

@@ -7,5 +7,6 @@ namespace Taxi.Application.Features.Trips.Commands.RequestTrip;
 public record RequestTripCommand(
     Guid QuoteId,
     List<CoordinateDto> Stops,
-    DateTimeOffset? ScheduledAt = null) : IRequest<Result<TripDto>>;
+    DateTimeOffset? ScheduledAt = null,
+    string? PassengerNote = null) : IRequest<Result<TripDto>>;
 

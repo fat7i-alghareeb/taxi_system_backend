@@ -170,6 +170,7 @@ public class CancelTripCommandHandler(
             driverLatitude,
             driverLongitude,
             vehicleTypeName,
-            cancellationResult.Value.ToDto());
+            cancellationResult.Value.ToDto(),
+            PassengerNote: trip.PassengerNote);
     }
 }

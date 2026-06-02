@@ -34,4 +34,5 @@ public record TripDetailsDto(
     // Route geometry mirrors TripDto so the admin dashboard can draw the same
     // multi-stop polyline the customer/driver apps render from /trips/{id}.
     string? EncodedOverviewPolyline = null,
-    List<TripRouteSegmentDto>? RouteSegments = null);
+    List<TripRouteSegmentDto>? RouteSegments = null,
+    string? PassengerNote = null);

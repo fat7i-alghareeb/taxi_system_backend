@@ -98,6 +98,7 @@ public class GetTripByIdQueryHandler(
             StartedAtUtc: trip.StartedAtUtc,
             CompletedAtUtc: trip.CompletedAtUtc,
             EncodedOverviewPolyline: tripRoute?.EncodedPolyline,
-            RouteSegments: TripRouteSegmentMapper.FromJson(tripRoute?.SegmentsJson));
+            RouteSegments: TripRouteSegmentMapper.FromJson(tripRoute?.SegmentsJson),
+            PassengerNote: trip.PassengerNote);
     }
 }

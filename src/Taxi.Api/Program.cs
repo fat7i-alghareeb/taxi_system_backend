@@ -1,9 +1,12 @@
+using QuestPDF.Infrastructure;
 using Scalar.AspNetCore;
 
 using Serilog;
 
 using Taxi.Infrastructure.Data;
 using Taxi.Infrastructure.Hubs;
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 

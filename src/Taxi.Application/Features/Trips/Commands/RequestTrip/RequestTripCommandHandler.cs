@@ -71,7 +71,8 @@ public class RequestTripCommandHandler(
             passengerId,
             quote,
             stops,
-            request.ScheduledAt);
+            request.ScheduledAt,
+            request.PassengerNote);
 
         if (tripResult.IsFailure)
         {
@@ -184,6 +185,7 @@ public class RequestTripCommandHandler(
             null,
             null,
             vehicleTypeName,
+            PassengerNote: trip.PassengerNote,
             EncodedOverviewPolyline: quote.EncodedOverviewPolyline,
             RouteSegments: TripRouteSegmentMapper.FromJson(quote.RouteSegmentsJson));
     }

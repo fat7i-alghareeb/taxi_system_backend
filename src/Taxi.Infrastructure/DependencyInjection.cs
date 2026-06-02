@@ -14,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Common.Options;
 using Taxi.Infrastructure.Auth;
 using Taxi.Infrastructure.BackgroundJobs;
 using Taxi.Infrastructure.Common;
@@ -24,6 +25,7 @@ using Taxi.Infrastructure.Maps;
 using Taxi.Infrastructure.Notifications;
 using Taxi.Infrastructure.Payments;
 using Taxi.Infrastructure.RealTime;
+using Taxi.Infrastructure.Services.Invoices;
 using Taxi.Infrastructure.Settings;
 using Taxi.Infrastructure.Storage;
 
@@ -32,6 +34,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
+        services.Configure<InvoiceIssuerOptions>(configuration.GetSection(InvoiceIssuerOptions.SectionName));
 
         if (FirebaseApp.DefaultInstance == null)
         {
@@ -159,6 +162,10 @@ public static class DependencyInjection
         services.AddScoped<IStripePaymentService, StripePaymentService>();
         services.AddScoped<IStripeWebhookValidator, StripeWebhookValidator>();
         services.AddSingleton<IClientConfigProvider, ClientConfigProvider>();
+
+        services.AddScoped<IInvoiceNumberGenerator, SequentialInvoiceNumberGenerator>();
+        services.AddScoped<IInvoiceIssuanceService, InvoiceIssuanceService>();
+        services.AddSingleton<IInvoicePdfRenderer, InvoicePdfRenderer>();
 
         services.AddHybridCache(options => options.DefaultEntryOptions = new Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions
         {

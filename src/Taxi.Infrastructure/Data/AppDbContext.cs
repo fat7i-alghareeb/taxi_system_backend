@@ -8,6 +8,7 @@ using Taxi.Domain.Common;
 using Taxi.Domain.Configuration;
 using Taxi.Domain.Drivers;
 using Taxi.Domain.Identity;
+using Taxi.Domain.Invoices;
 using Taxi.Domain.Notifications;
 using Taxi.Domain.PaymentMethods;
 using Taxi.Domain.Payments;
@@ -37,6 +38,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, IMediator medi
     public DbSet<TripCancellation> TripCancellations => this.Set<TripCancellation>();
     public DbSet<TripCompensationClaim> TripCompensationClaims => this.Set<TripCompensationClaim>();
     public DbSet<TripWaitingSession> TripWaitingSessions => this.Set<TripWaitingSession>();
+    public DbSet<Invoice> Invoices => this.Set<Invoice>();
+    public DbSet<InvoiceCounter> InvoiceCounters => this.Set<InvoiceCounter>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

@@ -52,7 +52,8 @@ public class GetPassengerTripsQueryHandler(
                         s.Sequence,
                         s.IsCompleted,
                         s.CompletedAtUtc))
-                    .ToList()))
+                    .ToList(),
+                x.t.PassengerNote))
             .ToListAsync(ct);
 
         return new PagedResult<TripSummaryDto>(items, totalCount, request.Page, request.PageSize);

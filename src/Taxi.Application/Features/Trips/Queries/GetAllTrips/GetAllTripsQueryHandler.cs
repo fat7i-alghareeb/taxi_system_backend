@@ -110,7 +110,8 @@ public class GetAllTripsQueryHandler(IAppDbContext context)
                 AssignedAtUtc: trip.AssignedAtUtc,
                 ArrivedAtUtc: trip.ArrivedAtUtc,
                 StartedAtUtc: trip.StartedAtUtc,
-                CompletedAtUtc: trip.CompletedAtUtc));
+                CompletedAtUtc: trip.CompletedAtUtc,
+                PassengerNote: trip.PassengerNote));
         }
 
         return tripDtos;

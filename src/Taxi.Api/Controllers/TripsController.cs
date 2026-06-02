@@ -18,6 +18,7 @@ using Taxi.Application.Features.Trips.Commands.StartTrip;
 using Taxi.Application.Features.Trips.Commands.StartTripWaiting;
 using Taxi.Application.Features.Trips.Commands.StopTripWaiting;
 using Taxi.Application.Features.Trips.Commands.SubmitCompensationClaim;
+using Taxi.Application.Features.Trips.Commands.UpdatePassengerNote;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Application.Features.Trips.Queries.GetAllTrips;
 using Taxi.Application.Features.Trips.Queries.GetCompensationClaims;
@@ -25,6 +26,9 @@ using Taxi.Application.Features.Trips.Queries.GetPassengerTripCount;
 using Taxi.Application.Features.Trips.Queries.GetPassengerTrips;
 using Taxi.Application.Features.Trips.Queries.GetTripById;
 using Taxi.Application.Features.Trips.Queries.GetTripDetails;
+using Taxi.Application.Features.Trips.Queries.GetTripInvoice;
+using Taxi.Application.Features.Trips.Queries.GetTripInvoicePdf;
+using Taxi.Application.Features.Trips.Queries.GetTripReceipt;
 using Taxi.Contracts.Requests.Trips;
 
 namespace Taxi.Api.Controllers;
@@ -107,7 +111,8 @@ public class TripsController(ISender sender) : ApiController
         var command = new RequestTripCommand(
             request.QuoteId,
             request.Stops.Select(s => new CoordinateDto(s.Latitude, s.Longitude, s.Label)).ToList(),
-            request.ScheduledAt);
+            request.ScheduledAt,
+            request.PassengerNote);
 
         var result = await sender.Send(command, ct);
 
@@ -117,6 +122,20 @@ public class TripsController(ISender sender) : ApiController
                 routeValues: new { version = "1.0", id = response.Id },
                 value: response),
             Problem);
+    }
+
+    [HttpPut("{id:guid}/passenger-note")]
+    [Authorize(Roles = "Passenger,Admin")]
+    [ProducesResponseType(typeof(TripDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Updates the passenger note shown to the driver before the trip starts.")]
+    [EndpointName("UpdatePassengerNote")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> UpdatePassengerNote(Guid id, [FromBody] UpdatePassengerNoteRequest request, CancellationToken ct)
+    {
+        var result = await sender.Send(new UpdatePassengerNoteCommand(id, request.PassengerNote), ct);
+        return result.Match(Ok, Problem);
     }
 
     [HttpPost("{id:guid}/cancellations")]
@@ -338,6 +357,46 @@ public class TripsController(ISender sender) : ApiController
     {
         var result = await sender.Send(new GetTripDetailsQuery(id), ct);
         return result.Match(Ok, Problem);
+    }
+
+    [HttpGet("{id:guid}/receipt")]
+    [Authorize(Roles = "Passenger,Admin")]
+    [ProducesResponseType(typeof(TripReceiptDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Returns a customer-facing receipt for a completed trip.")]
+    [EndpointName("GetTripReceipt")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetReceipt(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new GetTripReceiptQuery(id), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpGet("{id:guid}/invoice")]
+    [Authorize(Roles = "Passenger,Admin")]
+    [ProducesResponseType(typeof(TripInvoiceDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Returns the issued invoice for a completed trip.")]
+    [EndpointName("GetTripInvoice")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetInvoice(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new GetTripInvoiceQuery(id), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpGet("{id:guid}/invoice/pdf")]
+    [Authorize(Roles = "Passenger,Admin")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Returns the Fat7i-branded invoice PDF for a completed trip.")]
+    [EndpointDescription("Pass ?language=nl|en|ar|de|es|fr|pl|ro|uk to choose the invoice language. Defaults to Dutch (nl); unknown values fall back to Dutch.")]
+    [EndpointName("GetTripInvoicePdf")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetInvoicePdf(Guid id, [FromQuery] string? language = null, CancellationToken ct = default)
+    {
+        var result = await sender.Send(new GetTripInvoicePdfQuery(id, language), ct);
+        return result.Match(pdf => File(pdf.Bytes, "application/pdf", pdf.FileName), Problem);
     }
 }
 

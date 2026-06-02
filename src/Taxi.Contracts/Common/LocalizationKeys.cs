@@ -156,6 +156,8 @@ public static class LocalizationKeys
         public const string StopAlreadyCompleted = "Trip.Stop.AlreadyCompleted";
         public const string PendingStopsRemaining = "Trip.Stop.PendingStopsRemaining";
         public const string TooManyStops = "Trip.Stops.TooMany";
+        public const string PassengerNoteTooLong = "Trip.PassengerNote.TooLong";
+        public const string CannotUpdatePassengerNote = "Trip.PassengerNote.CannotUpdate";
     }
 
     public static class Maps
@@ -182,6 +184,38 @@ public static class LocalizationKeys
     {
         public const string CodeRequired = "Promo.Code.Required";
         public const string NotFound = "Promo.NotFound";
+    }
+
+    public static class Invoice
+    {
+        public const string NotIssued = "Invoice.NotIssued";
+        public const string NotFound = "Invoice.NotFound";
+        public const string AlreadyIssued = "Invoice.AlreadyIssued";
+        public const string TripIdRequired = "Invoice.TripIdRequired";
+        public const string PassengerIdRequired = "Invoice.PassengerIdRequired";
+        public const string NumberRequired = "Invoice.NumberRequired";
+        public const string CurrencyRequired = "Invoice.CurrencyRequired";
+        public const string InvalidAmount = "Invoice.InvalidAmount";
+        public const string InvalidTaxRate = "Invoice.InvalidTaxRate";
+
+        public const string Title = "Invoice.Title";
+        public const string Number = "Invoice.Number";
+        public const string Date = "Invoice.Date";
+        public const string TransactionDate = "Invoice.TransactionDate";
+        public const string ColumnDescription = "Invoice.Column.Description";
+        public const string ColumnQuantity = "Invoice.Column.Quantity";
+        public const string ColumnTaxRate = "Invoice.Column.TaxRate";
+        public const string ColumnTaxAmount = "Invoice.Column.TaxAmount";
+        public const string ColumnNet = "Invoice.Column.Net";
+        public const string TotalNet = "Invoice.TotalNet";
+        public const string LineItemTransport = "Invoice.LineItem.Transport";
+        public const string PaymentMethod = "Invoice.Payment.Method";
+        public const string PaymentCash = "Invoice.Payment.Cash";
+        public const string PaymentCard = "Invoice.Payment.Card";
+        public const string PaymentWallet = "Invoice.Payment.Wallet";
+        public const string BilledTo = "Invoice.BilledTo";
+        public const string IssuedBy = "Invoice.IssuedBy";
+        public const string VatNumber = "Invoice.VatNumber";
     }
 
     public static class Notification

@@ -13,5 +13,8 @@ public class RequestTripRequest
     public List<CoordinateRequest> Stops { get; set; } = [];
 
     public DateTimeOffset? ScheduledAt { get; set; }
+
+    [MaxLength(500, ErrorMessage = LocalizationKeys.Trip.PassengerNoteTooLong)]
+    public string? PassengerNote { get; set; }
 }
 

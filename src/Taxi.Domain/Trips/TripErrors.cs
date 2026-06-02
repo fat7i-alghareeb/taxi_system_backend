@@ -100,5 +100,9 @@ public static class TripErrors
     public static readonly Error TooManyStops = Error.Validation(
         code: LocalizationKeys.Trip.TooManyStops,
         description: "A trip cannot have more than 25 stops.");
+
+    public static readonly Error CannotUpdatePassengerNote = Error.Validation(
+        code: LocalizationKeys.Trip.CannotUpdatePassengerNote,
+        description: "Passenger note cannot be updated after the trip has started.");
 }
 

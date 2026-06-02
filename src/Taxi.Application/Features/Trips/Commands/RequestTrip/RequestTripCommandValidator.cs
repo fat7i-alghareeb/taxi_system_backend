@@ -20,6 +20,10 @@ public class RequestTripCommandValidator : AbstractValidator<RequestTripCommand>
             .Must(s => s == null || s > DateTimeOffset.UtcNow.AddMinutes(15))
             .WithErrorCode(LocalizationKeys.Trip.ScheduledAtTooSoon)
             .When(v => v.ScheduledAt.HasValue);
+        RuleFor(v => v.PassengerNote)
+            .MaximumLength(500)
+            .WithErrorCode(LocalizationKeys.Trip.PassengerNoteTooLong)
+            .WithMessage(LocalizationKeys.Trip.PassengerNoteTooLong);
     }
 }
 
