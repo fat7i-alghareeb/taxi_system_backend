@@ -39,7 +39,7 @@ public class RequestTripCommandHandlerStripeTests
     }
 
     [Fact]
-    public async Task Handle_StripeDisabled_TripStatusIsDriverAssigned()
+    public async Task Handle_StripeDisabled_TripStatusIsPendingDriver()
     {
         _clientConfig.GetClientConfig().Returns(new ClientConfig(StripeEnabled: false, StripePublishableKey: string.Empty, SignalREnabled: true));
         var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId);
@@ -48,7 +48,7 @@ public class RequestTripCommandHandlerStripeTests
         var result = await handler.Handle(new RequestTripCommand(quoteId, TwoStops()), default);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("DriverAssigned", result.Value.Status);
+        Assert.Equal("PendingDriver", result.Value.Status);
     }
 
     // ── Stripe enabled (payment path) ────────────────────────────────────────

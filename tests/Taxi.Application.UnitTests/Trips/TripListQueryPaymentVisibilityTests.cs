@@ -1,0 +1,178 @@
+using Microsoft.Extensions.Logging;
+using NSubstitute;
+using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Features.Trips.Queries.GetAllTrips;
+using Taxi.Application.Features.Trips.Queries.GetPassengerTripCount;
+using Taxi.Application.Features.Trips.Queries.GetPassengerTrips;
+using Taxi.Application.UnitTests.Infrastructure;
+using Taxi.Domain.Drivers;
+using Taxi.Domain.Trips;
+using Taxi.Domain.Vehicles;
+using Xunit;
+
+namespace Taxi.Application.UnitTests.Trips;
+
+public class TripListQueryPaymentVisibilityTests
+{
+    [Fact]
+    public async Task GetPassengerTrips_ExcludesAwaitingPaymentTripsFromItemsAndTotalCount()
+    {
+        var passengerId = Guid.NewGuid();
+        var awaitingQuoteId = Guid.NewGuid();
+        var visibleQuoteId = Guid.NewGuid();
+        var awaitingTrip = PaymentTestBuilders.CreateAwaitingPaymentTrip(passengerId, awaitingQuoteId);
+        var visibleTrip = PaymentTestBuilders.CreateAwaitingPaymentTrip(passengerId, visibleQuoteId);
+        visibleTrip.ConfirmPayment();
+
+        var context = BuildContext(
+            [awaitingTrip, visibleTrip],
+            [
+                CreateQuote(passengerId, awaitingTrip.VehicleTypeId, awaitingQuoteId),
+                CreateQuote(passengerId, visibleTrip.VehicleTypeId, visibleQuoteId),
+            ]);
+        var currentUser = Substitute.For<IUser>();
+        currentUser.Id.Returns(passengerId.ToString());
+        var logger = Substitute.For<ILogger<GetPassengerTripsQueryHandler>>();
+        var handler = new GetPassengerTripsQueryHandler(logger, context, currentUser);
+
+        var result = await handler.Handle(new GetPassengerTripsQuery(), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value.Items);
+        Assert.Equal(1, result.Value.TotalCount);
+        Assert.Equal(visibleTrip.Id, result.Value.Items[0].Id);
+        Assert.DoesNotContain(result.Value.Items, t => t.Status == TripStatus.AwaitingPayment.ToString());
+    }
+
+    [Fact]
+    public async Task GetPassengerTripCount_ExcludesAwaitingPaymentTrips()
+    {
+        var passengerId = Guid.NewGuid();
+        var awaitingTrip = PaymentTestBuilders.CreateAwaitingPaymentTrip(passengerId, Guid.NewGuid());
+        var visibleTrip = PaymentTestBuilders.CreateAwaitingPaymentTrip(passengerId, Guid.NewGuid());
+        visibleTrip.ConfirmPayment();
+
+        var context = BuildContext([awaitingTrip, visibleTrip], []);
+        var currentUser = Substitute.For<IUser>();
+        currentUser.Id.Returns(passengerId.ToString());
+        var handler = new GetPassengerTripCountQueryHandler(context, currentUser);
+
+        var result = await handler.Handle(new GetPassengerTripCountQuery(), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, result.Value);
+    }
+
+    [Fact]
+    public async Task GetAllTrips_ExcludesAwaitingPaymentTripsByDefault()
+    {
+        var passengerId = Guid.NewGuid();
+        var awaitingQuoteId = Guid.NewGuid();
+        var visibleQuoteId = Guid.NewGuid();
+        var awaitingTrip = PaymentTestBuilders.CreateAwaitingPaymentTrip(passengerId, awaitingQuoteId);
+        var visibleTrip = PaymentTestBuilders.CreateAwaitingPaymentTrip(passengerId, visibleQuoteId);
+        visibleTrip.ConfirmPayment();
+
+        var context = BuildContext(
+            [awaitingTrip, visibleTrip],
+            [
+                CreateQuote(passengerId, awaitingTrip.VehicleTypeId, awaitingQuoteId),
+                CreateQuote(passengerId, visibleTrip.VehicleTypeId, visibleQuoteId),
+            ]);
+        var handler = new GetAllTripsQueryHandler(context);
+
+        var result = await handler.Handle(new GetAllTripsQuery(), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value);
+        Assert.Equal(visibleTrip.Id, result.Value[0].Id);
+        Assert.DoesNotContain(result.Value, t => t.Status == TripStatus.AwaitingPayment.ToString());
+    }
+
+    [Fact]
+    public async Task GetAllTrips_WhenAwaitingPaymentStatusRequested_ReturnsNoTrips()
+    {
+        var passengerId = Guid.NewGuid();
+        var quoteId = Guid.NewGuid();
+        var awaitingTrip = PaymentTestBuilders.CreateAwaitingPaymentTrip(passengerId, quoteId);
+        var context = BuildContext(
+            [awaitingTrip],
+            [CreateQuote(passengerId, awaitingTrip.VehicleTypeId, quoteId)]);
+        var handler = new GetAllTripsQueryHandler(context);
+
+        var result = await handler.Handle(
+            new GetAllTripsQuery(Status: TripStatus.AwaitingPayment.ToString()),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Value);
+    }
+
+    [Fact]
+    public async Task GetAllTrips_WhenVisibleStatusRequested_ReturnsMatchingTrips()
+    {
+        var passengerId = Guid.NewGuid();
+        var awaitingQuoteId = Guid.NewGuid();
+        var pendingQuoteId = Guid.NewGuid();
+        var awaitingTrip = PaymentTestBuilders.CreateAwaitingPaymentTrip(passengerId, awaitingQuoteId);
+        var pendingTrip = PaymentTestBuilders.CreateAwaitingPaymentTrip(passengerId, pendingQuoteId);
+        pendingTrip.ConfirmPayment();
+
+        var context = BuildContext(
+            [awaitingTrip, pendingTrip],
+            [
+                CreateQuote(passengerId, awaitingTrip.VehicleTypeId, awaitingQuoteId),
+                CreateQuote(passengerId, pendingTrip.VehicleTypeId, pendingQuoteId),
+            ]);
+        var handler = new GetAllTripsQueryHandler(context);
+
+        var result = await handler.Handle(
+            new GetAllTripsQuery(Status: TripStatus.PendingDriver.ToString()),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value);
+        Assert.Equal(TripStatus.PendingDriver.ToString(), result.Value[0].Status);
+    }
+
+    private static IAppDbContext BuildContext(
+        List<Trip> trips,
+        List<PricingQuote> pricingQuotes)
+    {
+        var context = Substitute.For<IAppDbContext>();
+        var tripsSet = DbSetMockFactory.Create(trips);
+        var pricingQuotesSet = DbSetMockFactory.Create(pricingQuotes);
+        var vehicleTypesSet = DbSetMockFactory.Create(new List<VehicleType>());
+        var driversSet = DbSetMockFactory.Create(new List<Driver>());
+        var cancellationsSet = DbSetMockFactory.Create(new List<TripCancellation>());
+        var compensationClaimsSet = DbSetMockFactory.Create(new List<TripCompensationClaim>());
+        var waitingSessionsSet = DbSetMockFactory.Create(new List<TripWaitingSession>());
+
+        context.Trips.Returns(tripsSet);
+        context.PricingQuotes.Returns(pricingQuotesSet);
+        context.VehicleTypes.Returns(vehicleTypesSet);
+        context.Drivers.Returns(driversSet);
+        context.TripCancellations.Returns(cancellationsSet);
+        context.TripCompensationClaims.Returns(compensationClaimsSet);
+        context.TripWaitingSessions.Returns(waitingSessionsSet);
+        return context;
+    }
+
+    private static PricingQuote CreateQuote(Guid passengerId, Guid vehicleTypeId, Guid quoteId)
+        => PricingQuote.Create(
+            quoteId,
+            passengerId,
+            vehicleTypeId,
+            totalDistanceKm: 5m,
+            totalDurationMin: 10m,
+            finalFare: 15m,
+            originalFare: 15m,
+            discountPercent: 0m,
+            currencyCode: "eur",
+            validUntil: DateTime.UtcNow.AddHours(1),
+            stops:
+            [
+                new Taxi.Domain.Trips.Coordinate(52.37m, 4.89m),
+                new Taxi.Domain.Trips.Coordinate(52.38m, 4.90m),
+            ]).Value;
+}

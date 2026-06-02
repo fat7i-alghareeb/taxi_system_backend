@@ -1,13 +1,14 @@
 using System.Globalization;
-using System.Text.Json;
+
 using Microsoft.Extensions.Localization;
+
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+
 using Taxi.Application.Common.Interfaces;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Invoices;
-using Taxi.Domain.Payments;
 
 namespace Taxi.Infrastructure.Services.Invoices;
 
@@ -15,8 +16,11 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
 {
     private const string Ink = "#0B0B0F";
     private const string Surface = "#F2F2F4";
-    private const string Brand = "#FF7A00";
+    private const string Brand = "#D79C5C";
     private const string Muted = "#6B7280";
+
+    private const string LatinFont = "Lato";
+    private const string ArabicFont = "Noto Sans Arabic";
 
     public byte[] Render(Invoice invoice, string languageCode)
     {
@@ -41,8 +45,8 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
         IStringLocalizer localizer,
         CultureInfo culture)
     {
-        var stops = ParseStops(invoice.StopsJson);
         var rtl = IsRtl(culture.Name);
+        var primaryFont = rtl ? ArabicFont : LatinFont;
 
         string T(string key, string fallback)
         {
@@ -50,19 +54,13 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
             return value.ResourceNotFound ? fallback : value.Value;
         }
 
+        // Amounts always use invariant culture so digits stay Latin (1,234.50)
+        // even on Arabic invoices, per business requirement.
         string FormatMoney(decimal amount) =>
-            amount.ToString("N2", culture) + " " + invoice.CurrencyCode;
+            amount.ToString("N2", CultureInfo.InvariantCulture) + " " + invoice.CurrencyCode;
 
         string FormatDate(DateTimeOffset value) =>
             value.ToLocalTime().ToString("dd MMM yyyy", culture);
-
-        string PaymentLabel(PaymentMethod method) => method switch
-        {
-            PaymentMethod.Cash => T(LocalizationKeys.Invoice.PaymentCash, "Cash"),
-            PaymentMethod.CreditCard => T(LocalizationKeys.Invoice.PaymentCard, "Card"),
-            PaymentMethod.Wallet => T(LocalizationKeys.Invoice.PaymentWallet, "Wallet"),
-            _ => method.ToString(),
-        };
 
         return Document.Create(container =>
         {
@@ -71,7 +69,10 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
                 page.Size(PageSizes.A4);
                 page.Margin(36);
                 page.PageColor(Colors.White);
-                page.DefaultTextStyle(s => s.FontSize(10).FontColor(Ink));
+                page.DefaultTextStyle(s => s
+                    .FontSize(10)
+                    .FontColor(Ink)
+                    .FontFamily(primaryFont, LatinFont));
                 if (rtl)
                 {
                     page.ContentFromRightToLeft();
@@ -129,12 +130,6 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
                             right.Item().AlignRight()
                                 .Text($"Trip #{invoice.TripReferenceCode}")
                                 .FontSize(11).SemiBold();
-                            if (invoice.TripCompletedAtUtc is { } completed)
-                            {
-                                right.Item().AlignRight()
-                                    .Text(FormatDate(completed))
-                                    .FontSize(9).FontColor(Muted);
-                            }
                         });
                     });
 
@@ -154,10 +149,11 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
 
                             table.Header(header =>
                             {
-                                static void HeaderCell(IContainer cell, string text)
+                                static void HeaderCell(IContainer cell, string text, bool alignRight = false)
                                 {
-                                    cell.PaddingVertical(6)
-                                        .BorderBottom(1).BorderColor(Surface)
+                                    var c = cell.PaddingVertical(6)
+                                        .BorderBottom(1).BorderColor(Surface);
+                                    (alignRight ? c.AlignRight() : c)
                                         .Text(text)
                                         .FontSize(9).SemiBold().FontColor(Ink);
                                 }
@@ -166,8 +162,8 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
                                 HeaderCell(header.Cell(), T(LocalizationKeys.Invoice.ColumnDescription, "Description"));
                                 HeaderCell(header.Cell(), T(LocalizationKeys.Invoice.ColumnQuantity, "Qty"));
                                 HeaderCell(header.Cell(), T(LocalizationKeys.Invoice.ColumnTaxRate, "Tax"));
-                                HeaderCell(header.Cell(), T(LocalizationKeys.Invoice.ColumnTaxAmount, "Tax amount"));
-                                HeaderCell(header.Cell(), T(LocalizationKeys.Invoice.ColumnNet, "Net amount"));
+                                HeaderCell(header.Cell(), T(LocalizationKeys.Invoice.ColumnTaxAmount, "Tax amount"), alignRight: true);
+                                HeaderCell(header.Cell(), T(LocalizationKeys.Invoice.ColumnNet, "Net amount"), alignRight: true);
                             });
 
                             static void BodyCell(IContainer cell, string text, bool alignRight = false)
@@ -180,9 +176,10 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
                             BodyCell(table.Cell(), FormatDate(invoice.TripCompletedAtUtc ?? invoice.IssuedAtUtc));
                             BodyCell(table.Cell(), T(LocalizationKeys.Invoice.LineItemTransport, "Transport services"));
                             BodyCell(table.Cell(), "1");
-                            BodyCell(table.Cell(), invoice.TaxRate > 0
-                                ? (invoice.TaxRate * 100).ToString("0.##", culture) + "%"
-                                : "—");
+                            var taxRateText = invoice.TaxRate > 0
+                                ? (invoice.TaxRate * 100).ToString("0.##", CultureInfo.InvariantCulture) + "%"
+                                : "—";
+                            BodyCell(table.Cell(), taxRateText);
                             BodyCell(table.Cell(), invoice.TaxAmount > 0 ? FormatMoney(invoice.TaxAmount) : "—", alignRight: true);
                             BodyCell(table.Cell(), FormatMoney(invoice.NetAmount), alignRight: true);
                         });
@@ -205,44 +202,6 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
                             });
                         });
                     });
-
-                    if (stops.Count > 0)
-                    {
-                        col.Item().PaddingTop(24).Text("Trip stops").FontSize(11).SemiBold();
-                        foreach (var stop in stops)
-                        {
-                            col.Item().PaddingTop(4).Row(row =>
-                            {
-                                row.ConstantItem(40).Text(stop.CompletedAtUtc is { } t
-                                    ? t.ToLocalTime().ToString("HH:mm", culture)
-                                    : "—").FontSize(9).FontColor(Muted);
-                                row.RelativeItem().Text(stop.Label ?? "—").FontSize(10);
-                            });
-                        }
-                    }
-
-                    col.Item().PaddingTop(28).Row(row =>
-                    {
-                        row.RelativeItem().Column(left =>
-                        {
-                            left.Item().Text(T(LocalizationKeys.Invoice.PaymentMethod, "Payment method"))
-                                .FontSize(9).FontColor(Muted);
-                            left.Item().Text(PaymentLabel(invoice.PaymentMethod)).FontSize(11).SemiBold();
-                            if (!string.IsNullOrWhiteSpace(invoice.PaymentReference))
-                            {
-                                left.Item().Text(invoice.PaymentReference).FontSize(9).FontColor(Muted);
-                            }
-                        });
-
-                        row.RelativeItem().AlignRight().Column(right =>
-                        {
-                            if (invoice.PaidAtUtc is { } paid)
-                            {
-                                right.Item().AlignRight().Text(FormatDate(paid))
-                                    .FontSize(9).FontColor(Muted);
-                            }
-                        });
-                    });
                 });
 
                 page.Footer().AlignCenter().Text(invoice.IssuerName)
@@ -251,28 +210,9 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
         });
     }
 
-    private static List<InvoiceStopSnapshot> ParseStops(string stopsJson)
-    {
-        if (string.IsNullOrWhiteSpace(stopsJson))
-        {
-            return [];
-        }
-
-        try
-        {
-            return JsonSerializer.Deserialize<List<InvoiceStopSnapshot>>(stopsJson) ?? [];
-        }
-        catch (JsonException)
-        {
-            return [];
-        }
-    }
-
     private static bool IsRtl(string cultureName)
     {
         var name = cultureName?.ToLowerInvariant() ?? string.Empty;
         return name.StartsWith("ar") || name.StartsWith("he") || name.StartsWith("fa") || name.StartsWith("ur");
     }
-
-    private sealed record InvoiceStopSnapshot(int Sequence, string? Label, DateTimeOffset? CompletedAtUtc);
 }

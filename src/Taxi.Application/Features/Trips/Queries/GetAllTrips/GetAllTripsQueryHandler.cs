@@ -18,6 +18,7 @@ public class GetAllTripsQueryHandler(IAppDbContext context)
     {
         var query = _context.Trips
             .Where(t => t.DeletedAtUtc == null)
+            .Where(t => t.Status != TripStatus.AwaitingPayment)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(request.Status))

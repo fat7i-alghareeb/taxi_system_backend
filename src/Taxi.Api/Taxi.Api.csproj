@@ -36,6 +36,8 @@
         <Content Update="Resources\SharedResource.fr.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Update="Resources\SharedResource.es.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Update="Resources\SharedResource.ro.json" CopyToOutputDirectory="PreserveNewest" />
+        <None Include="Assets\Fonts\NotoSansArabic-Regular.ttf" CopyToOutputDirectory="PreserveNewest" />
+        <None Include="Assets\Fonts\NotoSansArabic-Bold.ttf" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
 </Project>

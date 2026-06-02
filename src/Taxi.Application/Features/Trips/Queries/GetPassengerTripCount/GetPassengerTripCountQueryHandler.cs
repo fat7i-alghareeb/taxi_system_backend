@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
+using Taxi.Domain.Trips;
 
 namespace Taxi.Application.Features.Trips.Queries.GetPassengerTripCount;
 
@@ -18,7 +19,7 @@ public class GetPassengerTripCountQueryHandler(
         }
 
         var count = await context.Trips
-            .CountAsync(t => t.PassengerId == passengerId, ct);
+            .CountAsync(t => t.PassengerId == passengerId && t.Status != TripStatus.AwaitingPayment, ct);
 
         return count;
     }

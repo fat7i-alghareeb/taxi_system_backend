@@ -5,6 +5,7 @@ using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
+using Taxi.Domain.Trips;
 
 namespace Taxi.Application.Features.Trips.Queries.GetPassengerTrips;
 
@@ -26,7 +27,7 @@ public class GetPassengerTripsQueryHandler(
 
         var query = context.Trips
             .AsNoTracking()
-            .Where(t => t.PassengerId == passengerId);
+            .Where(t => t.PassengerId == passengerId && t.Status != TripStatus.AwaitingPayment);
 
         var totalCount = await query.CountAsync(ct);
 
