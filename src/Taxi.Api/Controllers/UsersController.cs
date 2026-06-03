@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Taxi.Api.Contracts;
 using Taxi.Application.Features.Auth.Dtos;
+using Taxi.Application.Features.Users.Commands.DeleteCurrentUser;
 using Taxi.Application.Features.Users.Commands.UpdateFcmToken;
 using Taxi.Application.Features.Users.Commands.UpdatePreferredLanguage;
 using Taxi.Application.Features.Users.Commands.UpdateUserProfile;
@@ -49,6 +50,21 @@ public class UsersController(ISender sender) : ApiController
 
         var result = await sender.Send(command, ct);
         return result.Match(Ok, Problem);
+    }
+
+    [HttpDelete("me")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Soft-deletes the current authenticated user's account.")]
+    [EndpointDescription("Marks the user as deleted (DeletedAtUtc) so historical trips and invoices remain intact while the user can no longer authenticate. This satisfies the in-app account deletion requirement for app store review.")]
+    [EndpointName("DeleteCurrentUser")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> DeleteCurrentUser(CancellationToken ct)
+    {
+        var result = await sender.Send(new DeleteCurrentUserCommand(), ct);
+        return result.Match(_ => NoContent(), Problem);
     }
 
     [HttpPut("me/fcm-token")]
