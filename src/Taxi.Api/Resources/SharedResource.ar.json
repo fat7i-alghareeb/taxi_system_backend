@@ -183,5 +183,22 @@
   "Invoice.Payment.Wallet": "محفظة",
   "Invoice.BilledTo": "صدرت لـ",
   "Invoice.IssuedBy": "صادرة عن",
-  "Invoice.VatNumber": "الرقم الضريبي"
+  "Invoice.VatNumber": "الرقم الضريبي",
+  "AdminProfile.Name.Required": "اسم المسؤول مطلوب.",
+  "AdminProfile.Email.Required": "البريد الإلكتروني للمسؤول مطلوب.",
+  "AdminProfile.Email.Invalid": "البريد الإلكتروني للمسؤول غير صالح.",
+  "AdminProfile.Phone.Invalid": "رقم هاتف المسؤول غير صالح.",
+  "AdminProfile.NotFound": "ملف المسؤول غير موجود.",
+  "PassengerPaymentMethod.PassengerId.Required": "معرف الراكب مطلوب.",
+  "PassengerPaymentMethod.GatewayPaymentMethodId.Required": "معرف وسيلة الدفع لدى البوابة مطلوب.",
+  "PassengerPaymentMethod.CardBrand.Required": "نوع البطاقة مطلوب.",
+  "PassengerPaymentMethod.LastFour.Invalid": "آخر أربعة أرقام للبطاقة غير صالحة.",
+  "PassengerPaymentMethod.ExpiryMonth.Invalid": "شهر انتهاء صلاحية البطاقة غير صالح.",
+  "PassengerPaymentMethod.ExpiryYear.Invalid": "سنة انتهاء صلاحية البطاقة غير صالحة.",
+  "PassengerPaymentMethod.NotFound": "وسيلة الدفع غير موجودة.",
+  "Trip.Stop.NotFound": "محطة الرحلة غير موجودة.",
+  "Trip.Stop.OutOfOrder": "يجب إكمال محطات الرحلة بالترتيب.",
+  "Trip.Stop.AlreadyCompleted": "تم إكمال محطة الرحلة هذه بالفعل.",
+  "Trip.Stop.PendingStopsRemaining": "لا تزال هناك محطات معلقة يجب إكمالها قبل إنهاء الرحلة.",
+  "Trip.Stops.TooMany": "تم الوصول إلى الحد الأقصى لعدد المحطات لهذه الرحلة."
 }

@@ -1,6 +1,4 @@
 using System.Text.RegularExpressions;
-
-using Taxi.Contracts.Common;
 using Taxi.Domain.Common;
 using Taxi.Domain.Common.Results;
 
@@ -46,12 +44,12 @@ public sealed class User : AuditableEntity
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            return AuthErrors.NameRequired;
+            return UserErrors.NameRequired;
         }
 
         if (string.IsNullOrWhiteSpace(phone) || !Regex.IsMatch(phone, @"^\+?\d{7,15}$"))
         {
-            return AuthErrors.PhoneRequired;
+            return UserErrors.PhoneRequired;
         }
 
         return new User(id, name.Trim(), phone, email, role);
@@ -73,12 +71,12 @@ public sealed class User : AuditableEntity
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            return AuthErrors.NameRequired;
+            return UserErrors.NameRequired;
         }
 
         if (string.IsNullOrWhiteSpace(phone) || !Regex.IsMatch(phone, @"^\+?\d{7,15}$"))
         {
-            return AuthErrors.PhoneRequired;
+            return UserErrors.PhoneRequired;
         }
 
         return new User(id, name.Trim(), phone.Trim(), email, UserRole.Admin);
@@ -98,6 +96,11 @@ public sealed class User : AuditableEntity
 
     public Result<Success> SoftDelete()
     {
+        if (DeletedAtUtc.HasValue)
+        {
+            return Result.Success;
+        }
+
         DeletedAtUtc = DateTimeOffset.UtcNow;
         return Result.Success;
     }
@@ -106,7 +109,7 @@ public sealed class User : AuditableEntity
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            return Error.Validation(LocalizationKeys.User.ProfileNameRequired, "Name is required.");
+            return UserErrors.ProfileNameRequired;
         }
 
         Name = name.Trim();
@@ -129,7 +132,7 @@ public sealed class User : AuditableEntity
     {
         if (fcmToken is { Length: > 4096 })
         {
-            return Error.Validation(LocalizationKeys.User.FcmTokenInvalid, "FCM token is invalid.");
+            return UserErrors.FcmTokenInvalid;
         }
 
         FcmToken = string.IsNullOrWhiteSpace(fcmToken) ? null : fcmToken.Trim();
@@ -140,7 +143,7 @@ public sealed class User : AuditableEntity
     {
         if (string.IsNullOrWhiteSpace(stripeCustomerId))
         {
-            return Error.Validation(LocalizationKeys.User.StripeCustomerIdRequired, "Stripe customer id is required.");
+            return UserErrors.StripeCustomerIdRequired;
         }
 
         StripeCustomerId = stripeCustomerId.Trim();
@@ -151,17 +154,16 @@ public sealed class User : AuditableEntity
     {
         if (string.IsNullOrWhiteSpace(languageCode))
         {
-            return Error.Validation(LocalizationKeys.User.PreferredLanguageRequired, "Preferred language is required.");
+            return UserErrors.PreferredLanguageRequired;
         }
 
         var normalized = languageCode.Trim().ToLower();
         if (normalized != "en" && normalized != "ar" && normalized != "nl" && normalized != "de" && normalized != "pl" && normalized != "uk" && normalized != "fr" && normalized != "es" && normalized != "ro")
         {
-            return Error.Validation(LocalizationKeys.User.PreferredLanguageInvalid, "Preferred language is invalid.");
+            return UserErrors.PreferredLanguageInvalid;
         }
 
         PreferredLanguage = normalized;
         return Result.Success;
     }
 }
-

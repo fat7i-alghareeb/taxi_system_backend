@@ -1,4 +1,3 @@
-using Taxi.Contracts.Common;
 using Taxi.Domain.Common;
 using Taxi.Domain.Common.Results;
 
@@ -44,12 +43,12 @@ public sealed class DriverDocument : AuditableEntity
     {
         if (driverId == Guid.Empty)
         {
-            return Result.Failure<DriverDocument>(Error.Validation(LocalizationKeys.DriverDocument.DriverIdRequired, "DriverId is required."));
+            return DriverDocumentErrors.DriverIdRequired;
         }
 
         if (string.IsNullOrWhiteSpace(fileUrl))
         {
-            return Result.Failure<DriverDocument>(Error.Validation(LocalizationKeys.DriverDocument.FileUrlRequired, "FileUrl is required."));
+            return DriverDocumentErrors.FileUrlRequired;
         }
 
         return new DriverDocument(id, driverId, type, fileUrl);
@@ -67,7 +66,7 @@ public sealed class DriverDocument : AuditableEntity
     {
         if (string.IsNullOrWhiteSpace(notes))
         {
-            return Result.Failure<Success>(Error.Validation(LocalizationKeys.DriverDocument.RejectionNotesRequired, "Rejection notes are required when rejecting a document."));
+            return DriverDocumentErrors.RejectionNotesRequired;
         }
 
         Status = DocumentStatus.Rejected;
@@ -76,5 +75,14 @@ public sealed class DriverDocument : AuditableEntity
         return Result.Success;
     }
 
-    public void SoftDelete() => DeletedAtUtc = DateTimeOffset.UtcNow;
+    public Result<Success> SoftDelete()
+    {
+        if (DeletedAtUtc.HasValue)
+        {
+            return Result.Success;
+        }
+
+        DeletedAtUtc = DateTimeOffset.UtcNow;
+        return Result.Success;
+    }
 }

@@ -183,5 +183,22 @@
   "Invoice.Payment.Wallet": "Wallet",
   "Invoice.BilledTo": "Billed to",
   "Invoice.IssuedBy": "Issued by",
-  "Invoice.VatNumber": "VAT"
+  "Invoice.VatNumber": "VAT",
+  "AdminProfile.Name.Required": "Admin name is required.",
+  "AdminProfile.Email.Required": "Admin email is required.",
+  "AdminProfile.Email.Invalid": "Admin email is invalid.",
+  "AdminProfile.Phone.Invalid": "Admin phone number is invalid.",
+  "AdminProfile.NotFound": "Admin profile not found.",
+  "PassengerPaymentMethod.PassengerId.Required": "Passenger ID is required.",
+  "PassengerPaymentMethod.GatewayPaymentMethodId.Required": "Payment gateway method ID is required.",
+  "PassengerPaymentMethod.CardBrand.Required": "Card brand is required.",
+  "PassengerPaymentMethod.LastFour.Invalid": "Card last four digits are invalid.",
+  "PassengerPaymentMethod.ExpiryMonth.Invalid": "Card expiry month is invalid.",
+  "PassengerPaymentMethod.ExpiryYear.Invalid": "Card expiry year is invalid.",
+  "PassengerPaymentMethod.NotFound": "Payment method not found.",
+  "Trip.Stop.NotFound": "Trip stop not found.",
+  "Trip.Stop.OutOfOrder": "Trip stops must be completed in order.",
+  "Trip.Stop.AlreadyCompleted": "This trip stop is already completed.",
+  "Trip.Stop.PendingStopsRemaining": "There are still pending stops to complete before this trip can finish.",
+  "Trip.Stops.TooMany": "The maximum number of stops for this trip has been reached."
 }

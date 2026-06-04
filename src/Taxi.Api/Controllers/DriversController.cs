@@ -197,7 +197,8 @@ public class DriversController(ISender sender) : ApiController
         return result.Match(Ok, Problem);
     }
 
-    [HttpPost("{id:guid}/approve")]
+    [HttpPost("{id:guid}/approve")]      // Deprecated alias; Flutter calls POST /{id}/approvals.
+    [HttpPost("{id:guid}/approvals")]    // Constitution-compliant noun.
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -210,7 +211,8 @@ public class DriversController(ISender sender) : ApiController
         return result.Match(_ => NoContent(), Problem);
     }
 
-    [HttpPost("{id:guid}/suspend")]
+    [HttpPost("{id:guid}/suspend")]      // Deprecated alias; Flutter calls POST /{id}/suspensions.
+    [HttpPost("{id:guid}/suspensions")]  // Constitution-compliant noun.
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

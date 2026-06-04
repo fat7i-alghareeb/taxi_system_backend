@@ -3,8 +3,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using FluentValidation;
 using Taxi.Application.Common.Behaviours;
-using Taxi.Application.Common.Interfaces;
-using Taxi.Application.Common.Services;
 
 public static class DependencyInjection
 {
@@ -20,8 +18,6 @@ public static class DependencyInjection
             cfg.AddOpenBehavior(typeof(CachingBehavior<,>));
             cfg.AddOpenBehavior(typeof(PerformanceBehaviour<,>));
         });
-
-        services.AddScoped<IPricingService, PricingService>();
 
         return services;
     }

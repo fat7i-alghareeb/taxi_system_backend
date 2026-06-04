@@ -183,5 +183,22 @@
   "Invoice.Payment.Wallet": "Portofel",
   "Invoice.BilledTo": "Facturat către",
   "Invoice.IssuedBy": "Emis de",
-  "Invoice.VatNumber": "CIF"
+  "Invoice.VatNumber": "CIF",
+  "AdminProfile.Name.Required": "Numele administratorului este obligatoriu.",
+  "AdminProfile.Email.Required": "Adresa de e-mail a administratorului este obligatorie.",
+  "AdminProfile.Email.Invalid": "Adresa de e-mail a administratorului nu este validă.",
+  "AdminProfile.Phone.Invalid": "Numărul de telefon al administratorului nu este valid.",
+  "AdminProfile.NotFound": "Profilul administratorului nu a fost găsit.",
+  "PassengerPaymentMethod.PassengerId.Required": "ID-ul pasagerului este obligatoriu.",
+  "PassengerPaymentMethod.GatewayPaymentMethodId.Required": "ID-ul metodei de plată al gateway-ului este obligatoriu.",
+  "PassengerPaymentMethod.CardBrand.Required": "Marca cardului este obligatorie.",
+  "PassengerPaymentMethod.LastFour.Invalid": "Ultimele patru cifre ale cardului nu sunt valide.",
+  "PassengerPaymentMethod.ExpiryMonth.Invalid": "Luna de expirare a cardului nu este validă.",
+  "PassengerPaymentMethod.ExpiryYear.Invalid": "Anul de expirare a cardului nu este valid.",
+  "PassengerPaymentMethod.NotFound": "Metoda de plată nu a fost găsită.",
+  "Trip.Stop.NotFound": "Oprirea cursei nu a fost găsită.",
+  "Trip.Stop.OutOfOrder": "Opririle cursei trebuie finalizate în ordine.",
+  "Trip.Stop.AlreadyCompleted": "Această oprire a cursei este deja finalizată.",
+  "Trip.Stop.PendingStopsRemaining": "Mai sunt opriri în așteptare de finalizat înainte ca această cursă să poată fi încheiată.",
+  "Trip.Stops.TooMany": "S-a atins numărul maxim de opriri pentru această cursă."
 }

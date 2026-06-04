@@ -184,6 +184,45 @@ To ensure a professional, predictable, and scalable API surface, all developers 
 4. **Format Consistently**: All URIs must be **lowercase** and use **kebab-case** to separate words (e.g., `/customer-orders`).
 5. **Version Everything**: Always include a version indicator in your base route (e.g., `/api/v1/resources`). This protects clients from breaking during system overhauls.
 
+### Documented Exceptions
+
+A small number of routes intentionally deviate from the Constitution. Each is recorded here so future contributors don't "fix" them by mistake:
+
+- **`POST /api/webhooks/stripe`** — Unversioned + provider-name path segment. Third-party callback stability requires the URL never change; Stripe's signed delivery is the auth mechanism. (See §7.)
+- **`GET /api/v1/app-config`** and its sub-routes (`/client`, `/trip-discount`, `/currency`) — Modeled as a singleton settings resource, not a collection. Pluralising (`/app-configs`) would imply listability that doesn't exist.
+- **`GET /api/v1/trips/admin`** and **`GET /api/v1/vehicle-types/admin`** — Admin-scoped collection sub-views. Each returns a different DTO shape than the public list (e.g. `List<TripDto>` vs `PagedResult<TripSummaryDto>`), so they live as distinct sub-resources rather than `?scope=admin` filters on a single action.
+- **`GET /api/v1/trips/{id}/invoice/pdf`** — Two-level nesting tolerated because `/pdf` is a format selector on the singleton `/invoice` sub-resource. Content negotiation via `Accept: application/pdf` would be cleaner but exceeds "route rename" scope.
+- **`/users/me/*`, `/drivers/me/*`, `/admins/me/*`** — `me` is a self-identifier alias for the authenticated subject. Sub-singletons (`/me/language`, `/me/fcm-token`, `/me/location`, `/me/password`, `/me/claims`) are legitimate singleton sub-resources, not collections.
+
+### Deprecated alias routes (kept for the Blazor client only)
+
+When Phase 6 refactored the API to strict compliance, the legacy verb-in-URL routes were preserved as **dual-route aliases** on the same action handlers, so the Blazor `Taxi.Client` SPA continues to function. **Flutter apps no longer call these.** They will be removed in a future cleanup PR after the Blazor client migrates.
+
+| Legacy alias (deprecated) | Canonical route (use this) |
+|---|---|
+| `POST /api/v1/auth/login` | `POST /api/v1/auth/sessions` |
+| `POST /api/v1/auth/admin/login` | `POST /api/v1/auth/admin-sessions` |
+| `POST /api/v1/auth/force-reset-password` | `PUT /api/v1/auth/me/password` |
+| `POST /api/v1/identity/tokens/refresh` | `POST /api/v1/auth/tokens/refreshes` |
+| `GET /api/v1/identity/current-user/claims` | `GET /api/v1/users/me/claims` |
+| `POST /api/v1/identity/admins` | `POST /api/v1/admins` |
+| `POST /api/v1/admins/change-password` | `PUT /api/v1/admins/me/password` |
+| `POST /api/v1/drivers/{id}/approve` | `POST /api/v1/drivers/{id}/approvals` |
+| `POST /api/v1/drivers/{id}/suspend` | `POST /api/v1/drivers/{id}/suspensions` |
+| `PUT /api/v1/drivers/{id}/documents/{docId}/review` | `POST /api/v1/drivers/{id}/documents/{docId}/reviews` |
+| `POST /api/v1/notifications/broadcast` | `POST /api/v1/notifications/broadcasts` |
+| `POST /api/v1/maps/search` | `POST /api/v1/maps/searches` |
+| `POST /api/v1/trips/{id}/start` | `POST /api/v1/trips/{id}/starts` |
+| `POST /api/v1/trips/{id}/complete` | `POST /api/v1/trips/{id}/completions` |
+| `POST /api/v1/trips/{id}/arrive` | `POST /api/v1/trips/{id}/arrivals` |
+| `POST /api/v1/trips/{id}/arrive/resend` | `POST /api/v1/trips/{id}/arrival-notifications` |
+| `POST /api/v1/trips/{id}/assign` | `POST /api/v1/trips/{id}/assignments` |
+| `POST /api/v1/trips/{id}/admin-take` | `POST /api/v1/trips/{id}/admin-takeovers` |
+| `POST /api/v1/trips/{id}/waiting/start` | `POST /api/v1/trips/{id}/waiting-sessions` |
+| `POST /api/v1/trips/{id}/waiting/stop` | `DELETE /api/v1/trips/{id}/waiting-sessions/current` |
+| `POST /api/v1/trips/{id}/stops/{seq}/complete` | `POST /api/v1/trips/{id}/stops/{seq}/completions` |
+| `POST /api/v1/trips/compensation-claims/{id}/review` | `POST /api/v1/trips/compensation-claims/{id}/reviews` |
+
 ---
 
 ## 7. Stripe Payment Architecture

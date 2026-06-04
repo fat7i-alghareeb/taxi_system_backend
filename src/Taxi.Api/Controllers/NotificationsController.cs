@@ -13,7 +13,8 @@ namespace Taxi.Api.Controllers;
 [Authorize(Roles = "Admin")]
 public class NotificationsController(ISender sender) : ApiController
 {
-    [HttpPost("broadcast")]
+    [HttpPost("broadcast")]   // Deprecated alias kept for the Blazor client; Flutter calls POST /broadcasts.
+    [HttpPost("broadcasts")]  // Constitution-compliant noun.
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [EndpointSummary("Admin broadcasts a push notification to a specific target audience.")]

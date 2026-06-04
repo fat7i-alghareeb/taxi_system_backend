@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using Taxi.Contracts.Common;
 using Taxi.Domain.Common;
 using Taxi.Domain.Common.Results;
 
@@ -81,12 +80,22 @@ public sealed class AdminProfile : AuditableEntity
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            return Error.Validation(LocalizationKeys.User.NameRequired, "Name is required.");
+            return AdminProfileErrors.NameRequired;
         }
 
-        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@', StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(email))
         {
-            return Error.Validation(LocalizationKeys.Validation.EmailRequired, "Email is required.");
+            return AdminProfileErrors.EmailRequired;
+        }
+
+        if (!email.Contains('@', StringComparison.Ordinal))
+        {
+            return AdminProfileErrors.EmailInvalid;
+        }
+
+        if (!IsValidOptionalPhone(phone1) || !IsValidOptionalPhone(phone2))
+        {
+            return AdminProfileErrors.PhoneInvalid;
         }
 
         return Result.Success;

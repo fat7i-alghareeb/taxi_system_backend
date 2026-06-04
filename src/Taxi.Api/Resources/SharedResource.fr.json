@@ -183,5 +183,22 @@
   "Invoice.Payment.Wallet": "Portefeuille",
   "Invoice.BilledTo": "Facturé à",
   "Invoice.IssuedBy": "Émis par",
-  "Invoice.VatNumber": "N° TVA"
+  "Invoice.VatNumber": "N° TVA",
+  "AdminProfile.Name.Required": "Le nom de l'administrateur est requis.",
+  "AdminProfile.Email.Required": "L'adresse e-mail de l'administrateur est requise.",
+  "AdminProfile.Email.Invalid": "L'adresse e-mail de l'administrateur n'est pas valide.",
+  "AdminProfile.Phone.Invalid": "Le numéro de téléphone de l'administrateur n'est pas valide.",
+  "AdminProfile.NotFound": "Profil d'administrateur introuvable.",
+  "PassengerPaymentMethod.PassengerId.Required": "L'ID du passager est requis.",
+  "PassengerPaymentMethod.GatewayPaymentMethodId.Required": "L'ID du moyen de paiement de la passerelle est requis.",
+  "PassengerPaymentMethod.CardBrand.Required": "La marque de la carte est requise.",
+  "PassengerPaymentMethod.LastFour.Invalid": "Les quatre derniers chiffres de la carte ne sont pas valides.",
+  "PassengerPaymentMethod.ExpiryMonth.Invalid": "Le mois d'expiration de la carte n'est pas valide.",
+  "PassengerPaymentMethod.ExpiryYear.Invalid": "L'année d'expiration de la carte n'est pas valide.",
+  "PassengerPaymentMethod.NotFound": "Moyen de paiement introuvable.",
+  "Trip.Stop.NotFound": "Arrêt du trajet introuvable.",
+  "Trip.Stop.OutOfOrder": "Les arrêts du trajet doivent être complétés dans l'ordre.",
+  "Trip.Stop.AlreadyCompleted": "Cet arrêt du trajet est déjà terminé.",
+  "Trip.Stop.PendingStopsRemaining": "Il reste des arrêts en attente à compléter avant que ce trajet ne puisse se terminer.",
+  "Trip.Stops.TooMany": "Le nombre maximum d'arrêts pour ce trajet a été atteint."
 }

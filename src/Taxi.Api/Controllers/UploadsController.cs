@@ -1,14 +1,15 @@
 using Asp.Versioning;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Features.Uploads.Commands.UploadCompensationEvidence;
 
 namespace Taxi.Api.Controllers;
 
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/uploads")]
-public class UploadsController(IFileStorage fileStorage) : ApiController
+public class UploadsController(ISender sender) : ApiController
 {
     [HttpPost("compensation-evidence")]
     [Authorize(Roles = "Passenger,Admin")]
@@ -26,23 +27,16 @@ public class UploadsController(IFileStorage fileStorage) : ApiController
             return BadRequest("No files were uploaded.");
         }
 
-        var urls = new List<string>();
-        foreach (var file in files)
-        {
-            if (file.Length == 0)
-            {
-                continue;
-            }
+        // Map IFormFile → UploadFileItem so the Application layer never sees ASP.NET types.
+        var items = files
+            .Where(f => f.Length > 0)
+            .Select(f => new UploadFileItem(f.OpenReadStream(), f.FileName))
+            .ToList();
 
-            var extension = Path.GetExtension(file.FileName);
-            await using var stream = file.OpenReadStream();
-            var url = await fileStorage.SaveAsync(
-                stream,
-                $"compensation/{Guid.NewGuid():N}{extension}",
-                ct);
-            urls.Add(url);
-        }
+        var result = await sender.Send(new UploadCompensationEvidenceCommand(items), ct);
 
-        return Ok(new { urls });
+        return result.Match(
+            urls => Ok(new { urls }),
+            Problem);
     }
 }

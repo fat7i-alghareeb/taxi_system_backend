@@ -183,5 +183,22 @@
   "Invoice.Payment.Wallet": "Portemonnee",
   "Invoice.BilledTo": "Gefactureerd aan",
   "Invoice.IssuedBy": "Uitgereikt door",
-  "Invoice.VatNumber": "BTW"
+  "Invoice.VatNumber": "BTW",
+  "AdminProfile.Name.Required": "Beheerdersnaam is vereist.",
+  "AdminProfile.Email.Required": "E-mail van beheerder is vereist.",
+  "AdminProfile.Email.Invalid": "E-mail van beheerder is ongeldig.",
+  "AdminProfile.Phone.Invalid": "Telefoonnummer van beheerder is ongeldig.",
+  "AdminProfile.NotFound": "Beheerdersprofiel niet gevonden.",
+  "PassengerPaymentMethod.PassengerId.Required": "Passagier-ID is vereist.",
+  "PassengerPaymentMethod.GatewayPaymentMethodId.Required": "Betalingsgateway-methode-ID is vereist.",
+  "PassengerPaymentMethod.CardBrand.Required": "Kaartmerk is vereist.",
+  "PassengerPaymentMethod.LastFour.Invalid": "De laatste vier cijfers van de kaart zijn ongeldig.",
+  "PassengerPaymentMethod.ExpiryMonth.Invalid": "Vervalmaand van de kaart is ongeldig.",
+  "PassengerPaymentMethod.ExpiryYear.Invalid": "Vervaljaar van de kaart is ongeldig.",
+  "PassengerPaymentMethod.NotFound": "Betalingsmethode niet gevonden.",
+  "Trip.Stop.NotFound": "Tussenstop van de rit niet gevonden.",
+  "Trip.Stop.OutOfOrder": "Tussenstops van de rit moeten in volgorde worden voltooid.",
+  "Trip.Stop.AlreadyCompleted": "Deze tussenstop is al voltooid.",
+  "Trip.Stop.PendingStopsRemaining": "Er zijn nog openstaande tussenstops voordat deze rit kan worden afgesloten.",
+  "Trip.Stops.TooMany": "Het maximumaantal tussenstops voor deze rit is bereikt."
 }

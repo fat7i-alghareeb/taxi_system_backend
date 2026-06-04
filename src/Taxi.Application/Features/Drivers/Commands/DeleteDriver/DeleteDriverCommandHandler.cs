@@ -20,7 +20,12 @@ public class DeleteDriverCommandHandler(
             return Error.NotFound("Driver.NotFound", $"Driver with ID {request.Id} was not found.");
         }
 
-        driver.SoftDelete();
+        var softDeleteResult = driver.SoftDelete();
+        if (softDeleteResult.IsFailure)
+        {
+            return softDeleteResult.Error;
+        }
+
         await _context.SaveChangesAsync(ct);
 
         return Result.Deleted;

@@ -14,7 +14,8 @@ namespace Taxi.Api.Controllers;
 [Route("api/v{version:apiVersion}/maps")]
 public class MapsController(ISender sender) : ApiController
 {
-    [HttpPost("search")]
+    [HttpPost("search")]    // Deprecated alias; Flutter calls POST /searches.
+    [HttpPost("searches")]  // Constitution-compliant noun.
     [ProducesResponseType(typeof(List<PlaceResultDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [EndpointSummary("Search for places by text query.")]

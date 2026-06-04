@@ -62,7 +62,7 @@ public sealed class LoginCommandHandler(
         }
         else if (!domainUser.IsActive)
         {
-            return AuthErrors.UserInactive;
+            return UserErrors.Inactive;
         }
 
         // 4. Persist FCM token if provided (best-effort: client may omit it)

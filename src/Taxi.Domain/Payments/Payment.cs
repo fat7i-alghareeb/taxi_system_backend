@@ -74,11 +74,11 @@ public sealed class Payment : AuditableEntity
         return payment;
     }
 
-    public void MarkAsCompleted(string? chargeId = null)
+    public Result<Success> MarkAsCompleted(string? chargeId = null)
     {
         if (Status == PaymentStatus.Completed)
         {
-            return;
+            return Result.Success;
         }
 
         Status = PaymentStatus.Completed;
@@ -88,24 +88,28 @@ public sealed class Payment : AuditableEntity
             StripeChargeId = chargeId;
             TransactionReference = chargeId;
         }
+
+        return Result.Success;
     }
 
-    public void MarkAsFailed(string? errorCode = null, string? errorMessage = null)
+    public Result<Success> MarkAsFailed(string? errorCode = null, string? errorMessage = null)
     {
         Status = PaymentStatus.Failed;
         ProcessedAtUtc = DateTime.UtcNow;
         LastErrorCode = errorCode;
         LastErrorMessage = errorMessage;
+        return Result.Success;
     }
 
-    public void MarkAsRefunded()
+    public Result<Success> MarkAsRefunded()
     {
         if (Status == PaymentStatus.Refunded)
         {
-            return;
+            return Result.Success;
         }
 
         Status = PaymentStatus.Refunded;
         ProcessedAtUtc = DateTime.UtcNow;
+        return Result.Success;
     }
 }

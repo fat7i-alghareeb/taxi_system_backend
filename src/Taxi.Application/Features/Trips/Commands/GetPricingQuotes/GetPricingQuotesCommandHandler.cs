@@ -6,6 +6,7 @@ using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Configuration;
+using Taxi.Domain.Pricing;
 using Taxi.Domain.Trips;
 
 namespace Taxi.Application.Features.Trips.Commands.GetPricingQuotes;
@@ -13,7 +14,6 @@ namespace Taxi.Application.Features.Trips.Commands.GetPricingQuotes;
 public class GetPricingQuotesCommandHandler(
     IAppDbContext context,
     IDirectionsService directionsService,
-    IPricingService pricingService,
     IUser currentUser,
     ILanguageContext languageContext) : IRequestHandler<GetPricingQuotesCommand, Result<PricingQuotesListDto>>
 {
@@ -67,7 +67,7 @@ public class GetPricingQuotesCommandHandler(
 
         foreach (var vehicleType in vehicleTypes)
         {
-            var originalFare = pricingService.CalculateFare(
+            var originalFare = PricingService.CalculateFare(
                 vehicleType,
                 (double)totalDistanceKm,
                 (double)totalDurationMin);

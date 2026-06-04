@@ -218,6 +218,26 @@ public static class LocalizationKeys
         public const string VatNumber = "Invoice.VatNumber";
     }
 
+    public static class AdminProfile
+    {
+        public const string NameRequired = "AdminProfile.Name.Required";
+        public const string EmailRequired = "AdminProfile.Email.Required";
+        public const string EmailInvalid = "AdminProfile.Email.Invalid";
+        public const string PhoneInvalid = "AdminProfile.Phone.Invalid";
+        public const string NotFound = "AdminProfile.NotFound";
+    }
+
+    public static class PassengerPaymentMethod
+    {
+        public const string PassengerIdRequired = "PassengerPaymentMethod.PassengerId.Required";
+        public const string GatewayPaymentMethodIdRequired = "PassengerPaymentMethod.GatewayPaymentMethodId.Required";
+        public const string CardBrandRequired = "PassengerPaymentMethod.CardBrand.Required";
+        public const string LastFourInvalid = "PassengerPaymentMethod.LastFour.Invalid";
+        public const string ExpiryMonthInvalid = "PassengerPaymentMethod.ExpiryMonth.Invalid";
+        public const string ExpiryYearInvalid = "PassengerPaymentMethod.ExpiryYear.Invalid";
+        public const string NotFound = "PassengerPaymentMethod.NotFound";
+    }
+
     public static class Notification
     {
         public const string TitleRequired = "Notification.Title.Required";
