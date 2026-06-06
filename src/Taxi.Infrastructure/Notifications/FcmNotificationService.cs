@@ -22,7 +22,8 @@ public class FcmNotificationService(
 
     public async Task SendPushNotificationAsync(Guid userId, string title, string body, Dictionary<string, string>? data = null, CancellationToken ct = default)
     {
-        _logger.LogInformation("[FCM] SendPushNotification called. UserId={UserId} TitleKey={TitleKey} BodyKey={BodyKey} DataKeys=[{DataKeys}]",
+        _logger.LogInformation(
+            "[FCM] SendPushNotification called. UserId={UserId} TitleKey={TitleKey} BodyKey={BodyKey} DataKeys=[{DataKeys}]",
             userId, title, body, data != null ? string.Join(",", data.Keys) : "none");
 
         var user = await _context.DomainUsers.FirstOrDefaultAsync(u => u.Id == userId, ct);
@@ -32,13 +33,16 @@ public class FcmNotificationService(
             return;
         }
 
-        _logger.LogInformation("[FCM] User found. UserId={UserId} PreferredLanguage={Lang} HasFcmToken={HasToken}",
+        _logger.LogInformation(
+            "[FCM] User found. UserId={UserId} PreferredLanguage={Lang} HasFcmToken={HasToken}",
             userId, user.PreferredLanguage ?? "null", !string.IsNullOrWhiteSpace(user.FcmToken));
 
         if (string.IsNullOrWhiteSpace(user.FcmToken))
         {
-            _logger.LogWarning("[FCM] User {UserId} has no FCM token stored. Skipping. " +
-                "(App must call /auth/fcm-token after login to register a token.)", userId);
+            _logger.LogWarning(
+                "[FCM] User {UserId} has no FCM token stored. Skipping. " +
+                "(App must call /auth/fcm-token after login to register a token.)",
+                userId);
             return;
         }
 
@@ -49,7 +53,8 @@ public class FcmNotificationService(
         var lang = string.IsNullOrWhiteSpace(user.PreferredLanguage) ? "en" : user.PreferredLanguage;
         var (localizedTitle, localizedBody) = Localize(title, body, lang);
 
-        _logger.LogInformation("[FCM] Sending to user {UserId}. TokenPreview={TokenPreview} Lang={Lang} Title=\"{Title}\" Body=\"{Body}\" Data={Data}",
+        _logger.LogInformation(
+            "[FCM] Sending to user {UserId}. TokenPreview={TokenPreview} Lang={Lang} Title=\"{Title}\" Body=\"{Body}\" Data={Data}",
             userId, tokenPreview, lang, localizedTitle, localizedBody,
             data != null ? string.Join(", ", data.Select(kv => $"{kv.Key}={kv.Value}")) : "none");
 
@@ -69,7 +74,8 @@ public class FcmNotificationService(
             };
 
             var response = await FirebaseMessaging.DefaultInstance.SendAsync(message, ct);
-            _logger.LogInformation("[FCM] SUCCESS. UserId={UserId} TokenPreview={TokenPreview} Response={Response}",
+            _logger.LogInformation(
+                "[FCM] SUCCESS. UserId={UserId} TokenPreview={TokenPreview} Response={Response}",
                 userId, tokenPreview, response);
         }
         catch (FirebaseMessagingException ex)
@@ -96,7 +102,8 @@ public class FcmNotificationService(
             return;
         }
 
-        _logger.LogInformation("[FCM] SendPushNotificationToTopic called. Topic={Topic} TitleKey={TitleKey} BodyKey={BodyKey} DataKeys=[{DataKeys}]",
+        _logger.LogInformation(
+            "[FCM] SendPushNotificationToTopic called. Topic={Topic} TitleKey={TitleKey} BodyKey={BodyKey} DataKeys=[{DataKeys}]",
             topic, title, body, data != null ? string.Join(",", data.Keys) : "none");
 
         // Topic broadcasts have no per-recipient language, so resolve any
@@ -104,7 +111,8 @@ public class FcmNotificationService(
         // (e.g. admin broadcasts) are left untouched when no resource matches.
         var (localizedTitle, localizedBody) = Localize(title, body, DefaultTopicCulture);
 
-        _logger.LogInformation("[FCM] Sending to topic={Topic} Title=\"{Title}\" Body=\"{Body}\" Data={Data}",
+        _logger.LogInformation(
+            "[FCM] Sending to topic={Topic} Title=\"{Title}\" Body=\"{Body}\" Data={Data}",
             topic, localizedTitle, localizedBody,
             data != null ? string.Join(", ", data.Select(kv => $"{kv.Key}={kv.Value}")) : "none");
 

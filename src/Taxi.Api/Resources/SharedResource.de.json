@@ -183,5 +183,22 @@
   "Invoice.Payment.Wallet": "Wallet",
   "Invoice.BilledTo": "Rechnungsempfänger",
   "Invoice.IssuedBy": "Ausgestellt von",
-  "Invoice.VatNumber": "USt-IdNr."
+  "Invoice.VatNumber": "USt-IdNr.",
+  "AdminProfile.Name.Required": "Administratorname ist erforderlich.",
+  "AdminProfile.Email.Required": "Administrator-E-Mail ist erforderlich.",
+  "AdminProfile.Email.Invalid": "Administrator-E-Mail ist ungültig.",
+  "AdminProfile.Phone.Invalid": "Telefonnummer des Administrators ist ungültig.",
+  "AdminProfile.NotFound": "Administratorprofil nicht gefunden.",
+  "PassengerPaymentMethod.PassengerId.Required": "Fahrgast-ID ist erforderlich.",
+  "PassengerPaymentMethod.GatewayPaymentMethodId.Required": "Zahlungs-Gateway-Methoden-ID ist erforderlich.",
+  "PassengerPaymentMethod.CardBrand.Required": "Kartenmarke ist erforderlich.",
+  "PassengerPaymentMethod.LastFour.Invalid": "Letzte vier Kartenziffern sind ungültig.",
+  "PassengerPaymentMethod.ExpiryMonth.Invalid": "Kartenablaufmonat ist ungültig.",
+  "PassengerPaymentMethod.ExpiryYear.Invalid": "Kartenablaufjahr ist ungültig.",
+  "PassengerPaymentMethod.NotFound": "Zahlungsmethode nicht gefunden.",
+  "Trip.Stop.NotFound": "Fahrtstopp nicht gefunden.",
+  "Trip.Stop.OutOfOrder": "Fahrtstopps müssen in der richtigen Reihenfolge abgeschlossen werden.",
+  "Trip.Stop.AlreadyCompleted": "Dieser Fahrtstopp wurde bereits abgeschlossen.",
+  "Trip.Stop.PendingStopsRemaining": "Es sind noch ausstehende Stopps zu erledigen, bevor diese Fahrt beendet werden kann.",
+  "Trip.Stops.TooMany": "Die maximale Anzahl von Stopps für diese Fahrt wurde erreicht."
 }

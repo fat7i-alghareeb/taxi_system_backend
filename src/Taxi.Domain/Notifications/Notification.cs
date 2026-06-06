@@ -1,3 +1,6 @@
+using Taxi.Domain.Common;
+using Taxi.Domain.Common.Results;
+
 namespace Taxi.Domain.Notifications;
 
 public enum NotificationType
@@ -7,15 +10,18 @@ public enum NotificationType
     Email
 }
 
-public class Notification
+public sealed class Notification : Entity
 {
-    public Notification(
+    private Notification() { } // EF Core
+
+    private Notification(
+        Guid id,
         Guid userId,
         NotificationType type,
         string title,
         string body)
+        : base(id)
     {
-        Id = Guid.NewGuid();
         UserId = userId;
         Type = type;
         Title = title;
@@ -24,9 +30,6 @@ public class Notification
         IsSent = false;
     }
 
-    private Notification() { }
-
-    public Guid Id { get; private set; }
     public Guid UserId { get; private set; }
     public NotificationType Type { get; private set; }
     public string Title { get; private set; } = default!;
@@ -35,10 +38,34 @@ public class Notification
     public bool IsSent { get; private set; }
     public DateTime? SentAtUtc { get; private set; }
 
-    public void MarkAsSent()
+    public static Result<Notification> Create(
+        Guid userId,
+        NotificationType type,
+        string title,
+        string body)
     {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return NotificationErrors.TitleRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return NotificationErrors.BodyRequired;
+        }
+
+        return new Notification(Guid.NewGuid(), userId, type, title, body);
+    }
+
+    public Result<Success> MarkAsSent()
+    {
+        if (IsSent)
+        {
+            return Result.Success;
+        }
+
         IsSent = true;
         SentAtUtc = DateTime.UtcNow;
+        return Result.Success;
     }
 }
-

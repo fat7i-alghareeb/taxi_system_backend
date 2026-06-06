@@ -683,11 +683,6 @@
               "version": "[10.0.7, )",
               "versionCentrallyManaged": true
             },
-            "QuestPDF": {
-              "target": "Package",
-              "version": "[2026.2.4, )",
-              "versionCentrallyManaged": true
-            },
             "StyleCop.Analyzers": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers",
               "suppressParent": "All",
@@ -2394,6 +2389,11 @@
             "Npgsql.EntityFrameworkCore.PostgreSQL": {
               "target": "Package",
               "version": "[10.0.1, )",
+              "versionCentrallyManaged": true
+            },
+            "QuestPDF": {
+              "target": "Package",
+              "version": "[2026.2.4, )",
               "versionCentrallyManaged": true
             },
             "Serilog.AspNetCore": {

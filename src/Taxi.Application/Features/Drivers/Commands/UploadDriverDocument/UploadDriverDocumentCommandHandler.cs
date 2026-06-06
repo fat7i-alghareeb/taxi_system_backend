@@ -1,34 +1,44 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
-using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Drivers;
 
 namespace Taxi.Application.Features.Drivers.Commands.UploadDriverDocument;
 
-public class UploadDriverDocumentCommandHandler(IAppDbContext context)
-    : IRequestHandler<UploadDriverDocumentCommand, Result<Success>>
+public class UploadDriverDocumentCommandHandler(IAppDbContext context, IFileStorage fileStorage)
+    : IRequestHandler<UploadDriverDocumentCommand, Result<string>>
 {
     private readonly IAppDbContext _context = context;
+    private readonly IFileStorage _fileStorage = fileStorage;
 
-    public async Task<Result<Success>> Handle(UploadDriverDocumentCommand request, CancellationToken ct)
+    public async Task<Result<string>> Handle(UploadDriverDocumentCommand request, CancellationToken ct)
     {
         var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.Id == request.DriverId, ct);
         if (driver == null)
         {
-            return Result.Failure<Success>(Error.NotFound(LocalizationKeys.Driver.NotFound, "Driver not found."));
+            return DriverErrors.NotFound;
         }
 
-        // Delete existing document of same type if it exists to avoid duplicates
+        // Soft-delete an existing document of the same type so we never store duplicates.
         var existingDoc = await _context.DriverDocuments
             .FirstOrDefaultAsync(dd => dd.DriverId == driver.Id && dd.Type == request.Type, ct);
         if (existingDoc != null)
         {
-            existingDoc.SoftDelete();
+            var softDeleteResult = existingDoc.SoftDelete();
+            if (softDeleteResult.IsFailure)
+            {
+                return softDeleteResult.Error;
+            }
         }
 
-        var documentResult = DriverDocument.Create(Guid.NewGuid(), driver.Id, request.Type, request.FileUrl);
+        var extension = Path.GetExtension(request.FileName);
+        var fileUrl = await _fileStorage.SaveAsync(
+            request.FileStream,
+            $"documents/{driver.Id}_{request.Type}{extension}",
+            ct);
+
+        var documentResult = DriverDocument.Create(Guid.NewGuid(), driver.Id, request.Type, fileUrl);
         if (documentResult.IsFailure)
         {
             return documentResult.Error;
@@ -36,7 +46,7 @@ public class UploadDriverDocumentCommandHandler(IAppDbContext context)
 
         _context.DriverDocuments.Add(documentResult.Value);
 
-        // Check if all document types have been uploaded to submit for review
+        // Auto-submit for review once every required document type has been uploaded.
         var existingDocs = await _context.DriverDocuments
             .Where(dd => dd.DriverId == driver.Id && dd.DeletedAtUtc == null)
             .Select(dd => dd.Type)
@@ -52,6 +62,6 @@ public class UploadDriverDocumentCommandHandler(IAppDbContext context)
 
         await _context.SaveChangesAsync(ct);
 
-        return Result.Success;
+        return fileUrl;
     }
 }

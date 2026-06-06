@@ -82,7 +82,11 @@ public class HandleStripeWebhookCommandHandler(
             return TripErrors.NotFound;
         }
 
-        payment.MarkAsCompleted(evt.ChargeId);
+        var completeResult = payment.MarkAsCompleted(evt.ChargeId);
+        if (completeResult.IsFailure)
+        {
+            return completeResult.Error;
+        }
 
         // If the trip is still AwaitingPayment, just confirm payment so the trip
         // moves to PendingDriver. Admins/drivers receive the TripRequested event
@@ -127,7 +131,11 @@ public class HandleStripeWebhookCommandHandler(
             return TripErrors.NotFound;
         }
 
-        payment.MarkAsFailed(evt.FailureCode, evt.FailureMessage);
+        var failedResult = payment.MarkAsFailed(evt.FailureCode, evt.FailureMessage);
+        if (failedResult.IsFailure)
+        {
+            return failedResult.Error;
+        }
 
         if (trip.Status == TripStatus.AwaitingPayment)
         {
@@ -187,7 +195,11 @@ public class HandleStripeWebhookCommandHandler(
             return TripErrors.NotFound;
         }
 
-        payment.MarkAsRefunded();
+        var refundedResult = payment.MarkAsRefunded();
+        if (refundedResult.IsFailure)
+        {
+            return refundedResult.Error;
+        }
 
         // Only Cancelled/Completed trips can transition to Refunded per Trip.MarkRefunded.
         if (trip.Status == TripStatus.Cancelled || trip.Status == TripStatus.Completed)

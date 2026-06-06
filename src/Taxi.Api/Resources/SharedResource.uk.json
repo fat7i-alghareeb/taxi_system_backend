@@ -183,5 +183,22 @@
   "Invoice.Payment.Wallet": "Гаманець",
   "Invoice.BilledTo": "Платник",
   "Invoice.IssuedBy": "Виставник",
-  "Invoice.VatNumber": "ПДВ"
+  "Invoice.VatNumber": "ПДВ",
+  "AdminProfile.Name.Required": "Ім'я адміністратора обов'язкове.",
+  "AdminProfile.Email.Required": "Електронна пошта адміністратора обов'язкова.",
+  "AdminProfile.Email.Invalid": "Електронна пошта адміністратора недійсна.",
+  "AdminProfile.Phone.Invalid": "Номер телефону адміністратора недійсний.",
+  "AdminProfile.NotFound": "Профіль адміністратора не знайдено.",
+  "PassengerPaymentMethod.PassengerId.Required": "Ідентифікатор пасажира обов'язковий.",
+  "PassengerPaymentMethod.GatewayPaymentMethodId.Required": "Ідентифікатор способу оплати в шлюзі обов'язковий.",
+  "PassengerPaymentMethod.CardBrand.Required": "Бренд картки обов'язковий.",
+  "PassengerPaymentMethod.LastFour.Invalid": "Останні чотири цифри картки недійсні.",
+  "PassengerPaymentMethod.ExpiryMonth.Invalid": "Місяць закінчення дії картки недійсний.",
+  "PassengerPaymentMethod.ExpiryYear.Invalid": "Рік закінчення дії картки недійсний.",
+  "PassengerPaymentMethod.NotFound": "Спосіб оплати не знайдено.",
+  "Trip.Stop.NotFound": "Зупинку поїздки не знайдено.",
+  "Trip.Stop.OutOfOrder": "Зупинки поїздки повинні завершуватися по порядку.",
+  "Trip.Stop.AlreadyCompleted": "Цю зупинку поїздки вже завершено.",
+  "Trip.Stop.PendingStopsRemaining": "Залишаються невиконані зупинки, які потрібно завершити перед закінченням поїздки.",
+  "Trip.Stops.TooMany": "Досягнуто максимальної кількості зупинок для цієї поїздки."
 }

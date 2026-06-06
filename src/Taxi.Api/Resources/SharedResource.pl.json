@@ -183,5 +183,22 @@
   "Invoice.Payment.Wallet": "Portfel",
   "Invoice.BilledTo": "Nabywca",
   "Invoice.IssuedBy": "Wystawca",
-  "Invoice.VatNumber": "NIP"
+  "Invoice.VatNumber": "NIP",
+  "AdminProfile.Name.Required": "Imię administratora jest wymagane.",
+  "AdminProfile.Email.Required": "Adres e-mail administratora jest wymagany.",
+  "AdminProfile.Email.Invalid": "Adres e-mail administratora jest nieprawidłowy.",
+  "AdminProfile.Phone.Invalid": "Numer telefonu administratora jest nieprawidłowy.",
+  "AdminProfile.NotFound": "Profil administratora nie został znaleziony.",
+  "PassengerPaymentMethod.PassengerId.Required": "Identyfikator pasażera jest wymagany.",
+  "PassengerPaymentMethod.GatewayPaymentMethodId.Required": "Identyfikator metody płatności bramki jest wymagany.",
+  "PassengerPaymentMethod.CardBrand.Required": "Marka karty jest wymagana.",
+  "PassengerPaymentMethod.LastFour.Invalid": "Cztery ostatnie cyfry karty są nieprawidłowe.",
+  "PassengerPaymentMethod.ExpiryMonth.Invalid": "Miesiąc ważności karty jest nieprawidłowy.",
+  "PassengerPaymentMethod.ExpiryYear.Invalid": "Rok ważności karty jest nieprawidłowy.",
+  "PassengerPaymentMethod.NotFound": "Metoda płatności nie została znaleziona.",
+  "Trip.Stop.NotFound": "Przystanek przejazdu nie został znaleziony.",
+  "Trip.Stop.OutOfOrder": "Przystanki przejazdu muszą być ukończone w kolejności.",
+  "Trip.Stop.AlreadyCompleted": "Ten przystanek przejazdu został już ukończony.",
+  "Trip.Stop.PendingStopsRemaining": "Nadal pozostają oczekujące przystanki do ukończenia przed zakończeniem tego przejazdu.",
+  "Trip.Stops.TooMany": "Osiągnięto maksymalną liczbę przystanków dla tego przejazdu."
 }

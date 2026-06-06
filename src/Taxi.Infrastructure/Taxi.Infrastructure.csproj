@@ -19,6 +19,7 @@
         <PackageReference Include="Serilog.Sinks.Seq" />
         <PackageReference Include="FirebaseAdmin" />
         <PackageReference Include="Stripe.net" />
+        <PackageReference Include="QuestPDF" />
 	</ItemGroup>
 
 	<ItemGroup>

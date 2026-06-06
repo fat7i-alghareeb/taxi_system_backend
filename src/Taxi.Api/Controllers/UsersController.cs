@@ -1,9 +1,12 @@
+using System.Security.Claims;
 using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Taxi.Api.Contracts;
 using Taxi.Application.Features.Auth.Dtos;
+using Taxi.Application.Features.Identity.Dtos;
+using Taxi.Application.Features.Identity.Queries.GetUserInfo;
 using Taxi.Application.Features.Users.Commands.DeleteCurrentUser;
 using Taxi.Application.Features.Users.Commands.UpdateFcmToken;
 using Taxi.Application.Features.Users.Commands.UpdatePreferredLanguage;
@@ -28,6 +31,30 @@ public class UsersController(ISender sender) : ApiController
     public async Task<IActionResult> GetCurrentUser(CancellationToken ct)
     {
         var result = await sender.Send(new GetCurrentUserQuery(), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    // Constitution-compliant: claims are a sub-resource of the authenticated user.
+    // Moved from IdentityController (GET /identity/current-user/claims);
+    // the legacy route remains in IdentityController for the Blazor client.
+    [HttpGet("me/claims")]
+    [Authorize]
+    [ProducesResponseType(typeof(AppUserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [EndpointSummary("Gets the claims of the currently authenticated user.")]
+    [EndpointDescription("Returns the claims encoded in the access token, resolved through the Identity service.")]
+    [EndpointName("GetCurrentUserClaims")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetCurrentUserClaims(CancellationToken ct)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await sender.Send(new GetUserByIdQuery(userId), ct);
         return result.Match(Ok, Problem);
     }
 

@@ -197,12 +197,12 @@ public class DriversController(ISender sender) : ApiController
         return result.Match(Ok, Problem);
     }
 
-    [HttpPost("{id:guid}/approve")]
+    [HttpPost("{id:guid}/approve")] // Deprecated alias; Flutter calls POST /{id}/approvals.
+    [HttpPost("{id:guid}/approvals")] // Constitution-compliant noun.
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [EndpointSummary("Admin approves driver KYC once all documents are verified.")]
-    [EndpointName("ApproveDriver")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> Approve(Guid id, CancellationToken ct)
     {
@@ -210,12 +210,12 @@ public class DriversController(ISender sender) : ApiController
         return result.Match(_ => NoContent(), Problem);
     }
 
-    [HttpPost("{id:guid}/suspend")]
+    [HttpPost("{id:guid}/suspend")] // Deprecated alias; Flutter calls POST /{id}/suspensions.
+    [HttpPost("{id:guid}/suspensions")] // Constitution-compliant noun.
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Admin suspends a driver's account.")]
-    [EndpointName("SuspendDriver")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> Suspend(Guid id, CancellationToken ct)
     {

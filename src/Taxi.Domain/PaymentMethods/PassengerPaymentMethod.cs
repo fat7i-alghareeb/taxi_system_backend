@@ -49,6 +49,36 @@ public sealed class PassengerPaymentMethod : AuditableEntity
         int expiryYear,
         string? cardholderName)
     {
+        if (passengerId == Guid.Empty)
+        {
+            return PassengerPaymentMethodErrors.PassengerIdRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(gatewayPaymentMethodId))
+        {
+            return PassengerPaymentMethodErrors.GatewayPaymentMethodIdRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(cardBrand))
+        {
+            return PassengerPaymentMethodErrors.CardBrandRequired;
+        }
+
+        if (string.IsNullOrWhiteSpace(lastFour) || lastFour.Length != 4 || !lastFour.All(char.IsDigit))
+        {
+            return PassengerPaymentMethodErrors.LastFourInvalid;
+        }
+
+        if (expiryMonth is < 1 or > 12)
+        {
+            return PassengerPaymentMethodErrors.ExpiryMonthInvalid;
+        }
+
+        if (expiryYear < 2000 || expiryYear > 2100)
+        {
+            return PassengerPaymentMethodErrors.ExpiryYearInvalid;
+        }
+
         return new PassengerPaymentMethod(
             id,
             passengerId,
@@ -60,8 +90,26 @@ public sealed class PassengerPaymentMethod : AuditableEntity
             cardholderName);
     }
 
-    public void SetAsDefault() => IsDefault = true;
-    public void UnsetAsDefault() => IsDefault = false;
-    public void SoftDelete() => DeletedAtUtc = DateTimeOffset.UtcNow;
-}
+    public Result<Success> SetAsDefault()
+    {
+        IsDefault = true;
+        return Result.Success;
+    }
 
+    public Result<Success> UnsetAsDefault()
+    {
+        IsDefault = false;
+        return Result.Success;
+    }
+
+    public Result<Success> SoftDelete()
+    {
+        if (DeletedAtUtc.HasValue)
+        {
+            return Result.Success;
+        }
+
+        DeletedAtUtc = DateTimeOffset.UtcNow;
+        return Result.Success;
+    }
+}

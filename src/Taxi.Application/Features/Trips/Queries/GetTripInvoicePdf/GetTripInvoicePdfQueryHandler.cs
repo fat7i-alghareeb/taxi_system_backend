@@ -14,6 +14,9 @@ public class GetTripInvoicePdfQueryHandler(
     IInvoiceIssuanceService invoiceIssuance)
     : IRequestHandler<GetTripInvoicePdfQuery, Result<TripInvoicePdfResult>>
 {
+    /// <summary>Dutch is the default per business rule (Fat7i is NL-based).</summary>
+    private const string DefaultLanguage = "nl";
+
     /// <summary>
     /// Languages the renderer + SharedResource files cover. Anything else
     /// silently falls back to <see cref="DefaultLanguage"/>.
@@ -22,9 +25,6 @@ public class GetTripInvoicePdfQueryHandler(
     {
         "nl", "en", "ar", "de", "es", "fr", "pl", "ro", "uk",
     };
-
-    /// <summary>Dutch is the default per business rule (Fat7i is NL-based).</summary>
-    private const string DefaultLanguage = "nl";
 
     public async Task<Result<TripInvoicePdfResult>> Handle(GetTripInvoicePdfQuery request, CancellationToken ct)
     {

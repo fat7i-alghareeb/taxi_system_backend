@@ -37,14 +37,17 @@ public sealed class LoginCommandHandler(
 
         var identityId = identityResult.Value;
 
-        // 3. Resolve or create the Domain User (silent registration with trilingual placeholders)
+        // 3. Resolve or create the Domain User (silent registration with trilingual placeholders).
+        // IgnoreQueryFilters so a previously soft-deleted account is found and can be revived,
+        // otherwise re-registration would try to insert a duplicate Id/Phone and fail.
+        var placeholder = $"Passenger {verifiedPhone}";
+
         var domainUser = await dbContext.DomainUsers
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(u => u.Phone == verifiedPhone, cancellationToken);
 
         if (domainUser is null)
         {
-            var placeholder = $"Passenger {verifiedPhone}";
-
             var createResult = User.Create(
                 Guid.Parse(identityId),
                 placeholder,
@@ -60,14 +63,37 @@ public sealed class LoginCommandHandler(
             domainUser = createResult.Value;
             dbContext.DomainUsers.Add(domainUser);
         }
+        else if (domainUser.DeletedAtUtc is not null)
+        {
+            // Self-deleted account re-registering: revive it as a fresh blank profile.
+            var reviveResult = domainUser.ReviveForReRegistration(placeholder);
+            if (reviveResult.IsError)
+            {
+                return reviveResult.Errors;
+            }
+        }
         else if (!domainUser.IsActive)
         {
-            return AuthErrors.UserInactive;
+            // Admin-deactivated (banned) account; distinct from self-deletion.
+            return UserErrors.Inactive;
         }
 
         // 4. Persist FCM token if provided (best-effort: client may omit it)
         if (!string.IsNullOrWhiteSpace(request.FcmToken))
         {
+            // Override: this device token must belong only to the account logging in now.
+            // Clear it from any other account that previously registered it on this device,
+            // so stale users stop receiving push notifications meant for them.
+            var previousOwners = await dbContext.DomainUsers
+                .IgnoreQueryFilters()
+                .Where(u => u.FcmToken == request.FcmToken && u.Id != domainUser.Id)
+                .ToListAsync(cancellationToken);
+
+            foreach (var previousOwner in previousOwners)
+            {
+                previousOwner.UpdateFcmToken(null);
+            }
+
             var fcmResult = domainUser.UpdateFcmToken(request.FcmToken);
             if (fcmResult.IsError)
             {

@@ -183,5 +183,22 @@
   "Invoice.Payment.Wallet": "Monedero",
   "Invoice.BilledTo": "Facturado a",
   "Invoice.IssuedBy": "Emitido por",
-  "Invoice.VatNumber": "NIF"
+  "Invoice.VatNumber": "NIF",
+  "AdminProfile.Name.Required": "El nombre del administrador es obligatorio.",
+  "AdminProfile.Email.Required": "El correo electrónico del administrador es obligatorio.",
+  "AdminProfile.Email.Invalid": "El correo electrónico del administrador no es válido.",
+  "AdminProfile.Phone.Invalid": "El número de teléfono del administrador no es válido.",
+  "AdminProfile.NotFound": "Perfil de administrador no encontrado.",
+  "PassengerPaymentMethod.PassengerId.Required": "El ID del pasajero es obligatorio.",
+  "PassengerPaymentMethod.GatewayPaymentMethodId.Required": "El ID del método de pago de la pasarela es obligatorio.",
+  "PassengerPaymentMethod.CardBrand.Required": "La marca de la tarjeta es obligatoria.",
+  "PassengerPaymentMethod.LastFour.Invalid": "Los últimos cuatro dígitos de la tarjeta no son válidos.",
+  "PassengerPaymentMethod.ExpiryMonth.Invalid": "El mes de caducidad de la tarjeta no es válido.",
+  "PassengerPaymentMethod.ExpiryYear.Invalid": "El año de caducidad de la tarjeta no es válido.",
+  "PassengerPaymentMethod.NotFound": "Método de pago no encontrado.",
+  "Trip.Stop.NotFound": "Parada del viaje no encontrada.",
+  "Trip.Stop.OutOfOrder": "Las paradas del viaje deben completarse en orden.",
+  "Trip.Stop.AlreadyCompleted": "Esta parada del viaje ya está completada.",
+  "Trip.Stop.PendingStopsRemaining": "Aún hay paradas pendientes por completar antes de finalizar este viaje.",
+  "Trip.Stops.TooMany": "Se ha alcanzado el número máximo de paradas para este viaje."
 }

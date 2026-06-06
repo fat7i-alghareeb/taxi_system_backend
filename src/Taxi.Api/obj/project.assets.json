@@ -2429,7 +2429,6 @@
         "dependencies": {
           "FluentValidation.DependencyInjectionExtensions": "12.1.1",
           "Microsoft.EntityFrameworkCore": "10.0.7",
-          "QuestPDF": "2026.2.4",
           "Taxi.Contracts": "1.0.0",
           "Taxi.Domain": "1.0.0"
         },
@@ -2495,6 +2494,7 @@
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "10.0.7",
           "Microsoft.Extensions.Caching.Hybrid": "10.5.0",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.1",
+          "QuestPDF": "2026.2.4",
           "Serilog.AspNetCore": "10.0.0",
           "Serilog.Sinks.Seq": "9.0.0",
           "Stripe.net": "51.1.0",

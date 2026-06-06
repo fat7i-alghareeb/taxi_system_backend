@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Taxi.Application.Features.Admins.Commands.UpdateCurrentAdminProfile;
 using Taxi.Application.Features.Admins.Dtos;
 using Taxi.Application.Features.Admins.Queries.GetCurrentAdminProfile;
+using Taxi.Application.Features.Identity.Commands.RegisterAdmin;
+using Taxi.Contracts.Requests.Identity;
 
 namespace Taxi.Api.Controllers;
 
@@ -13,6 +15,31 @@ namespace Taxi.Api.Controllers;
 [Route("api/v{version:apiVersion}/admins")]
 public sealed class AdminsController(ISender sender) : ApiController
 {
+    // Constitution-compliant: POST /admins creates a new admin resource.
+    // Moved from IdentityController.RegisterAdmin (POST /identity/admins);
+    // the legacy route remains in IdentityController for the Blazor client.
+    [HttpPost]
+    [ProducesResponseType(typeof(Guid), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [EndpointSummary("Creates a new administrative user.")]
+    [EndpointDescription("Only existing Admins can create new Admins.")]
+    [EndpointName("RegisterAdmin")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> RegisterAdmin([FromBody] RegisterAdminRequest request, CancellationToken ct)
+    {
+        var command = new RegisterAdminCommand(
+            request.UserName,
+            request.Password,
+            request.Name,
+            request.Email,
+            request.Phone1,
+            request.Phone2);
+
+        var result = await sender.Send(command, ct);
+        return result.Match(id => Ok(id), Problem);
+    }
+
     [HttpGet("me")]
     [ProducesResponseType(typeof(AdminProfileDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -44,14 +71,29 @@ public sealed class AdminsController(ISender sender) : ApiController
         return result.Match(Ok, Problem);
     }
 
-    [HttpPost("change-password")]
+    // Constitution-compliant: password is a singleton sub-resource of /me, PUT replaces it.
+    [HttpPut("me/password")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [EndpointSummary("Changes the password of the currently authenticated admin.")]
     [EndpointName("ChangeAdminPassword")]
     [MapToApiVersion("1.0")]
-    public async Task<IActionResult> ChangeAdminPassword([FromBody] ChangeAdminPasswordRequest request, CancellationToken ct)
+    public Task<IActionResult> ChangeAdminPassword([FromBody] ChangeAdminPasswordRequest request, CancellationToken ct)
+        => ChangeAdminPasswordCore(request, ct);
+
+    // Deprecated legacy alias kept for the Blazor client (verb in URL).
+    [HttpPost("change-password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [EndpointSummary("[Deprecated] Use PUT /me/password. Changes the password of the currently authenticated admin.")]
+    [EndpointName("ChangeAdminPasswordLegacy")]
+    [MapToApiVersion("1.0")]
+    public Task<IActionResult> ChangeAdminPasswordLegacy([FromBody] ChangeAdminPasswordRequest request, CancellationToken ct)
+        => ChangeAdminPasswordCore(request, ct);
+
+    private async Task<IActionResult> ChangeAdminPasswordCore(ChangeAdminPasswordRequest request, CancellationToken ct)
     {
         var command = new Taxi.Application.Features.Admins.Commands.ChangeAdminPassword.ChangeAdminPasswordCommand(
             request.CurrentPassword,

@@ -1,7 +1,10 @@
 using Asp.Versioning;
+
 using MediatR;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
 using Taxi.Application.Features.Trips.Commands.AdminTakeTrip;
 using Taxi.Application.Features.Trips.Commands.ArriveTrip;
 using Taxi.Application.Features.Trips.Commands.AssignDriverToTrip;
@@ -190,11 +193,11 @@ public class TripsController(ISender sender) : ApiController
         return result.Match(Ok, Problem);
     }
 
-    [HttpPost("compensation-claims/{claimId:guid}/review")]
+    [HttpPost("compensation-claims/{claimId:guid}/review")] // Deprecated alias.
+    [HttpPost("compensation-claims/{claimId:guid}/reviews")] // Constitution-compliant noun.
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(CompensationClaimDto), StatusCodes.Status200OK)]
     [EndpointSummary("Approves or rejects a compensation claim.")]
-    [EndpointName("ReviewCompensationClaim")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> ReviewCompensationClaim(Guid claimId, [FromBody] ReviewCompensationClaimRequest request, CancellationToken ct)
     {
@@ -202,11 +205,11 @@ public class TripsController(ISender sender) : ApiController
         return result.Match(Ok, Problem);
     }
 
-    [HttpPost("{id:guid}/waiting/start")]
+    [HttpPost("{id:guid}/waiting/start")] // Deprecated alias (verb + 2-level depth).
+    [HttpPost("{id:guid}/waiting-sessions")] // Constitution-compliant noun (creates a session resource).
     [Authorize(Roles = "Driver,Admin")]
     [ProducesResponseType(typeof(WaitingSessionDto), StatusCodes.Status200OK)]
     [EndpointSummary("Starts driver waiting-time tracking.")]
-    [EndpointName("StartTripWaiting")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> StartWaiting(Guid id, CancellationToken ct)
     {
@@ -214,17 +217,25 @@ public class TripsController(ISender sender) : ApiController
         return result.Match(Ok, Problem);
     }
 
-    [HttpPost("{id:guid}/waiting/stop")]
+    // Constitution-compliant: DELETE on the singleton current waiting session ends it.
+    [HttpDelete("{id:guid}/waiting-sessions/current")]
     [Authorize(Roles = "Driver,Admin")]
     [ProducesResponseType(typeof(WaitingSessionDto), StatusCodes.Status200OK)]
     [EndpointSummary("Stops driver waiting-time tracking and returns estimated fee.")]
     [EndpointName("StopTripWaiting")]
     [MapToApiVersion("1.0")]
-    public async Task<IActionResult> StopWaiting(Guid id, CancellationToken ct)
-    {
-        var result = await sender.Send(new StopTripWaitingCommand(id), ct);
-        return result.Match(Ok, Problem);
-    }
+    public Task<IActionResult> StopWaiting(Guid id, CancellationToken ct)
+        => StopWaitingCore(id, ct);
+
+    // Deprecated legacy alias kept for the Blazor client (verb + 2-level depth).
+    [HttpPost("{id:guid}/waiting/stop")]
+    [Authorize(Roles = "Driver,Admin")]
+    [ProducesResponseType(typeof(WaitingSessionDto), StatusCodes.Status200OK)]
+    [EndpointSummary("[Deprecated] Use DELETE /waiting-sessions/current. Stops driver waiting-time tracking.")]
+    [EndpointName("StopTripWaitingLegacy")]
+    [MapToApiVersion("1.0")]
+    public Task<IActionResult> StopWaitingLegacy(Guid id, CancellationToken ct)
+        => StopWaitingCore(id, ct);
 
     [HttpPost("{id:guid}/en-route")]
     [Authorize(Roles = "Driver,Admin")]
@@ -239,12 +250,12 @@ public class TripsController(ISender sender) : ApiController
         return result.Match(_ => NoContent(), Problem);
     }
 
-    [HttpPost("{id:guid}/arrive")]
+    [HttpPost("{id:guid}/arrive")] // Deprecated alias.
+    [HttpPost("{id:guid}/arrivals")] // Constitution-compliant noun.
     [Authorize(Roles = "Driver,Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Driver arrives at pickup location.")]
-    [EndpointName("ArriveTrip")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> Arrive(Guid id, CancellationToken ct)
     {
@@ -252,13 +263,13 @@ public class TripsController(ISender sender) : ApiController
         return result.Match(_ => NoContent(), Problem);
     }
 
-    [HttpPost("{id:guid}/arrive/resend")]
+    [HttpPost("{id:guid}/arrive/resend")] // Deprecated alias (verb + 2-level).
+    [HttpPost("{id:guid}/arrival-notifications")] // Constitution-compliant noun (POST creates a new notification dispatch).
     [Authorize(Roles = "Driver,Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [EndpointSummary("Re-broadcasts the driver-arrived notification (FCM + SignalR) without changing trip state.")]
-    [EndpointName("ResendArrivedNotification")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> ResendArriveNotification(Guid id, CancellationToken ct)
     {
@@ -266,12 +277,12 @@ public class TripsController(ISender sender) : ApiController
         return result.Match(_ => NoContent(), Problem);
     }
 
-    [HttpPost("{id:guid}/start")]
+    [HttpPost("{id:guid}/start")] // Deprecated alias.
+    [HttpPost("{id:guid}/starts")] // Constitution-compliant noun.
     [Authorize(Roles = "Driver,Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Driver starts the trip (passenger is in the vehicle).")]
-    [EndpointName("StartTrip")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> StartTrip(Guid id, CancellationToken ct)
     {
@@ -279,12 +290,12 @@ public class TripsController(ISender sender) : ApiController
         return result.Match(_ => NoContent(), Problem);
     }
 
-    [HttpPost("{id:guid}/complete")]
+    [HttpPost("{id:guid}/complete")] // Deprecated alias.
+    [HttpPost("{id:guid}/completions")] // Constitution-compliant noun.
     [Authorize(Roles = "Driver,Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Driver completes the trip at the destination.")]
-    [EndpointName("CompleteTrip")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> Complete(Guid id, CancellationToken ct)
     {
@@ -292,14 +303,14 @@ public class TripsController(ISender sender) : ApiController
         return result.Match(_ => NoContent(), Problem);
     }
 
-    [HttpPost("{id:guid}/stops/{sequence:int}/complete")]
+    [HttpPost("{id:guid}/stops/{sequence:int}/complete")] // Deprecated alias.
+    [HttpPost("{id:guid}/stops/{sequence:int}/completions")] // Constitution-compliant noun.
     [Authorize(Roles = "Driver,Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Driver marks an intermediate stop as completed on a multi-stop trip.")]
-    [EndpointDescription("Stops must be completed in ascending sequence order. The final dropoff is reached via /complete, not this endpoint.")]
-    [EndpointName("CompleteTripStop")]
+    [EndpointDescription("Stops must be completed in ascending sequence order. The final dropoff is reached via /completions, not this endpoint.")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> CompleteStop(Guid id, int sequence, CancellationToken ct)
     {
@@ -307,12 +318,12 @@ public class TripsController(ISender sender) : ApiController
         return result.Match(_ => NoContent(), Problem);
     }
 
-    [HttpPost("{id:guid}/assign")]
+    [HttpPost("{id:guid}/assign")] // Deprecated alias.
+    [HttpPost("{id:guid}/assignments")] // Constitution-compliant noun.
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Admin manually dispatches a driver to a trip.")]
-    [EndpointName("AssignDriverToTrip")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> Assign(Guid id, [FromBody] Guid driverId, CancellationToken ct)
     {
@@ -320,13 +331,13 @@ public class TripsController(ISender sender) : ApiController
         return result.Match(_ => NoContent(), Problem);
     }
 
-    [HttpPost("{id:guid}/admin-take")]
+    [HttpPost("{id:guid}/admin-take")] // Deprecated alias.
+    [HttpPost("{id:guid}/admin-takeovers")] // Constitution-compliant noun.
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Admin takes a trip and acts as its driver.")]
     [EndpointDescription("Ensures the admin has a backing Driver record (creating one on first use), then assigns the trip to it.")]
-    [EndpointName("AdminTakeTrip")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> AdminTake(Guid id, CancellationToken ct)
     {
@@ -397,6 +408,12 @@ public class TripsController(ISender sender) : ApiController
     {
         var result = await sender.Send(new GetTripInvoicePdfQuery(id, language), ct);
         return result.Match(pdf => File(pdf.Bytes, "application/pdf", pdf.FileName), Problem);
+    }
+
+    private async Task<IActionResult> StopWaitingCore(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new StopTripWaitingCommand(id), ct);
+        return result.Match(Ok, Problem);
     }
 }
 

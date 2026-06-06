@@ -1,6 +1,9 @@
 using Asp.Versioning;
+
 using MediatR;
+
 using Microsoft.AspNetCore.Mvc;
+
 using Taxi.Application.Features.Maps.Dtos;
 using Taxi.Application.Features.Maps.Queries.GetDirections;
 using Taxi.Application.Features.Maps.Queries.ReverseGeocode;
@@ -14,12 +17,12 @@ namespace Taxi.Api.Controllers;
 [Route("api/v{version:apiVersion}/maps")]
 public class MapsController(ISender sender) : ApiController
 {
-    [HttpPost("search")]
+    [HttpPost("search")] // Deprecated alias; Flutter calls POST /searches.
+    [HttpPost("searches")] // Constitution-compliant noun.
     [ProducesResponseType(typeof(List<PlaceResultDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [EndpointSummary("Search for places by text query.")]
     [EndpointDescription("Calls Google Places Text Search API. Optionally biases results around the provided coordinates.")]
-    [EndpointName("SearchPlaces")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> SearchPlaces([FromBody] SearchPlacesRequest request, CancellationToken ct)
     {
