@@ -1,43 +1,38 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Infrastructure\\Taxi.Infrastructure.csproj": {}
+    "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Infrastructure\\Taxi.Infrastructure.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Application\\Taxi.Application.csproj": {
+    "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Application\\Taxi.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Application\\Taxi.Application.csproj",
+        "projectUniqueName": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Application\\Taxi.Application.csproj",
         "projectName": "Taxi.Application",
-        "projectPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Application\\Taxi.Application.csproj",
-        "packagesPath": "C:\\Users\\Fat7i\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Application\\obj\\",
+        "projectPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Application\\Taxi.Application.csproj",
+        "packagesPath": "C:\\Users\\fat7i\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Application\\obj\\",
         "projectStyle": "PackageReference",
         "centralPackageVersionsManagementEnabled": true,
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\Fat7i\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\fat7i\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj": {
-                "projectPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj"
+              "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Contracts\\Taxi.Contracts.csproj": {
+                "projectPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Contracts\\Taxi.Contracts.csproj"
               },
-              "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Domain\\Taxi.Domain.csproj": {
-                "projectPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Domain\\Taxi.Domain.csproj"
+              "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Domain\\Taxi.Domain.csproj": {
+                "projectPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Domain\\Taxi.Domain.csproj"
               }
             }
           }
@@ -52,10 +47,11 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.300"
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "FluentValidation.DependencyInjectionExtensions": {
@@ -148,7 +144,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -426,33 +422,28 @@
         }
       }
     },
-    "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj": {
+    "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Contracts\\Taxi.Contracts.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj",
+        "projectUniqueName": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Contracts\\Taxi.Contracts.csproj",
         "projectName": "Taxi.Contracts",
-        "projectPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj",
-        "packagesPath": "C:\\Users\\Fat7i\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\obj\\",
+        "projectPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Contracts\\Taxi.Contracts.csproj",
+        "packagesPath": "C:\\Users\\fat7i\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Contracts\\obj\\",
         "projectStyle": "PackageReference",
         "centralPackageVersionsManagementEnabled": true,
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\Fat7i\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\fat7i\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {}
           }
@@ -467,10 +458,11 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.300"
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "Microsoft.AspNetCore.Components.DataAnnotations.Validation": {
@@ -553,7 +545,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -831,37 +823,32 @@
         }
       }
     },
-    "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Domain\\Taxi.Domain.csproj": {
+    "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Domain\\Taxi.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Domain\\Taxi.Domain.csproj",
+        "projectUniqueName": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Domain\\Taxi.Domain.csproj",
         "projectName": "Taxi.Domain",
-        "projectPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Domain\\Taxi.Domain.csproj",
-        "packagesPath": "C:\\Users\\Fat7i\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Domain\\obj\\",
+        "projectPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Domain\\Taxi.Domain.csproj",
+        "packagesPath": "C:\\Users\\fat7i\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "centralPackageVersionsManagementEnabled": true,
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\Fat7i\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\fat7i\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj": {
-                "projectPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Contracts\\Taxi.Contracts.csproj"
+              "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Contracts\\Taxi.Contracts.csproj": {
+                "projectPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Contracts\\Taxi.Contracts.csproj"
               }
             }
           }
@@ -876,10 +863,11 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.300"
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "MediatR": {
@@ -962,7 +950,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -1240,37 +1228,32 @@
         }
       }
     },
-    "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Infrastructure\\Taxi.Infrastructure.csproj": {
+    "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Infrastructure\\Taxi.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Infrastructure\\Taxi.Infrastructure.csproj",
+        "projectUniqueName": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Infrastructure\\Taxi.Infrastructure.csproj",
         "projectName": "Taxi.Infrastructure",
-        "projectPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Infrastructure\\Taxi.Infrastructure.csproj",
-        "packagesPath": "C:\\Users\\Fat7i\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Infrastructure\\obj\\",
+        "projectPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Infrastructure\\Taxi.Infrastructure.csproj",
+        "packagesPath": "C:\\Users\\fat7i\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "centralPackageVersionsManagementEnabled": true,
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\Fat7i\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\fat7i\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Application\\Taxi.Application.csproj": {
-                "projectPath": "C:\\Users\\Fat7i\\myProject\\fat7i\\TAXI_SERVER\\src\\Taxi.Application\\Taxi.Application.csproj"
+              "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Application\\Taxi.Application.csproj": {
+                "projectPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Application\\Taxi.Application.csproj"
               }
             }
           }
@@ -1285,10 +1268,11 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.300"
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "FirebaseAdmin": {
@@ -1425,7 +1409,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
