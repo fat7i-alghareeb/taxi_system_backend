@@ -30,40 +30,35 @@ dig +short api.example.com
 
 It must return your VPS IP.
 
-## 3. First SSH Into The VPS
+## 3. First SSH Into The VPS With Your Main User
+
+Use the main VPS user your provider gave you. It may be `root`, `ubuntu`, `admin`, or another sudo-capable user. In this guide, replace `YOUR_VPS_USER` with that user.
 
 From your machine:
 
 ```bash
-ssh root@YOUR_VPS_IP
+ssh YOUR_VPS_USER@YOUR_VPS_IP
 ```
 
-Create a normal deploy user:
+Check which user you are logged in as:
 
 ```bash
-adduser deploy
-usermod -aG sudo deploy
+whoami
 ```
 
-Copy your login SSH key to that user. On the VPS:
+If the command prints `root`, that is okay. If it prints another user, make sure sudo works:
 
 ```bash
-mkdir -p /home/deploy/.ssh
-nano /home/deploy/.ssh/authorized_keys
-chown -R deploy:deploy /home/deploy/.ssh
-chmod 700 /home/deploy/.ssh
-chmod 600 /home/deploy/.ssh/authorized_keys
+sudo whoami
 ```
 
-Open a new terminal and login as `deploy`:
+It should print `root`.
 
-```bash
-ssh deploy@YOUR_VPS_IP
-```
+Do not create another Linux user for this guide. The GitHub key below is still repo-only, so it only gives this VPS read access to this one repository.
 
 ## 4. Install Docker And Tools
 
-Run on the VPS as `deploy`:
+Run on the VPS as your main user:
 
 ```bash
 sudo apt-get update
@@ -89,14 +84,14 @@ EOF
 sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 sudo systemctl enable --now docker
-sudo usermod -aG docker deploy
+sudo usermod -aG docker "$USER"
 ```
 
 Log out and back in so the `docker` group applies:
 
 ```bash
 exit
-ssh deploy@YOUR_VPS_IP
+ssh YOUR_VPS_USER@YOUR_VPS_IP
 docker compose version
 docker run --rm hello-world
 ```
@@ -117,7 +112,7 @@ Do not open Postgres, Seq, Prometheus, Grafana, or API port `5001` publicly. Pro
 
 ## 6. Create A Repo-Only GitHub SSH Key
 
-On the VPS as `deploy`:
+On the VPS as your main user:
 
 ```bash
 ssh-keygen -t ed25519 -C "taxi-server-vps-deploy-key" -f ~/.ssh/taxi_server_deploy -N ""
@@ -160,7 +155,7 @@ Replace `OWNER` and `REPO`:
 
 ```bash
 sudo mkdir -p /srv/taxi-server
-sudo chown deploy:deploy /srv/taxi-server
+sudo chown "$USER":"$USER" /srv/taxi-server
 git clone git@github-taxi-server:OWNER/REPO.git /srv/taxi-server
 cd /srv/taxi-server
 ```
@@ -287,7 +282,7 @@ They are marked as requiring password reset. Change them immediately after first
 From your local machine:
 
 ```bash
-ssh -L 3000:localhost:3000 -L 9090:localhost:9090 -L 8081:localhost:8081 deploy@YOUR_VPS_IP
+ssh -L 3000:localhost:3000 -L 9090:localhost:9090 -L 8081:localhost:8081 YOUR_VPS_USER@YOUR_VPS_IP
 ```
 
 Then open:
