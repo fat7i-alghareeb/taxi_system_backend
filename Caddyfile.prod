@@ -4,10 +4,10 @@
 # in the `caddy_data` named volume.
 
 {
-    email fat7ighareeb@gmail.com
+    email {$CADDY_EMAIL}
 }
 
-api.fat7i.dev {
+{$DOMAIN} {
     encode zstd gzip
 
     reverse_proxy taxi.api:8080 {
