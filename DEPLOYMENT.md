@@ -110,7 +110,98 @@ sudo ufw status
 
 Do not open Postgres, Seq, Prometheus, Grafana, or API port `5001` publicly. Production Compose binds the API and dashboards to `127.0.0.1` only.
 
-## 6. Create A Repo-Only GitHub SSH Key
+## 6. Check If Traefik Is Already Using Ports 80 And 443
+
+Caddy and Traefik do the same public job: they listen on ports `80` and `443` and forward traffic to your app. They cannot both use those ports on the same VPS.
+
+Check what is using those ports:
+
+```bash
+sudo ss -ltnp | grep -E ':80 |:443 '
+docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Ports}}'
+```
+
+If you see `traefik` using `0.0.0.0:80` or `0.0.0.0:443`, choose one path:
+
+```text
+Path A: Use Caddy from this repository
+Path B: Keep the existing Traefik and do not start Caddy
+```
+
+For this guide, use **Path A** unless you already rely on Traefik for another dashboard or hosting panel.
+
+### Path A: Use Caddy
+
+Only do this if Traefik is not needed by another app or panel.
+
+Find where Traefik came from:
+
+```bash
+docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Ports}}' | grep -i traefik
+systemctl list-units --type=service | grep -i traefik
+```
+
+If Traefik is a standalone Docker container:
+
+```bash
+docker stop traefik-traefik-1
+docker update --restart=no traefik-traefik-1
+```
+
+Replace `traefik-traefik-1` with the real Traefik container name from `docker ps`. Do not type `TRAEFIK_CONTAINER_NAME` literally.
+
+If Traefik is managed by another Compose project, first find its Compose directory:
+
+```bash
+docker inspect traefik-traefik-1 \
+  --format '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}'
+```
+
+Then go to the printed directory and stop Traefik from there:
+
+```bash
+cd /path/printed/by/docker-inspect
+docker compose down
+```
+
+Do not run plain `docker compose down` from `/srv/taxi-server` when you are trying to stop Traefik. That stops the taxi app, not Traefik.
+
+Then confirm ports are free:
+
+```bash
+sudo ss -ltnp | grep -E ':80 |:443 ' || echo "80 and 443 are free"
+```
+
+Now continue this guide normally. Caddy will take ports `80` and `443`.
+
+### Path B: Keep Traefik
+
+If Traefik belongs to Coolify, Dokploy, Portainer, another app, or anything you still need, do not stop it. In that case, do not run the `caddy` service from `docker-compose.prod.yml`, because it will fail with a port conflict.
+
+The quick temporary way to run only the API stack behind localhost is:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build \
+  taxi.api postgres seq prometheus grafana
+```
+
+That starts the API on `127.0.0.1:5001`, but your domain will not work until Traefik is configured to route:
+
+```text
+Host: api.example.com
+Target: http://127.0.0.1:5001
+```
+
+If your Traefik is Docker-label based, the cleaner setup is to add Traefik labels and attach `taxi.api` to Traefik's Docker network. That depends on your Traefik network name and entrypoint names, so first check:
+
+```bash
+docker network ls
+docker inspect TRAEFIK_CONTAINER_NAME --format '{{json .NetworkSettings.Networks}}'
+```
+
+Common Traefik network names are `traefik`, `web`, `proxy`, `coolify`, or `dokploy-network`.
+
+## 7. Create A Repo-Only GitHub SSH Key
 
 On the VPS as your main user:
 
@@ -149,7 +240,7 @@ ssh -T github-taxi-server
 
 GitHub should recognize the key. It may say shell access is not provided; that is normal.
 
-## 7. Clone The Project
+## 8. Clone The Project
 
 Replace `OWNER` and `REPO`:
 
@@ -160,7 +251,7 @@ git clone git@github-taxi-server:OWNER/REPO.git /srv/taxi-server
 cd /srv/taxi-server
 ```
 
-## 8. Create The Production `.env`
+## 9. Create The Production `.env`
 
 ```bash
 cp .env.example .env
@@ -213,7 +304,7 @@ Paste the output into `FIREBASE_CREDENTIALS='...'`, then delete the temporary JS
 rm firebase-service-account.json
 ```
 
-## 9. Stripe Webhook
+## 10. Stripe Webhook
 
 In Stripe Dashboard, create a webhook endpoint:
 
@@ -232,7 +323,7 @@ charge.refunded
 
 Copy the signing secret into `STRIPE_WEBHOOK_SECRET`.
 
-## 10. Start Production
+## 11. Start Production
 
 From `/srv/taxi-server`:
 
@@ -240,6 +331,8 @@ From `/srv/taxi-server`:
 docker compose -f docker-compose.yml -f docker-compose.prod.yml config
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
+
+If this fails with `port is already allocated` for `80` or `443`, go back to the Traefik section above. That means Caddy cannot bind because another proxy already owns those ports.
 
 Watch logs:
 
@@ -250,7 +343,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f caddy
 
 The API automatically applies EF migrations and seeds admin users on startup.
 
-## 11. Check It Works
+## 12. Check It Works
 
 From your local machine:
 
@@ -277,7 +370,7 @@ admin2 / admin2
 
 They are marked as requiring password reset. Change them immediately after first login.
 
-## 12. Private Dashboards By SSH Tunnel
+## 13. Private Dashboards By SSH Tunnel
 
 From your local machine:
 
@@ -293,7 +386,7 @@ Prometheus: http://localhost:9090
 Seq:        http://localhost:8081
 ```
 
-## 13. Update The App Later
+## 14. Update The App Later
 
 ```bash
 cd /srv/taxi-server
@@ -302,7 +395,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f taxi.api
 ```
 
-## 14. Back Up The Database
+## 15. Back Up The Database
 
 ```bash
 cd /srv/taxi-server
@@ -314,7 +407,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres
 
 Copy backups off the VPS regularly.
 
-## 15. Useful Commands
+## 16. Useful Commands
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
@@ -325,7 +418,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml down
 
 Do not use `down -v` in production unless you intentionally want to delete named volumes, including the database.
 
-## 16. Files This Deployment Uses
+## 17. Files This Deployment Uses
 
 - `docker-compose.yml`: base services.
 - `docker-compose.prod.yml`: production ports, secrets, Caddy, persistent upload volume.
