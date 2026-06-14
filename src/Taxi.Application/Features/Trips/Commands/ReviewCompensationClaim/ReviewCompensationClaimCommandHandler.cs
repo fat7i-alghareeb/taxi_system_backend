@@ -32,7 +32,8 @@ public sealed class ReviewCompensationClaimCommandHandler(
 
         if (request.Approved)
         {
-            var payment = await context.Payments.FirstOrDefaultAsync(p => p.TripId == claim.TripId, ct);
+            var payment = await context.Payments.FirstOrDefaultAsync(
+                p => p.TripId == claim.TripId && p.Kind == PaymentKind.Fare, ct);
             if (clientConfig.GetClientConfig().StripeEnabled &&
                 payment?.Status == PaymentStatus.Completed &&
                 !string.IsNullOrWhiteSpace(payment.StripePaymentIntentId) &&

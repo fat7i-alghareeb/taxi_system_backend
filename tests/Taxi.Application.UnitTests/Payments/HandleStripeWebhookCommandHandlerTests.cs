@@ -12,6 +12,7 @@ namespace Taxi.Application.UnitTests.Payments;
 public class HandleStripeWebhookCommandHandlerTests
 {
     private readonly IStripeWebhookValidator _validator = Substitute.For<IStripeWebhookValidator>();
+    private readonly IStripePaymentService _stripe = Substitute.For<IStripePaymentService>();
     private readonly ILogger<HandleStripeWebhookCommandHandler> _logger =
         Substitute.For<ILogger<HandleStripeWebhookCommandHandler>>();
 
@@ -282,5 +283,5 @@ public class HandleStripeWebhookCommandHandlerTests
     }
 
     private HandleStripeWebhookCommandHandler CreateHandler(IAppDbContext context)
-        => new(context, _validator, _logger);
+        => new(context, _validator, _stripe, _logger);
 }

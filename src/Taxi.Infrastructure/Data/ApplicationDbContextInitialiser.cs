@@ -128,6 +128,11 @@ public class ApplicationDbContextInitialiser(
             await context.SaveChangesAsync();
         }
 
+        // Company contact details printed in the invoice footer (admin-editable).
+        await SeedCompanyContactAsync(AppConfigKeys.CompanyEmail, "info@fat7i.dev", "Company email shown on invoices.");
+        await SeedCompanyContactAsync(AppConfigKeys.CompanyPhone, "0639550352", "Company phone shown on invoices.");
+        await SeedCompanyContactAsync(AppConfigKeys.CompanyWebsite, "www.fat7i.dev", "Company website shown on invoices.");
+
         // 4. Seed admin users
         await SeedAdminAsync(AdminUserName, AdminPassword, AdminDisplayName, AdminEmail);
         await SeedAdminAsync(SecondAdminUserName, SecondAdminPassword, SecondAdminDisplayName, SecondAdminEmail);
@@ -136,6 +141,23 @@ public class ApplicationDbContextInitialiser(
         {
             await SeedDevelopmentOnlyAsync();
         }
+    }
+
+    private async Task SeedCompanyContactAsync(string key, string value, string description)
+    {
+        if (await context.AppConfigs.AnyAsync(c => c.Key == key))
+        {
+            return;
+        }
+
+        var result = AppConfig.Create(key, value, description);
+        if (result.IsFailure)
+        {
+            throw new InvalidOperationException($"Failed to seed app config '{key}': {result.Error.Description}");
+        }
+
+        context.AppConfigs.Add(result.Value);
+        await context.SaveChangesAsync();
     }
 
     private async Task SeedAdminAsync(string userName, string password, string displayName, string email)

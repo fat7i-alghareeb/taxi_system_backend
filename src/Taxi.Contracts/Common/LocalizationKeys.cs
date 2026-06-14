@@ -158,6 +158,7 @@ public static class LocalizationKeys
         public const string TooManyStops = "Trip.Stops.TooMany";
         public const string PassengerNoteTooLong = "Trip.PassengerNote.TooLong";
         public const string CannotUpdatePassengerNote = "Trip.PassengerNote.CannotUpdate";
+        public const string InvalidRating = "Trip.Rating.Invalid";
     }
 
     public static class Maps
@@ -216,6 +217,24 @@ public static class LocalizationKeys
         public const string BilledTo = "Invoice.BilledTo";
         public const string IssuedBy = "Invoice.IssuedBy";
         public const string VatNumber = "Invoice.VatNumber";
+
+        // Redesigned PDF layout (mockup).
+        public const string VatId = "Invoice.VatId";
+        public const string Status = "Invoice.Status";
+        public const string StatusPaid = "Invoice.Status.Paid";
+        public const string TripDetails = "Invoice.TripDetails";
+        public const string Route = "Invoice.Route";
+        public const string ServiceType = "Invoice.ServiceType";
+        public const string ServiceTitle = "Invoice.ServiceTitle";
+        public const string RideDate = "Invoice.RideDate";
+        public const string ColumnTotal = "Invoice.Column.Total";
+        public const string Total = "Invoice.Total";
+        public const string TotalPaid = "Invoice.TotalPaid";
+        public const string PaidVia = "Invoice.PaidVia";
+        public const string TransactionId = "Invoice.TransactionId";
+        public const string PaymentCompleted = "Invoice.PaymentCompleted";
+        public const string MethodIdeal = "Invoice.Method.iDEAL";
+        public const string MethodKlarna = "Invoice.Method.Klarna";
     }
 
     public static class AdminProfile
@@ -269,6 +288,9 @@ public static class LocalizationKeys
 
         public const string TripScheduledActivatedTitle = "Notification.TripScheduledActivated.Title";
         public const string TripScheduledActivatedBody = "Notification.TripScheduledActivated.Body";
+
+        public const string WaitingFeeDueTitle = "Notification.WaitingFeeDue.Title";
+        public const string WaitingFeeDueBody = "Notification.WaitingFeeDue.Body";
     }
 }
 

@@ -34,6 +34,7 @@ public sealed class TripCompletedEventHandler(
             {
                 { "tripId", notification.TripId.ToString() },
                 { "status", "Completed" },
+                { "type", "trip_completed" },
             },
             ct);
 

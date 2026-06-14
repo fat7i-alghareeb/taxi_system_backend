@@ -13,6 +13,7 @@ namespace Taxi.Application.Features.Payments.Commands.HandleStripeWebhook;
 public class HandleStripeWebhookCommandHandler(
     IAppDbContext context,
     IStripeWebhookValidator validator,
+    IStripePaymentService stripe,
     ILogger<HandleStripeWebhookCommandHandler> logger)
     : IRequestHandler<HandleStripeWebhookCommand, Result<Success>>
 {
@@ -82,7 +83,11 @@ public class HandleStripeWebhookCommandHandler(
             return TripErrors.NotFound;
         }
 
-        var completeResult = payment.MarkAsCompleted(evt.ChargeId);
+        // Resolve the exact method (ideal/klarna/card) from the charge so the
+        // invoice can print "Betaald via: iDEAL". Best-effort — never blocks completion.
+        var methodType = await stripe.GetChargePaymentMethodTypeAsync(evt.ChargeId ?? string.Empty, ct);
+
+        var completeResult = payment.MarkAsCompleted(evt.ChargeId, methodType);
         if (completeResult.IsFailure)
         {
             return completeResult.Error;
@@ -201,8 +206,11 @@ public class HandleStripeWebhookCommandHandler(
             return refundedResult.Error;
         }
 
+        // Only the fare payment drives the trip's Refunded state. Refunding a
+        // waiting-fee surcharge must not flip the whole trip to Refunded.
         // Only Cancelled/Completed trips can transition to Refunded per Trip.MarkRefunded.
-        if (trip.Status == TripStatus.Cancelled || trip.Status == TripStatus.Completed)
+        if (payment.Kind == PaymentKind.Fare &&
+            (trip.Status == TripStatus.Cancelled || trip.Status == TripStatus.Completed))
         {
             var refundResult = trip.MarkRefunded(evt.RefundedAmount ?? payment.Amount);
             if (refundResult.IsFailure)

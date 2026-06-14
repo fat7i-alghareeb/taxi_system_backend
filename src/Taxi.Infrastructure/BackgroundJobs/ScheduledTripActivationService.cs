@@ -14,6 +14,12 @@ public sealed class ScheduledTripActivationService(
 {
     private static readonly TimeSpan CheckInterval = TimeSpan.FromMinutes(1);
 
+    /// <summary>
+    /// How long before a scheduled trip's start time the passenger receives the
+    /// "driver on the way / arrives within 15 minutes" reminder.
+    /// </summary>
+    private static readonly TimeSpan PreArrivalLeadTime = TimeSpan.FromMinutes(15);
+
     private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
     private readonly ILogger<ScheduledTripActivationService> _logger = logger;
 
@@ -23,8 +29,62 @@ public sealed class ScheduledTripActivationService(
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            await SendPreArrivalRemindersAsync(stoppingToken);
             await ActivateDueTripsAsync(stoppingToken);
             await Task.Delay(CheckInterval, stoppingToken);
+        }
+    }
+
+    /// <summary>
+    /// Sends the "driver on the way" reminder to passengers 15 minutes before their
+    /// scheduled trip starts. Idempotent via <see cref="Trip.PreArrivalNotifiedAtUtc"/>.
+    /// </summary>
+    private async Task SendPreArrivalRemindersAsync(CancellationToken ct)
+    {
+        await using var scope = _scopeFactory.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+
+        var threshold = DateTimeOffset.UtcNow.Add(PreArrivalLeadTime);
+
+        var dueTrips = await context.Trips
+            .Where(t => t.Status == TripStatus.Scheduled
+                && t.PreArrivalNotifiedAtUtc == null
+                && t.ScheduledAtUtc != null
+                && t.ScheduledAtUtc <= threshold)
+            .ToListAsync(ct);
+
+        if (dueTrips.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var trip in dueTrips)
+        {
+            trip.MarkPreArrivalNotified();
+
+            try
+            {
+                await context.SaveChangesAsync(ct);
+
+                await notificationService.SendPushNotificationAsync(
+                    trip.PassengerId,
+                    LocalizationKeys.Notification.DriverEnRouteTitle,
+                    LocalizationKeys.Notification.DriverEnRouteBody,
+                    new Dictionary<string, string>
+                    {
+                        { "tripId", trip.Id.ToString() },
+                        { "status", "Scheduled" },
+                        { "type", "driver_en_route" },
+                    },
+                    ct);
+
+                _logger.LogInformation("Sent pre-arrival reminder for scheduled trip {TripId}.", trip.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending pre-arrival reminder for scheduled trip {TripId}.", trip.Id);
+            }
         }
     }
 

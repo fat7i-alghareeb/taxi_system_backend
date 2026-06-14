@@ -8,10 +8,16 @@ using Taxi.Infrastructure.Hubs;
 
 QuestPDF.Settings.License = LicenseType.Community;
 
-// Register Arabic-capable font as a fallback so RTL invoices render real glyphs
+// Register Arabic-capable Cairo font so RTL invoices render real glyphs
 // instead of tofu boxes (QuestPDF's default Lato has no Arabic coverage).
 var fontsDir = Path.Combine(AppContext.BaseDirectory, "Assets", "Fonts");
-foreach (var ttf in new[] { "NotoSansArabic-Regular.ttf", "NotoSansArabic-Bold.ttf" })
+foreach (var ttf in new[]
+{
+    "Cairo-Regular.ttf",
+    "Cairo-Medium.ttf",
+    "Cairo-SemiBold.ttf",
+    "Cairo-Bold.ttf",
+})
 {
     var path = Path.Combine(fontsDir, ttf);
     if (File.Exists(path))

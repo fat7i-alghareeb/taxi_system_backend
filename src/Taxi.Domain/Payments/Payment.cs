@@ -27,12 +27,24 @@ public sealed class Payment : AuditableEntity
     public decimal Amount { get; private set; }
     public string Currency { get; private set; } = default!;
     public PaymentMethod Method { get; private set; }
+
+    /// <summary>Distinguishes the upfront fare from a post-trip waiting-fee surcharge.</summary>
+    public PaymentKind Kind { get; private set; }
+
     public PaymentStatus Status { get; private set; }
     public DateTime? ProcessedAtUtc { get; private set; }
     public string? TransactionReference { get; private set; }
     public string? StripePaymentIntentId { get; private set; }
     public string? StripeClientSecret { get; private set; }
     public string? StripeChargeId { get; private set; }
+
+    /// <summary>
+    /// The exact Stripe payment-method type used to settle this payment
+    /// (e.g. "ideal", "klarna", "card"). Captured from the charge on success
+    /// and printed on the invoice. Null for cash / non-Stripe payments.
+    /// </summary>
+    public string? StripePaymentMethodType { get; private set; }
+
     public string? LastErrorCode { get; private set; }
     public string? LastErrorMessage { get; private set; }
 
@@ -74,7 +86,32 @@ public sealed class Payment : AuditableEntity
         return payment;
     }
 
-    public Result<Success> MarkAsCompleted(string? chargeId = null)
+    // Creates the ledger entry for an off-session waiting-fee surcharge that is
+    // confirmed server-side (no client secret). The caller marks it
+    // completed/failed based on the off-session charge result.
+    public static Result<Payment> CreateWaitingFeeSurcharge(
+        Guid id,
+        Guid tripId,
+        decimal amount,
+        string currency,
+        string paymentIntentId)
+    {
+        if (amount <= 0)
+        {
+            return PaymentErrors.InvalidAmount;
+        }
+
+        var payment = new Payment(id, tripId, amount, currency, PaymentMethod.CreditCard)
+        {
+            Kind = PaymentKind.WaitingFee,
+            StripePaymentIntentId = paymentIntentId,
+            TransactionReference = paymentIntentId,
+        };
+
+        return payment;
+    }
+
+    public Result<Success> MarkAsCompleted(string? chargeId = null, string? stripePaymentMethodType = null)
     {
         if (Status == PaymentStatus.Completed)
         {
@@ -87,6 +124,11 @@ public sealed class Payment : AuditableEntity
         {
             StripeChargeId = chargeId;
             TransactionReference = chargeId;
+        }
+
+        if (!string.IsNullOrWhiteSpace(stripePaymentMethodType))
+        {
+            StripePaymentMethodType = stripePaymentMethodType;
         }
 
         return Result.Success;

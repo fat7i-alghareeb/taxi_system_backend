@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
+using Taxi.Domain.Configuration;
 using Taxi.Domain.Trips;
 
 namespace Taxi.Application.Features.Trips.Queries.GetTripInvoicePdf;
@@ -57,11 +58,31 @@ public class GetTripInvoicePdfQueryHandler(
 
         var invoice = issued.Value;
         var languageCode = ResolveLanguage(request.LanguageCode);
+        var contact = await GetCompanyContactAsync(ct);
 
-        var bytes = renderer.Render(invoice, languageCode);
+        var bytes = renderer.Render(invoice, languageCode, contact);
         var fileName = $"{invoice.InvoiceNumber}.pdf";
 
         return new TripInvoicePdfResult(fileName, bytes);
+    }
+
+    /// <summary>
+    /// Reads the live, admin-editable company contact details for the footer.
+    /// Rendered live (not snapshotted) so admin edits apply to every download.
+    /// </summary>
+    private async Task<InvoiceContact> GetCompanyContactAsync(CancellationToken ct)
+    {
+        var keys = new[] { AppConfigKeys.CompanyEmail, AppConfigKeys.CompanyPhone, AppConfigKeys.CompanyWebsite };
+
+        var values = await context.AppConfigs
+            .AsNoTracking()
+            .Where(c => keys.Contains(c.Key))
+            .ToDictionaryAsync(c => c.Key, c => c.Value, ct);
+
+        return new InvoiceContact(
+            Email: values.GetValueOrDefault(AppConfigKeys.CompanyEmail) ?? string.Empty,
+            Phone: values.GetValueOrDefault(AppConfigKeys.CompanyPhone) ?? string.Empty,
+            Website: values.GetValueOrDefault(AppConfigKeys.CompanyWebsite) ?? string.Empty);
     }
 
     private static string ResolveLanguage(string? requested)

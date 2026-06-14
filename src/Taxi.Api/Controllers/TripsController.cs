@@ -14,9 +14,11 @@ using Taxi.Application.Features.Trips.Commands.CompleteTrip;
 using Taxi.Application.Features.Trips.Commands.DriverCancelTrip;
 using Taxi.Application.Features.Trips.Commands.EnRouteTrip;
 using Taxi.Application.Features.Trips.Commands.GetPricingQuotes;
+using Taxi.Application.Features.Trips.Commands.RateTrip;
 using Taxi.Application.Features.Trips.Commands.RequestTrip;
 using Taxi.Application.Features.Trips.Commands.ResendArrivedNotification;
 using Taxi.Application.Features.Trips.Commands.ReviewCompensationClaim;
+using Taxi.Application.Features.Trips.Commands.SettleWaitingFee;
 using Taxi.Application.Features.Trips.Commands.StartTrip;
 using Taxi.Application.Features.Trips.Commands.StartTripWaiting;
 using Taxi.Application.Features.Trips.Commands.StopTripWaiting;
@@ -25,6 +27,7 @@ using Taxi.Application.Features.Trips.Commands.UpdatePassengerNote;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Application.Features.Trips.Queries.GetAllTrips;
 using Taxi.Application.Features.Trips.Queries.GetCompensationClaims;
+using Taxi.Application.Features.Trips.Queries.GetMyActiveTrip;
 using Taxi.Application.Features.Trips.Queries.GetPassengerTripCount;
 using Taxi.Application.Features.Trips.Queries.GetPassengerTrips;
 using Taxi.Application.Features.Trips.Queries.GetTripById;
@@ -62,6 +65,20 @@ public class TripsController(ISender sender) : ApiController
     {
         var result = await sender.Send(new GetPassengerTripCountQuery(), ct);
         return result.Match(count => Ok(count), Problem);
+    }
+
+    [HttpGet("active")]
+    [Authorize(Roles = "Passenger,Driver,Admin")]
+    [ProducesResponseType(typeof(TripDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [EndpointSummary("Returns the caller's current active (non-terminal) trip, or 204 if none.")]
+    [EndpointDescription("Used by the apps to resume the live trip view and join its realtime channel on launch / tab open. Resolves the passenger's trip, then the driver's assignment.")]
+    [EndpointName("GetMyActiveTrip")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetMyActiveTrip(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetMyActiveTripQuery(), ct);
+        return result.Match(dto => dto is null ? NoContent() : Ok(dto), Problem);
     }
 
     [HttpGet("{id:guid}", Name = "GetTripById")]
@@ -301,6 +318,34 @@ public class TripsController(ISender sender) : ApiController
     {
         var result = await sender.Send(new CompleteTripCommand(id), ct);
         return result.Match(_ => NoContent(), Problem);
+    }
+
+    [HttpPost("{id:guid}/rating")] // Simple alias used by the mobile apps.
+    [HttpPost("{id:guid}/ratings")] // Constitution-compliant noun (creates a rating resource).
+    [Authorize(Roles = "Passenger,Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Passenger rates a completed trip (1-5 stars).")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> RateTrip(Guid id, [FromBody] RateTripRequest request, CancellationToken ct)
+    {
+        var result = await sender.Send(new RateTripCommand(id, request.Stars, request.Comment), ct);
+        return result.Match(_ => NoContent(), Problem);
+    }
+
+    [HttpPost("{id:guid}/waiting-fee/settlements")]
+    [Authorize(Roles = "Passenger,Admin")]
+    [ProducesResponseType(typeof(WaitingFeeSettlementDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Creates a payment to settle an outstanding waiting fee for a trip.")]
+    [EndpointName("SettleWaitingFee")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> SettleWaitingFee(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new SettleWaitingFeeCommand(id), ct);
+        return result.Match(Ok, Problem);
     }
 
     [HttpPost("{id:guid}/stops/{sequence:int}/complete")] // Deprecated alias.

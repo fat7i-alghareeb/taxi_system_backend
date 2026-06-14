@@ -87,6 +87,16 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
         builder.Property(t => t.DeletedAtUtc)
             .IsRequired(false);
 
+        builder.Property(t => t.PreArrivalNotifiedAtUtc)
+            .IsRequired(false);
+
+        builder.Property(t => t.PassengerRating)
+            .IsRequired(false);
+
+        builder.Property(t => t.RatingComment)
+            .HasMaxLength(500)
+            .IsRequired(false);
+
         builder.HasQueryFilter(t => t.DeletedAtUtc == null);
     }
 }

@@ -25,4 +25,9 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Taxi.Application\Taxi.Application.csproj" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<!-- Fat7i logo embedded for the invoice PDF header. -->
+		<EmbeddedResource Include="Services\Invoices\Assets\oranje_logo.png" />
+	</ItemGroup>
 </Project>

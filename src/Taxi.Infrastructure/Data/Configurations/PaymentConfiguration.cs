@@ -22,6 +22,11 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasConversion<string>()
             .HasMaxLength(20);
 
+        builder.Property(x => x.Kind)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .HasDefaultValue(PaymentKind.Fare);
+
         builder.Property(x => x.Status)
             .HasConversion<string>()
             .HasMaxLength(20);
@@ -37,6 +42,9 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
 
         builder.Property(x => x.StripeChargeId)
             .HasMaxLength(255);
+
+        builder.Property(x => x.StripePaymentMethodType)
+            .HasMaxLength(50);
 
         builder.Property(x => x.LastErrorCode)
             .HasMaxLength(100);

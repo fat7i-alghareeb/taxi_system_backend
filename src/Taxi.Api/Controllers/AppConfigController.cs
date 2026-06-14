@@ -3,8 +3,10 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Taxi.Application.Features.Config.GetClientConfig;
+using Taxi.Application.Features.Config.GetCompanyContact;
 using Taxi.Application.Features.Config.GetCurrency;
 using Taxi.Application.Features.Config.GetTripDiscount;
+using Taxi.Application.Features.Config.UpdateCompanyContact;
 using Taxi.Application.Features.Config.UpdateCurrency;
 using Taxi.Application.Features.Config.UpdateTripDiscount;
 using Taxi.Contracts.Requests.Config;
@@ -80,6 +82,34 @@ public class AppConfigController(ISender sender) : ApiController
         CancellationToken ct)
     {
         var result = await sender.Send(new UpdateCurrencyCommand(request.CurrencyCode), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpGet("company-contact")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(CompanyContactDto), StatusCodes.Status200OK)]
+    [EndpointSummary("Gets the company contact details (email, phone, website) printed on invoices.")]
+    [EndpointName("GetCompanyContact")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetCompanyContact(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetCompanyContactQuery(), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpPut("company-contact")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(CompanyContactDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [EndpointSummary("Updates the company contact details (email, phone, website) printed on invoices.")]
+    [EndpointName("UpdateCompanyContact")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> UpdateCompanyContact(
+        [FromBody] UpdateCompanyContactRequest request,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(
+            new UpdateCompanyContactCommand(request.Email, request.Phone, request.Website), ct);
         return result.Match(Ok, Problem);
     }
 }

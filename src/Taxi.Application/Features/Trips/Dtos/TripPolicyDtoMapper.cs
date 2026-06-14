@@ -37,5 +37,8 @@ public static class TripPolicyDtoMapper
             session.StoppedAtUtc,
             session.Minutes,
             session.EstimatedFee,
-            session.IsActive);
+            session.IsActive,
+            session.RatePerMinute,
+            TripWaitingSession.GraceMinutes,
+            session.BillableMinutes);
 }

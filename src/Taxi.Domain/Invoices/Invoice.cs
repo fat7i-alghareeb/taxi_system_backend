@@ -32,6 +32,8 @@ public sealed class Invoice : AuditableEntity
         decimal durationMin,
         string vehicleTypeName,
         string? passengerName,
+        string? passengerPhone,
+        string? stripePaymentMethodType,
         string stopsJson)
         : base(id)
     {
@@ -56,6 +58,8 @@ public sealed class Invoice : AuditableEntity
         DurationMin = durationMin;
         VehicleTypeName = vehicleTypeName;
         PassengerName = passengerName;
+        PassengerPhone = passengerPhone;
+        StripePaymentMethodType = stripePaymentMethodType;
         StopsJson = stopsJson;
     }
 
@@ -80,6 +84,16 @@ public sealed class Invoice : AuditableEntity
     public decimal DurationMin { get; private set; }
     public string VehicleTypeName { get; private set; } = default!;
     public string? PassengerName { get; private set; }
+
+    /// <summary>Passenger phone snapshot, printed in the "billed to" block.</summary>
+    public string? PassengerPhone { get; private set; }
+
+    /// <summary>
+    /// Exact Stripe method used (e.g. "ideal", "klarna", "card") snapshot, so the
+    /// invoice can print "Betaald via: iDEAL". Null for cash / non-Stripe payments.
+    /// </summary>
+    public string? StripePaymentMethodType { get; private set; }
+
     public string StopsJson { get; private set; } = default!;
 
     public static Result<Invoice> Issue(
@@ -103,6 +117,8 @@ public sealed class Invoice : AuditableEntity
         string vehicleTypeName,
         string? passengerName,
         string stopsJson,
+        string? passengerPhone = null,
+        string? stripePaymentMethodType = null,
         decimal taxRate = 0m)
     {
         if (tripId == Guid.Empty)
@@ -164,6 +180,8 @@ public sealed class Invoice : AuditableEntity
             durationMin,
             vehicleTypeName,
             passengerName,
+            passengerPhone,
+            stripePaymentMethodType,
             stopsJson);
 
         invoice.AddDomainEvent(new InvoiceIssued

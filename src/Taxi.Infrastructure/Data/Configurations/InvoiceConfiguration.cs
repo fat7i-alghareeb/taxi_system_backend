@@ -52,6 +52,8 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         builder.Property(x => x.TripReferenceCode).IsRequired().HasMaxLength(20);
         builder.Property(x => x.VehicleTypeName).IsRequired().HasMaxLength(120);
         builder.Property(x => x.PassengerName).HasMaxLength(200);
+        builder.Property(x => x.PassengerPhone).HasMaxLength(30);
+        builder.Property(x => x.StripePaymentMethodType).HasMaxLength(50);
         builder.Property(x => x.StopsJson).IsRequired().HasColumnType("jsonb");
 
         builder.Property(x => x.CreatedAtUtc).IsRequired();

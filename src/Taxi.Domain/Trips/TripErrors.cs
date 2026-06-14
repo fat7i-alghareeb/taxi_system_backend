@@ -104,5 +104,9 @@ public static class TripErrors
     public static readonly Error CannotUpdatePassengerNote = Error.Validation(
         code: LocalizationKeys.Trip.CannotUpdatePassengerNote,
         description: "Passenger note cannot be updated after the trip has started.");
+
+    public static readonly Error InvalidRating = Error.Validation(
+        code: LocalizationKeys.Trip.InvalidRating,
+        description: "The rating must be between 1 and 5 stars.");
 }
 

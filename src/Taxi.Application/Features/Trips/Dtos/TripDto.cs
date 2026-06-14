@@ -27,7 +27,9 @@ public record TripDto(
     DateTimeOffset? CompletedAtUtc = null,
     string? EncodedOverviewPolyline = null,
     List<TripRouteSegmentDto>? RouteSegments = null,
-    string? PassengerNote = null);
+    string? PassengerNote = null,
+    int? PassengerRating = null,
+    string? RatingComment = null);
 
 public record TripRouteSegmentDto(
     int DistanceMeters,

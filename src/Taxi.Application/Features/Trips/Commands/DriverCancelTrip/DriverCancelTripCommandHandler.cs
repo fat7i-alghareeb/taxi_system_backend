@@ -84,7 +84,8 @@ public sealed class DriverCancelTripCommandHandler(
 
         context.TripCancellations.Add(cancellationResult.Value);
 
-        var payment = await context.Payments.FirstOrDefaultAsync(p => p.TripId == trip.Id, ct);
+        var payment = await context.Payments.FirstOrDefaultAsync(
+            p => p.TripId == trip.Id && p.Kind == PaymentKind.Fare, ct);
         if (clientConfig.GetClientConfig().StripeEnabled &&
             payment?.Status == PaymentStatus.Completed &&
             !string.IsNullOrWhiteSpace(payment.StripePaymentIntentId) &&

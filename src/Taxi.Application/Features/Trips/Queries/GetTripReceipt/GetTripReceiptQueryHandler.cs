@@ -57,7 +57,7 @@ public class GetTripReceiptQueryHandler(
 
         var payment = await context.Payments
             .AsNoTracking()
-            .Where(p => p.TripId == trip.Id)
+            .Where(p => p.TripId == trip.Id && p.Kind == PaymentKind.Fare)
             .OrderByDescending(p => p.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
 

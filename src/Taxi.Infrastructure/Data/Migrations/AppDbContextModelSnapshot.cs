@@ -510,6 +510,10 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("PassengerPhone")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -522,6 +526,10 @@ namespace Taxi.Infrastructure.Data.Migrations
                     b.Property<string>("StopsJson")
                         .IsRequired()
                         .HasColumnType("jsonb");
+
+                    b.Property<string>("StripePaymentMethodType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<decimal>("TaxAmount")
                         .HasPrecision(18, 2)
@@ -691,6 +699,13 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Fare");
+
                     b.Property<string>("LastErrorCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -729,6 +744,10 @@ namespace Taxi.Infrastructure.Data.Migrations
                     b.Property<string>("StripePaymentIntentId")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<string>("StripePaymentMethodType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("TransactionReference")
                         .HasMaxLength(255)
@@ -847,8 +866,18 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<int?>("PassengerRating")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("PreArrivalNotifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid>("QuoteId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("RatingComment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("ReferenceCode")
                         .IsRequired()
@@ -1040,6 +1069,9 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int?>("BillableMinutes")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -1061,6 +1093,10 @@ namespace Taxi.Infrastructure.Data.Migrations
 
                     b.Property<int?>("Minutes")
                         .HasColumnType("integer");
+
+                    b.Property<decimal>("RatePerMinute")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<DateTimeOffset>("StartedAtUtc")
                         .HasColumnType("timestamp with time zone");

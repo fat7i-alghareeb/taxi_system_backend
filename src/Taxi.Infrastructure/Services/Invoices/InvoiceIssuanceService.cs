@@ -50,7 +50,7 @@ public sealed class InvoiceIssuanceService(
             .FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
 
         var payment = await db.Payments
-            .Where(p => p.TripId == trip.Id)
+            .Where(p => p.TripId == trip.Id && p.Kind == PaymentKind.Fare)
             .OrderByDescending(p => p.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
 
@@ -68,6 +68,12 @@ public sealed class InvoiceIssuanceService(
         PaymentMethod method;
         string? paymentReference;
         DateTimeOffset? paidAtUtc;
+
+        // Exact Stripe method (ideal/klarna/card) captured on the completed payment,
+        // used to print "Betaald via: iDEAL". Null for cash / non-Stripe trips.
+        var stripePaymentMethodType = payment is { Status: PaymentStatus.Completed }
+            ? payment.StripePaymentMethodType
+            : null;
 
         if (payment is { Status: PaymentStatus.Completed, Method: PaymentMethod.CreditCard })
         {
@@ -87,6 +93,17 @@ public sealed class InvoiceIssuanceService(
             paymentReference = method == PaymentMethod.Cash ? "cash" : payment?.TransactionReference;
             paidAtUtc = trip.CompletedAtUtc;
         }
+
+        // Add any accrued waiting fee (per-minute charge beyond the free grace
+        // window once the driver has arrived) to the invoiced amount. For card
+        // trips the upfront Stripe charge did not include this surcharge; the
+        // invoice records the true amount owed, and collecting the difference is
+        // handled separately.
+        var waitingFee = await db.TripWaitingSessions
+            .Where(s => s.TripId == trip.Id)
+            .Select(s => s.EstimatedFee ?? 0m)
+            .ToListAsync(ct);
+        gross += waitingFee.Sum();
 
         var stopsSnapshot = trip.Stops
             .OrderBy(s => s.Sequence)
@@ -122,7 +139,9 @@ public sealed class InvoiceIssuanceService(
             durationMin: quote?.TotalDurationMin ?? 0m,
             vehicleTypeName: vehicleType?.Name.En ?? "Unknown",
             passengerName: passenger?.Name,
-            stopsJson: stopsJson);
+            stopsJson: stopsJson,
+            passengerPhone: passenger?.Phone,
+            stripePaymentMethodType: stripePaymentMethodType);
 
         if (result.IsFailure)
         {

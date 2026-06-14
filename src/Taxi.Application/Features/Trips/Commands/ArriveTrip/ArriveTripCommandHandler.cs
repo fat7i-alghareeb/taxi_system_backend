@@ -46,6 +46,27 @@ public class ArriveTripCommandHandler(IAppDbContext context, IUser currentUser)
             return transitionResult.Error;
         }
 
+        // Auto-start the waiting meter the moment the driver arrives. The first
+        // TripWaitingSession.GraceMinutes are free; beyond that the passenger is
+        // billed per minute at the vehicle type's RatePerMin (settled on completion).
+        if (trip.DriverId is { } driverId)
+        {
+            var hasActive = await _context.TripWaitingSessions
+                .AnyAsync(s => s.TripId == trip.Id && s.StoppedAtUtc == null, ct);
+            if (!hasActive)
+            {
+                var vehicleType = await _context.VehicleTypes
+                    .FirstOrDefaultAsync(v => v.Id == trip.VehicleTypeId, ct);
+                var ratePerMinute = vehicleType?.RatePerMin ?? TripWaitingSession.DefaultFeePerMinute;
+
+                var sessionResult = TripWaitingSession.Start(Guid.NewGuid(), trip.Id, driverId, ratePerMinute);
+                if (!sessionResult.IsError)
+                {
+                    _context.TripWaitingSessions.Add(sessionResult.Value);
+                }
+            }
+        }
+
         await _context.SaveChangesAsync(ct);
 
         return Result.Success;

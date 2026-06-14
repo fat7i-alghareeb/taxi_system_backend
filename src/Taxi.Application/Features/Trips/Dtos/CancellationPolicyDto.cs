@@ -30,4 +30,7 @@ public record WaitingSessionDto(
     DateTimeOffset? StoppedAtUtc,
     int? Minutes,
     decimal? EstimatedFee,
-    bool IsActive);
+    bool IsActive,
+    decimal RatePerMinute,
+    int GraceMinutes,
+    int? BillableMinutes);

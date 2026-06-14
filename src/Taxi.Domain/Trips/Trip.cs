@@ -46,6 +46,17 @@ public sealed class Trip : AuditableEntity
     public DateTimeOffset? CompletedAtUtc { get; private set; }
     public DateTimeOffset? DeletedAtUtc { get; private set; }
 
+    /// <summary>
+    /// Set once the passenger has been sent the "driver on the way" reminder for a
+    /// scheduled trip (15 minutes before <see cref="ScheduledAtUtc"/>). Used by the
+    /// background activation service to avoid sending the reminder more than once.
+    /// </summary>
+    public DateTimeOffset? PreArrivalNotifiedAtUtc { get; private set; }
+
+    /// <summary>Passenger's star rating (1-5) for a completed trip; null until rated.</summary>
+    public int? PassengerRating { get; private set; }
+    public string? RatingComment { get; private set; }
+
     public static Result<Trip> Request(
         Guid id,
         string referenceCode,
@@ -352,6 +363,33 @@ public sealed class Trip : AuditableEntity
     public Result<Success> SoftDelete()
     {
         DeletedAtUtc = DateTimeOffset.UtcNow;
+        return Result.Success;
+    }
+
+    /// <summary>
+    /// Records that the pre-arrival ("driver on the way") reminder has been sent for a
+    /// scheduled trip, so the activation service does not send it again.
+    /// </summary>
+    public void MarkPreArrivalNotified()
+    {
+        PreArrivalNotifiedAtUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Stores the passenger's 1-5 star rating for a completed trip.</summary>
+    public Result<Success> Rate(int stars, string? comment)
+    {
+        if (Status != TripStatus.Completed)
+        {
+            return TripErrors.InvalidStatus(Status);
+        }
+
+        if (stars is < 1 or > 5)
+        {
+            return TripErrors.InvalidRating;
+        }
+
+        PassengerRating = stars;
+        RatingComment = NormalizePassengerNote(comment);
         return Result.Success;
     }
 

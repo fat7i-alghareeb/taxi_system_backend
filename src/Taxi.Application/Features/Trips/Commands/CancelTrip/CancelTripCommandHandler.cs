@@ -60,9 +60,9 @@ public class CancelTripCommandHandler(
             return TripErrors.CancellationWindowExpired;
         }
 
-        // Load the linked Payment (if any) so we know whether to refund or cancel the PaymentIntent.
+        // Load the linked fare Payment (if any) so we know whether to refund or cancel the PaymentIntent.
         var payment = await context.Payments
-            .FirstOrDefaultAsync(p => p.TripId == trip.Id, ct);
+            .FirstOrDefaultAsync(p => p.TripId == trip.Id && p.Kind == PaymentKind.Fare, ct);
 
         var cancelResult = trip.Cancel();
         if (cancelResult.IsError)

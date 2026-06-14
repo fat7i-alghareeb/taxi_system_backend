@@ -55,7 +55,10 @@ public sealed class StartTripWaitingCommandHandler(IAppDbContext context, IUser 
             return Error.Validation(LocalizationKeys.Trip.DriverMismatch, "Trip has no assigned driver.");
         }
 
-        var sessionResult = TripWaitingSession.Start(Guid.NewGuid(), trip.Id, trip.DriverId.Value);
+        var vehicleType = await context.VehicleTypes.FirstOrDefaultAsync(v => v.Id == trip.VehicleTypeId, ct);
+        var ratePerMinute = vehicleType?.RatePerMin ?? TripWaitingSession.DefaultFeePerMinute;
+
+        var sessionResult = TripWaitingSession.Start(Guid.NewGuid(), trip.Id, trip.DriverId.Value, ratePerMinute);
         if (sessionResult.IsError)
         {
             return sessionResult.Errors;
