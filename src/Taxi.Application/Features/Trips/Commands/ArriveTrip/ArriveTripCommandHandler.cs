@@ -58,8 +58,21 @@ public class ArriveTripCommandHandler(IAppDbContext context, IUser currentUser)
                 var vehicleType = await _context.VehicleTypes
                     .FirstOrDefaultAsync(v => v.Id == trip.VehicleTypeId, ct);
                 var ratePerMinute = vehicleType?.RatePerMin ?? TripWaitingSession.DefaultFeePerMinute;
+                var graceMinutes = trip.IsAirport
+                    ? TripWaitingSession.AirportGraceMinutes
+                    : TripWaitingSession.DefaultGraceMinutes;
+                var now = DateTimeOffset.UtcNow;
+                var effectiveWaitingStart = trip.ScheduledAtUtc is { } scheduledAt && scheduledAt > now
+                    ? scheduledAt
+                    : now;
 
-                var sessionResult = TripWaitingSession.Start(Guid.NewGuid(), trip.Id, driverId, ratePerMinute);
+                var sessionResult = TripWaitingSession.Start(
+                    Guid.NewGuid(),
+                    trip.Id,
+                    driverId,
+                    ratePerMinute,
+                    graceMinutes,
+                    startedAtUtc: effectiveWaitingStart);
                 if (!sessionResult.IsError)
                 {
                     _context.TripWaitingSessions.Add(sessionResult.Value);

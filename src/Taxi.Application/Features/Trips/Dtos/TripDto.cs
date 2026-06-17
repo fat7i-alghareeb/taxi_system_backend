@@ -29,7 +29,10 @@ public record TripDto(
     List<TripRouteSegmentDto>? RouteSegments = null,
     string? PassengerNote = null,
     int? PassengerRating = null,
-    string? RatingComment = null);
+    string? RatingComment = null,
+    bool IsAirport = false,
+    decimal WaitingFeeTotal = 0m,
+    int WaitingBillableMinutes = 0);
 
 public record TripRouteSegmentDto(
     int DistanceMeters,

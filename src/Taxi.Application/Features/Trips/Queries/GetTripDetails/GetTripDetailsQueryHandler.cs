@@ -71,6 +71,14 @@ public class GetTripDetailsQueryHandler(IAppDbContext context)
             .OrderByDescending(s => s.StartedAtUtc)
             .FirstOrDefaultAsync(ct);
 
+        // Aggregate every session (active + settled) so the accrued waiting fee
+        // remains visible after the session has stopped.
+        var allWaitingSessions = await _context.TripWaitingSessions
+            .Where(s => s.TripId == trip.Id)
+            .ToListAsync(ct);
+        var waitingFeeTotal = allWaitingSessions.Sum(s => s.EstimatedFee ?? 0m);
+        var waitingBillableMinutes = allWaitingSessions.Sum(s => s.BillableMinutes ?? 0);
+
         var tripRoute = await _context.TripRoutes
             .FirstOrDefaultAsync(r => r.TripId == trip.Id, ct);
 
@@ -100,6 +108,9 @@ public class GetTripDetailsQueryHandler(IAppDbContext context)
             waitingSession?.ToDto(),
             EncodedOverviewPolyline: tripRoute?.EncodedPolyline,
             RouteSegments: TripRouteSegmentMapper.FromJson(tripRoute?.SegmentsJson),
-            PassengerNote: trip.PassengerNote);
+            PassengerNote: trip.PassengerNote,
+            IsAirport: trip.IsAirport,
+            WaitingFeeTotal: waitingFeeTotal,
+            WaitingBillableMinutes: waitingBillableMinutes);
     }
 }

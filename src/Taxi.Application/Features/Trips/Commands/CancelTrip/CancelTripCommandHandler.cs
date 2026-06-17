@@ -52,12 +52,40 @@ public class CancelTripCommandHandler(
 
         var preCancelStatus = trip.Status;
         var isWithinPassengerWindow = DateTimeOffset.UtcNow <= trip.CreatedAtUtc.AddHours(1);
-        var reason = isAdmin ? CancellationReason.AdminOverride : CancellationReason.PassengerWithinOneHour;
-        var actor = isAdmin ? CancellationActor.Admin : CancellationActor.Passenger;
 
-        if (!isAdmin && !isWithinPassengerWindow)
+        // Cancellation policy:
+        //   - Admin override: full refund (nothing charged yet => 0).
+        //   - Passenger, never charged (AwaitingPayment): cancel the intent, no refund.
+        //   - Passenger within 1 hour of booking: free cancellation (100% refund).
+        //   - Passenger after 1 hour: still cancellable, but only 20% refunded.
+        CancellationActor actor;
+        CancellationReason reason;
+        int refundPercent;
+
+        if (isAdmin)
         {
-            return TripErrors.CancellationWindowExpired;
+            actor = CancellationActor.Admin;
+            reason = CancellationReason.AdminOverride;
+            refundPercent = preCancelStatus == TripStatus.AwaitingPayment ? 0 : 100;
+        }
+        else
+        {
+            actor = CancellationActor.Passenger;
+            if (preCancelStatus == TripStatus.AwaitingPayment)
+            {
+                reason = CancellationReason.PassengerWithinOneHour;
+                refundPercent = 0;
+            }
+            else if (isWithinPassengerWindow)
+            {
+                reason = CancellationReason.PassengerWithinOneHour;
+                refundPercent = 100;
+            }
+            else
+            {
+                reason = CancellationReason.PassengerAfterOneHour;
+                refundPercent = 20;
+            }
         }
 
         // Load the linked fare Payment (if any) so we know whether to refund or cancel the PaymentIntent.
@@ -73,7 +101,6 @@ public class CancelTripCommandHandler(
         var quote = await context.PricingQuotes.FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
         var fare = quote?.FinalFare ?? 0;
         var currency = quote?.CurrencyCode ?? "EUR";
-        var refundPercent = preCancelStatus == TripStatus.AwaitingPayment ? 0 : 100;
         var refundAmount = Math.Round(fare * refundPercent / 100m, 2, MidpointRounding.AwayFromZero);
 
         var cancellationResult = TripCancellation.Create(

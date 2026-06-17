@@ -60,6 +60,30 @@ public sealed class SignalRTripNotifier(IHubContext<TripHub> hubContext, ILogger
     public Task NotifyTripCancelledAsync(Guid tripId, Guid passengerId, CancellationToken ct = default) =>
         SendToPassengerAsync("TripCancelled", tripId, passengerId, new TripCancelledNotification(tripId, passengerId), ct);
 
+    public Task NotifyTripCancelledToDriverAsync(Guid tripId, Guid driverUserId, Guid passengerId, CancellationToken ct = default)
+    {
+        _logger.LogInformation(
+            "[SignalRTripNotifier] => TripCancelled group=User_{DriverUserId} tripId={TripId}",
+            driverUserId,
+            tripId);
+
+        return _hubContext.Clients
+            .Group($"User_{driverUserId}")
+            .SendAsync("TripCancelled", new TripCancelledNotification(tripId, passengerId), ct);
+    }
+
+    public Task NotifyTripCancelledToAdminsAsync(Guid tripId, Guid passengerId, CancellationToken ct = default)
+    {
+        _logger.LogInformation(
+            "[SignalRTripNotifier] => TripCancelled group={AdminsGroup} tripId={TripId}",
+            TripHub.AdminsGroup,
+            tripId);
+
+        return _hubContext.Clients
+            .Group(TripHub.AdminsGroup)
+            .SendAsync("TripCancelled", new TripCancelledNotification(tripId, passengerId), ct);
+    }
+
     public Task NotifyPaymentConfirmedAsync(Guid tripId, Guid passengerId, CancellationToken ct = default) =>
         SendToPassengerAsync("PaymentConfirmed", tripId, passengerId, new PaymentConfirmedNotification(tripId, passengerId), ct);
 

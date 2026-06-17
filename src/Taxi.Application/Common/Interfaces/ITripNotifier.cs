@@ -27,6 +27,13 @@ public interface ITripNotifier
     /// <summary>Sends to the trip group that the ride has been cancelled.</summary>
     Task NotifyTripCancelledAsync(Guid tripId, Guid passengerId, CancellationToken ct = default);
 
+    /// <summary>Notifies the assigned driver (via their per-user group) that the trip was cancelled,
+    /// so they stop driving to / waiting at the pickup.</summary>
+    Task NotifyTripCancelledToDriverAsync(Guid tripId, Guid driverUserId, Guid passengerId, CancellationToken ct = default);
+
+    /// <summary>Notifies all admins that the trip was cancelled, so the dashboard updates live.</summary>
+    Task NotifyTripCancelledToAdminsAsync(Guid tripId, Guid passengerId, CancellationToken ct = default);
+
     /// <summary>Sends to the passenger that their payment has been confirmed and the trip is being dispatched.</summary>
     Task NotifyPaymentConfirmedAsync(Guid tripId, Guid passengerId, CancellationToken ct = default);
 

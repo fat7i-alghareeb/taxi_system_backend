@@ -8,5 +8,6 @@ public record RequestTripCommand(
     Guid QuoteId,
     List<CoordinateDto> Stops,
     DateTimeOffset? ScheduledAt = null,
-    string? PassengerNote = null) : IRequest<Result<TripDto>>;
+    string? PassengerNote = null,
+    bool IsAirport = false) : IRequest<Result<TripDto>>;
 

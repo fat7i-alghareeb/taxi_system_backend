@@ -71,6 +71,9 @@ public class GetCurrentUserQueryHandler(
             DriverId = driverId,
             ApprovalStatus = approvalStatus,
             RequiresPasswordReset = requiresPasswordReset,
+            HomeAddressLabel = user.HomeAddress?.Label,
+            HomeAddressLatitude = user.HomeAddress?.Latitude,
+            HomeAddressLongitude = user.HomeAddress?.Longitude,
         };
     }
 }

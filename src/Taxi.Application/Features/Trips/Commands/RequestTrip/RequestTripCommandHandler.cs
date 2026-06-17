@@ -72,7 +72,8 @@ public class RequestTripCommandHandler(
             quote,
             stops,
             request.ScheduledAt,
-            request.PassengerNote);
+            request.PassengerNote,
+            request.IsAirport);
 
         if (tripResult.IsFailure)
         {

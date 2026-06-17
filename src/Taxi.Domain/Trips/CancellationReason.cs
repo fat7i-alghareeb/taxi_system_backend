@@ -8,4 +8,16 @@ public enum CancellationReason
     PassengerNoShow = 3,
     PassengerUnreachable = 4,
     AdminOverride = 5,
+
+    /// <summary>
+    /// Passenger cancelled after the free 1-hour window. Per policy the trip is still
+    /// cancellable, but only 20% of the fare is refunded.
+    /// </summary>
+    PassengerAfterOneHour = 6,
+
+    /// <summary>
+    /// Airport trip: driver declined to keep waiting after the free 30-minute window.
+    /// The trip is cancelled and the passenger is refunded 20%.
+    /// </summary>
+    AirportWaitDeclined = 7,
 }

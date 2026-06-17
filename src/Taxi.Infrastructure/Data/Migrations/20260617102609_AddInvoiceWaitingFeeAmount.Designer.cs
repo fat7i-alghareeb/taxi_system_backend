@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Taxi.Infrastructure.Data;
@@ -11,9 +12,11 @@ using Taxi.Infrastructure.Data;
 namespace Taxi.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260617102609_AddInvoiceWaitingFeeAmount")]
+    partial class AddInvoiceWaitingFeeAmount
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1558,40 +1561,6 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasForeignKey("TripId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Taxi.Domain.Users.User", b =>
-                {
-                    b.OwnsOne("Taxi.Domain.Users.HomeAddress", "HomeAddress", b1 =>
-                        {
-                            b1.Property<Guid>("UserId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("Label")
-                                .IsRequired()
-                                .HasMaxLength(500)
-                                .HasColumnType("character varying(500)")
-                                .HasColumnName("HomeAddressLabel");
-
-                            b1.Property<decimal>("Latitude")
-                                .HasPrecision(18, 10)
-                                .HasColumnType("numeric(18,10)")
-                                .HasColumnName("HomeAddressLatitude");
-
-                            b1.Property<decimal>("Longitude")
-                                .HasPrecision(18, 10)
-                                .HasColumnType("numeric(18,10)")
-                                .HasColumnName("HomeAddressLongitude");
-
-                            b1.HasKey("UserId");
-
-                            b1.ToTable("DomainUsers");
-
-                            b1.WithOwner()
-                                .HasForeignKey("UserId");
-                        });
-
-                    b.Navigation("HomeAddress");
                 });
 
             modelBuilder.Entity("Taxi.Domain.Vehicles.VehicleType", b =>

@@ -4,5 +4,8 @@ namespace Taxi.Api.Contracts;
 
 public record UpdateUserProfileRequest(
     string? Name,
-    IFormFile? Photo);
+    IFormFile? Photo,
+    string? HomeAddressLabel,
+    decimal? HomeAddressLatitude,
+    decimal? HomeAddressLongitude);
 

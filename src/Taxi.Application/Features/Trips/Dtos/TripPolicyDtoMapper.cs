@@ -39,6 +39,6 @@ public static class TripPolicyDtoMapper
             session.EstimatedFee,
             session.IsActive,
             session.RatePerMinute,
-            TripWaitingSession.GraceMinutes,
+            session.GraceMinutes,
             session.BillableMinutes);
 }

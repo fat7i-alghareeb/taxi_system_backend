@@ -45,7 +45,8 @@ public sealed class SubmitCompensationClaimCommandHandler(IAppDbContext context,
             passengerId,
             request.Note,
             request.EvidenceUrls ?? [],
-            Math.Round(fare * 0.02m, 2, MidpointRounding.AwayFromZero),
+            // Policy: driver >20 min late (with proof) => 5% of the fare compensated.
+            Math.Round(fare * 0.05m, 2, MidpointRounding.AwayFromZero),
             currency);
 
         if (claimResult.IsError)

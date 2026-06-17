@@ -11,5 +11,8 @@ public class UserDto
     public Guid? DriverId { get; set; }
     public string? ApprovalStatus { get; set; }
     public bool RequiresPasswordReset { get; set; }
+    public string? HomeAddressLabel { get; set; }
+    public decimal? HomeAddressLatitude { get; set; }
+    public decimal? HomeAddressLongitude { get; set; }
 }
 

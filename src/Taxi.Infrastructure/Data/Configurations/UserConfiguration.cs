@@ -55,6 +55,22 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasIndex(x => x.StripeCustomerId);
 
+        // Optional home address (owned type). Nullable columns leave existing rows untouched.
+        builder.OwnsOne(x => x.HomeAddress, address =>
+        {
+            address.Property(a => a.Label)
+                .HasColumnName("HomeAddressLabel")
+                .HasMaxLength(500);
+
+            address.Property(a => a.Latitude)
+                .HasColumnName("HomeAddressLatitude")
+                .HasPrecision(18, 10);
+
+            address.Property(a => a.Longitude)
+                .HasColumnName("HomeAddressLongitude")
+                .HasPrecision(18, 10);
+        });
+
         // Global query filter for soft delete
         builder.HasQueryFilter(x => x.DeletedAtUtc == null);
     }

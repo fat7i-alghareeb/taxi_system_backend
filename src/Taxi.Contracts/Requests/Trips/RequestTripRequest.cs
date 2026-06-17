@@ -16,5 +16,8 @@ public class RequestTripRequest
 
     [MaxLength(500, ErrorMessage = LocalizationKeys.Trip.PassengerNoteTooLong)]
     public string? PassengerNote { get; set; }
+
+    /// <summary>Passenger flagged this as an airport trip (30-min free waiting policy).</summary>
+    public bool IsAirport { get; set; }
 }
 

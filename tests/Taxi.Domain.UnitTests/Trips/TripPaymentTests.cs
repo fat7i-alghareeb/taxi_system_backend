@@ -121,6 +121,65 @@ public class TripPaymentTests
         Assert.True(result.IsFailure);
     }
 
+    [Fact]
+    public void DriverEnRoute_WhenScheduledTimeIsMoreThanFifteenMinutesAway_ReturnsScheduledEnRouteNotReady()
+    {
+        var trip = CreateAwaitingPaymentTrip(scheduledAt: DateTimeOffset.UtcNow.AddHours(2));
+        trip.ConfirmPayment();
+        trip.AssignDriver(Guid.NewGuid());
+
+        var result = trip.DriverEnRoute();
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(TripErrors.ScheduledEnRouteNotReady.Code, result.Error.Code);
+        Assert.Equal(TripStatus.DriverAssigned, trip.Status);
+    }
+
+    [Fact]
+    public void DriverEnRoute_WhenScheduledTimeIsWithinFifteenMinutes_TransitionsToDriverEnRoute()
+    {
+        var trip = CreateAwaitingPaymentTrip(scheduledAt: DateTimeOffset.UtcNow.AddMinutes(10));
+        trip.ConfirmPayment();
+        trip.AssignDriver(Guid.NewGuid());
+
+        var result = trip.DriverEnRoute();
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(TripStatus.DriverEnRoute, trip.Status);
+    }
+
+    [Fact]
+    public void DriverArrived_WhenScheduledTimeIsStillInFuture_ReturnsScheduledArrivalNotReady()
+    {
+        var trip = CreateAwaitingPaymentTrip(scheduledAt: DateTimeOffset.UtcNow.AddMinutes(10));
+        trip.ConfirmPayment();
+        trip.AssignDriver(Guid.NewGuid());
+        trip.DriverEnRoute();
+
+        var result = trip.DriverArrived();
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(TripErrors.ScheduledArrivalNotReady.Code, result.Error.Code);
+        Assert.Equal(TripStatus.DriverEnRoute, trip.Status);
+        Assert.Null(trip.ArrivedAtUtc);
+    }
+
+    [Fact]
+    public void Start_WhenScheduledTimeIsStillInFuture_ReturnsScheduledStartNotReady()
+    {
+        var trip = CreateAwaitingPaymentTrip(scheduledAt: DateTimeOffset.UtcNow.AddHours(2));
+        trip.ConfirmPayment();
+        trip.AssignDriver(Guid.NewGuid());
+        ForceTripState(trip, TripStatus.DriverArrived);
+
+        var result = trip.Start();
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(TripErrors.ScheduledStartNotReady.Code, result.Error.Code);
+        Assert.Equal(TripStatus.DriverArrived, trip.Status);
+        Assert.Null(trip.StartedAtUtc);
+    }
+
     // ── Cancel ───────────────────────────────────────────────────────────────
 
     [Fact]
@@ -159,5 +218,14 @@ public class TripPaymentTests
         };
 
         return Trip.Request(Guid.NewGuid(), "TRP-TEST01", passengerId, quote, stops, scheduledAt).Value;
+    }
+
+    private static void ForceTripState(Trip trip, TripStatus status)
+    {
+        typeof(Trip).GetProperty(nameof(Trip.Status))!.SetValue(trip, status);
+        if (status == TripStatus.DriverArrived)
+        {
+            typeof(Trip).GetProperty(nameof(Trip.ArrivedAtUtc))!.SetValue(trip, DateTimeOffset.UtcNow);
+        }
     }
 }

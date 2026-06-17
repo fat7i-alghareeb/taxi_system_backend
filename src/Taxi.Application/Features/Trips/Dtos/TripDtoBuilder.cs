@@ -46,6 +46,12 @@ public static class TripDtoBuilder
             .OrderByDescending(w => w.StartedAtUtc)
             .FirstOrDefaultAsync(ct);
 
+        var allWaitingSessions = await context.TripWaitingSessions
+            .Where(w => w.TripId == trip.Id)
+            .ToListAsync(ct);
+        var waitingFeeTotal = allWaitingSessions.Sum(w => w.EstimatedFee ?? 0m);
+        var waitingBillableMinutes = allWaitingSessions.Sum(w => w.BillableMinutes ?? 0);
+
         var tripRoute = await context.TripRoutes
             .FirstOrDefaultAsync(r => r.TripId == trip.Id, ct);
 
@@ -91,6 +97,9 @@ public static class TripDtoBuilder
             RouteSegments: TripRouteSegmentMapper.FromJson(tripRoute?.SegmentsJson),
             PassengerNote: trip.PassengerNote,
             PassengerRating: trip.PassengerRating,
-            RatingComment: trip.RatingComment);
+            RatingComment: trip.RatingComment,
+            IsAirport: trip.IsAirport,
+            WaitingFeeTotal: waitingFeeTotal,
+            WaitingBillableMinutes: waitingBillableMinutes);
     }
 }

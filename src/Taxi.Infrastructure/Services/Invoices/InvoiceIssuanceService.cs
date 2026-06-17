@@ -103,7 +103,8 @@ public sealed class InvoiceIssuanceService(
             .Where(s => s.TripId == trip.Id)
             .Select(s => s.EstimatedFee ?? 0m)
             .ToListAsync(ct);
-        gross += waitingFee.Sum();
+        var waitingFeeTotal = waitingFee.Sum();
+        gross += waitingFeeTotal;
 
         var stopsSnapshot = trip.Stops
             .OrderBy(s => s.Sequence)
@@ -141,7 +142,8 @@ public sealed class InvoiceIssuanceService(
             passengerName: passenger?.Name,
             stopsJson: stopsJson,
             passengerPhone: passenger?.Phone,
-            stripePaymentMethodType: stripePaymentMethodType);
+            stripePaymentMethodType: stripePaymentMethodType,
+            waitingFeeAmount: waitingFeeTotal);
 
         if (result.IsFailure)
         {

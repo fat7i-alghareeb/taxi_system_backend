@@ -46,13 +46,25 @@ public sealed class DriverCancelTripCommandHandler(
             return TripErrors.DriverCancelTooEarly;
         }
 
-        if (DateTimeOffset.UtcNow < trip.ArrivedAtUtc.Value.AddMinutes(10))
+        // Airport trips give the passenger a 30-minute free wait before the driver may
+        // decline to continue; regular trips use the standard 10-minute no-show window.
+        var graceMinutes = trip.IsAirport
+            ? TripWaitingSession.AirportGraceMinutes
+            : TripWaitingSession.DefaultGraceMinutes;
+        var waitingStart = trip.ScheduledAtUtc is { } scheduledAt && scheduledAt > trip.ArrivedAtUtc.Value
+            ? scheduledAt
+            : trip.ArrivedAtUtc.Value;
+
+        if (DateTimeOffset.UtcNow < waitingStart.AddMinutes(graceMinutes))
         {
             return TripErrors.DriverCancelTooEarly;
         }
 
         if (!Enum.TryParse<CancellationReason>(request.Reason, ignoreCase: true, out var reason) ||
-            reason is not (CancellationReason.PassengerLate or CancellationReason.PassengerNoShow or CancellationReason.PassengerUnreachable))
+            reason is not (CancellationReason.PassengerLate
+                or CancellationReason.PassengerNoShow
+                or CancellationReason.PassengerUnreachable
+                or CancellationReason.AirportWaitDeclined))
         {
             return TripErrors.InvalidCancellationReason;
         }

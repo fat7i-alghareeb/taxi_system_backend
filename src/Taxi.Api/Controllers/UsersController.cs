@@ -73,7 +73,10 @@ public class UsersController(ISender sender) : ApiController
         var command = new UpdateUserProfileCommand(
             request.Name,
             request.Photo?.OpenReadStream(),
-            request.Photo?.ContentType);
+            request.Photo?.ContentType,
+            request.HomeAddressLabel,
+            request.HomeAddressLatitude,
+            request.HomeAddressLongitude);
 
         var result = await sender.Send(command, ct);
         return result.Match(Ok, Problem);

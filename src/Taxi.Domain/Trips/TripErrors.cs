@@ -45,6 +45,18 @@ public static class TripErrors
         code: LocalizationKeys.Trip.ScheduledAtTooSoon,
         description: "Scheduled time must be at least 15 minutes in the future.");
 
+    public static readonly Error ScheduledEnRouteNotReady = Error.Validation(
+        code: LocalizationKeys.Trip.ScheduledEnRouteNotReady,
+        description: "This scheduled trip can only be marked on the way 15 minutes before its scheduled time.");
+
+    public static readonly Error ScheduledArrivalNotReady = Error.Validation(
+        code: LocalizationKeys.Trip.ScheduledArrivalNotReady,
+        description: "This scheduled trip cannot be marked arrived before its scheduled time.");
+
+    public static readonly Error ScheduledStartNotReady = Error.Validation(
+        code: LocalizationKeys.Trip.ScheduledStartNotReady,
+        description: "This scheduled trip cannot be started before its scheduled time.");
+
     public static readonly Error CannotCancel = Error.Validation(
         code: LocalizationKeys.Trip.CannotCancel,
         description: "This trip cannot be cancelled in its current status.");

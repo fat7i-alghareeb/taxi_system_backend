@@ -35,4 +35,10 @@ public record TripDetailsDto(
     // multi-stop polyline the customer/driver apps render from /trips/{id}.
     string? EncodedOverviewPolyline = null,
     List<TripRouteSegmentDto>? RouteSegments = null,
-    string? PassengerNote = null);
+    string? PassengerNote = null,
+    bool IsAirport = false,
+
+    // Total accrued waiting fee across all sessions (active + settled) and the
+    // billable minutes behind it, so the settled fee survives after the session stops.
+    decimal WaitingFeeTotal = 0m,
+    int WaitingBillableMinutes = 0);

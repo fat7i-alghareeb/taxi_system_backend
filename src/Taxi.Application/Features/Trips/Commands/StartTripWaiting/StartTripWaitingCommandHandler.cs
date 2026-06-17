@@ -57,8 +57,21 @@ public sealed class StartTripWaitingCommandHandler(IAppDbContext context, IUser 
 
         var vehicleType = await context.VehicleTypes.FirstOrDefaultAsync(v => v.Id == trip.VehicleTypeId, ct);
         var ratePerMinute = vehicleType?.RatePerMin ?? TripWaitingSession.DefaultFeePerMinute;
+        var graceMinutes = trip.IsAirport
+            ? TripWaitingSession.AirportGraceMinutes
+            : TripWaitingSession.DefaultGraceMinutes;
+        var now = DateTimeOffset.UtcNow;
+        var effectiveWaitingStart = trip.ScheduledAtUtc is { } scheduledAt && scheduledAt > now
+            ? scheduledAt
+            : now;
 
-        var sessionResult = TripWaitingSession.Start(Guid.NewGuid(), trip.Id, trip.DriverId.Value, ratePerMinute);
+        var sessionResult = TripWaitingSession.Start(
+            Guid.NewGuid(),
+            trip.Id,
+            trip.DriverId.Value,
+            ratePerMinute,
+            graceMinutes,
+            effectiveWaitingStart);
         if (sessionResult.IsError)
         {
             return sessionResult.Errors;

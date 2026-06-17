@@ -33,6 +33,10 @@ public static class UserErrors
         code: LocalizationKeys.User.StripeCustomerIdRequired,
         description: "Stripe customer id is required.");
 
+    public static readonly Error HomeAddressInvalid = Error.Validation(
+        code: LocalizationKeys.User.HomeAddressInvalid,
+        description: "Home address is invalid.");
+
     public static readonly Error Inactive = Error.Forbidden(
         code: LocalizationKeys.User.Inactive,
         description: "User account is inactive.");

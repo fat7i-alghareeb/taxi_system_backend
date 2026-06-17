@@ -33,6 +33,14 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
     private const string LatinFont = "Lato";
     private const string ArabicFont = "Cairo";
 
+    // Fat7i legal/registration details printed under the brand name.
+    // Street, postal code and registration numbers are fixed; only the country
+    // word and the "KvK"/"BTW ID" labels are localized.
+    private const string CompanyStreet = "Frederik Hendrikstraat, 30zw";
+    private const string CompanyPostalCity = "3143LD Maassluis";
+    private const string CompanyKvkNumber = "90298934";
+    private const string CompanyBtwNumber = "NL004808140B65";
+
     private static readonly byte[]? LogoBytes = LoadLogo();
 
     public byte[] Render(Invoice invoice, string languageCode, InvoiceContact contact)
@@ -141,20 +149,24 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
                         row.RelativeItem().Column(left =>
                         {
                             left.Item().Text(invoice.IssuerName).FontSize(17).Bold().FontColor(Brand);
-                            foreach (var line in AddressLines(invoice.IssuerAddress))
-                            {
-                                left.Item().PaddingTop(1).Text(line).FontSize(9.5f).FontColor(Ink);
-                            }
+                            left.Item().PaddingTop(1).Text(CompanyStreet).FontSize(9.5f).FontColor(Ink);
+                            left.Item().PaddingTop(1).Text(CompanyPostalCity).FontSize(9.5f).FontColor(Ink);
+                            left.Item().PaddingTop(1)
+                                .Text(T(LocalizationKeys.Invoice.CompanyCountry, "Netherlands"))
+                                .FontSize(9.5f).FontColor(Ink);
 
-                            if (!string.IsNullOrWhiteSpace(invoice.IssuerVatNumber))
+                            left.Item().PaddingTop(6).Text(text =>
                             {
-                                left.Item().PaddingTop(6).Text(text =>
-                                {
-                                    text.Span($"{T(LocalizationKeys.Invoice.VatId, "VAT ID")}: ")
-                                        .SemiBold().FontColor(Ink);
-                                    text.Span(invoice.IssuerVatNumber).FontColor(Muted);
-                                });
-                            }
+                                text.Span($"{T(LocalizationKeys.Invoice.CompanyKvk, "KvK")}: ")
+                                    .SemiBold().FontColor(Ink);
+                                text.Span(CompanyKvkNumber).FontColor(Muted);
+                            });
+                            left.Item().PaddingTop(1).Text(text =>
+                            {
+                                text.Span($"{T(LocalizationKeys.Invoice.CompanyBtwId, "BTW ID")}: ")
+                                    .SemiBold().FontColor(Ink);
+                                text.Span(CompanyBtwNumber).FontColor(Muted);
+                            });
                         });
 
                         row.ConstantItem(230).Column(right =>
@@ -243,7 +255,9 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
                             HeaderCell(header.Cell(), T(LocalizationKeys.Invoice.ColumnTotal, "Total"), Alignment.Right);
                         });
 
-                        // Single transport line item.
+                        // Transport line item. When a waiting fee accrued it is split
+                        // out onto its own line, so this line shows the fare only.
+                        var transportAmount = invoice.GrossAmount - invoice.WaitingFeeAmount;
                         table.Cell().PaddingVertical(8).PaddingHorizontal(10).Column(c =>
                         {
                             c.Item().Text(T(LocalizationKeys.Invoice.ServiceTitle, "Taxi service")).SemiBold();
@@ -257,7 +271,19 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
                         });
                         table.Cell().PaddingVertical(8).AlignCenter().AlignMiddle().Text("1");
                         table.Cell().PaddingVertical(8).PaddingHorizontal(10).AlignRight().AlignMiddle()
-                            .Text(FormatMoney(invoice.GrossAmount)).SemiBold();
+                            .Text(FormatMoney(transportAmount)).SemiBold();
+
+                        // Waiting-fee line item (only when one accrued).
+                        if (invoice.WaitingFeeAmount > 0m)
+                        {
+                            table.Cell().PaddingVertical(8).PaddingHorizontal(10).Column(c =>
+                            {
+                                c.Item().Text(T(LocalizationKeys.Invoice.WaitingFee, "Waiting fee")).SemiBold();
+                            });
+                            table.Cell().PaddingVertical(8).AlignCenter().AlignMiddle().Text("1");
+                            table.Cell().PaddingVertical(8).PaddingHorizontal(10).AlignRight().AlignMiddle()
+                                .Text(FormatMoney(invoice.WaitingFeeAmount)).SemiBold();
+                        }
                     });
 
                     // ---- Totals card (right) ---------------------------------------
@@ -293,14 +319,6 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
                                     text.Span($"{T(LocalizationKeys.Invoice.PaidVia, "Paid via")}: ").FontColor(Muted);
                                     text.Span(methodLabel).SemiBold().FontColor(Ink);
                                 });
-                                if (!string.IsNullOrWhiteSpace(invoice.PaymentReference))
-                                {
-                                    info.Item().PaddingTop(2).Text(text =>
-                                    {
-                                        text.Span($"{T(LocalizationKeys.Invoice.TransactionId, "Transaction ID")}: ").FontColor(Muted);
-                                        text.Span(invoice.PaymentReference!).FontColor(Ink);
-                                    });
-                                }
                             });
 
                             if (isPaid)
@@ -391,25 +409,6 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
         Left,
         Center,
         Right,
-    }
-
-    /// <summary>Splits the issuer address into display lines (newline or comma separated).</summary>
-    private static IEnumerable<string> AddressLines(string address)
-    {
-        if (string.IsNullOrWhiteSpace(address))
-        {
-            yield break;
-        }
-
-        var separators = address.Contains('\n') ? new[] { '\n' } : new[] { ',' };
-        foreach (var part in address.Split(separators, StringSplitOptions.RemoveEmptyEntries))
-        {
-            var trimmed = part.Trim();
-            if (trimmed.Length > 0)
-            {
-                yield return trimmed;
-            }
-        }
     }
 
     /// <summary>Builds "origin → destination" from the stored stop snapshot.</summary>

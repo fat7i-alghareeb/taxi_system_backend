@@ -132,7 +132,8 @@ public class TripsController(ISender sender) : ApiController
             request.QuoteId,
             request.Stops.Select(s => new CoordinateDto(s.Latitude, s.Longitude, s.Label)).ToList(),
             request.ScheduledAt,
-            request.PassengerNote);
+            request.PassengerNote,
+            request.IsAirport);
 
         var result = await sender.Send(command, ct);
 
@@ -164,7 +165,7 @@ public class TripsController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Cancels a trip.")]
-    [EndpointDescription("Allowed while trip is Scheduled, PendingDriver, or DriverAssigned. Not allowed once InProgress.")]
+    [EndpointDescription("Cancellable until the ride is InProgress. Free (100% refund) within 1 hour of booking; after that 20% is refunded. Not allowed once InProgress, Completed, Cancelled, Refunded, or PaymentFailed.")]
     [EndpointName("CancelTrip")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> CancelTrip(Guid id, [FromBody] CancelTripRequest? request, CancellationToken ct)

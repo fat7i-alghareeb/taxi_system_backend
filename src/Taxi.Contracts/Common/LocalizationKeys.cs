@@ -58,6 +58,7 @@ public static class LocalizationKeys
         public const string PreferredLanguageRequired = "User.PreferredLanguageRequired";
         public const string PreferredLanguageInvalid = "User.PreferredLanguageInvalid";
         public const string StripeCustomerIdRequired = "User.StripeCustomerIdRequired";
+        public const string HomeAddressInvalid = "User.HomeAddressInvalid";
     }
 
     public static class Validation
@@ -141,6 +142,9 @@ public static class LocalizationKeys
         public const string DriverNotFound = "Trip.Driver.NotFound";
         public const string ScheduledAtTooSoon = "Trip.ScheduledAt.TooSoon";
         public const string ScheduledNotReady = "Trip.Scheduled.NotReady";
+        public const string ScheduledEnRouteNotReady = "Trip.Scheduled.EnRouteNotReady";
+        public const string ScheduledArrivalNotReady = "Trip.Scheduled.ArrivalNotReady";
+        public const string ScheduledStartNotReady = "Trip.Scheduled.StartNotReady";
         public const string CannotCancel = "Trip.CannotCancel";
         public const string CancellationWindowExpired = "Trip.Cancellation.WindowExpired";
         public const string DriverCancelTooEarly = "Trip.Cancellation.DriverTooEarly";
@@ -227,6 +231,7 @@ public static class LocalizationKeys
         public const string ServiceType = "Invoice.ServiceType";
         public const string ServiceTitle = "Invoice.ServiceTitle";
         public const string RideDate = "Invoice.RideDate";
+        public const string WaitingFee = "Invoice.WaitingFee";
         public const string ColumnTotal = "Invoice.Column.Total";
         public const string Total = "Invoice.Total";
         public const string TotalPaid = "Invoice.TotalPaid";
@@ -235,6 +240,11 @@ public static class LocalizationKeys
         public const string PaymentCompleted = "Invoice.PaymentCompleted";
         public const string MethodIdeal = "Invoice.Method.iDEAL";
         public const string MethodKlarna = "Invoice.Method.Klarna";
+
+        // Issuer company/legal block under the brand name.
+        public const string CompanyCountry = "Invoice.Company.Country";
+        public const string CompanyKvk = "Invoice.Company.Kvk";
+        public const string CompanyBtwId = "Invoice.Company.BtwId";
     }
 
     public static class AdminProfile

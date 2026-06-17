@@ -57,6 +57,17 @@ public class UpdateUserProfileCommandHandler(
             return updateResult.Errors;
         }
 
+        // 3. Update optional home address (all-null clears it).
+        var addressResult = user.UpdateHomeAddress(
+            request.HomeAddressLabel,
+            request.HomeAddressLatitude,
+            request.HomeAddressLongitude);
+
+        if (addressResult.IsError)
+        {
+            return addressResult.Errors;
+        }
+
         await context.SaveChangesAsync(ct);
 
         return new UserDto
@@ -67,6 +78,9 @@ public class UpdateUserProfileCommandHandler(
             Email = user.Email,
             ProfilePhotoUrl = user.ProfilePhotoUrl,
             Name = user.Name,
+            HomeAddressLabel = user.HomeAddress?.Label,
+            HomeAddressLatitude = user.HomeAddress?.Latitude,
+            HomeAddressLongitude = user.HomeAddress?.Longitude,
         };
     }
 }

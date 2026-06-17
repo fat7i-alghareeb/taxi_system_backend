@@ -6,6 +6,8 @@ namespace Taxi.Domain.Trips;
 
 public sealed class Trip : AuditableEntity
 {
+    private static readonly TimeSpan ScheduledEnRouteLeadTime = TimeSpan.FromMinutes(15);
+
     private readonly List<TripStop> _stops = [];
 
     private Trip() { }
@@ -18,7 +20,8 @@ public sealed class Trip : AuditableEntity
         Guid quoteId,
         IEnumerable<TripStop> stops,
         DateTimeOffset? scheduledAtUtc,
-        string? passengerNote)
+        string? passengerNote,
+        bool isAirport)
         : base(id)
     {
         PassengerId = passengerId;
@@ -27,6 +30,7 @@ public sealed class Trip : AuditableEntity
         QuoteId = quoteId;
         ScheduledAtUtc = scheduledAtUtc;
         PassengerNote = NormalizePassengerNote(passengerNote);
+        IsAirport = isAirport;
         Status = TripStatus.AwaitingPayment;
         _stops.AddRange(stops);
     }
@@ -39,6 +43,13 @@ public sealed class Trip : AuditableEntity
     public Guid QuoteId { get; private set; }
     public IReadOnlyCollection<TripStop> Stops => _stops.AsReadOnly();
     public string? PassengerNote { get; private set; }
+
+    /// <summary>
+    /// Airport trip flagged by the passenger at booking. Airport trips get a longer
+    /// free waiting window (30 min vs 10) and the driver may decline to keep waiting
+    /// after it, which cancels the trip with a 20% passenger refund.
+    /// </summary>
+    public bool IsAirport { get; private set; }
     public DateTimeOffset? ScheduledAtUtc { get; private set; }
     public DateTimeOffset? AssignedAtUtc { get; private set; }
     public DateTimeOffset? ArrivedAtUtc { get; private set; }
@@ -64,7 +75,8 @@ public sealed class Trip : AuditableEntity
         PricingQuote quote,
         IEnumerable<TripStop> stops,
         DateTimeOffset? scheduledAtUtc = null,
-        string? passengerNote = null)
+        string? passengerNote = null,
+        bool isAirport = false)
     {
         if (quote.IsExpired())
         {
@@ -84,7 +96,8 @@ public sealed class Trip : AuditableEntity
             quote.Id,
             stops,
             scheduledAtUtc,
-            passengerNote);
+            passengerNote,
+            isAirport);
 
         trip.AddDomainEvent(new TripRequested
         {
@@ -139,6 +152,12 @@ public sealed class Trip : AuditableEntity
             return TripErrors.InvalidStatus(Status);
         }
 
+        if (ScheduledAtUtc.HasValue &&
+            ScheduledAtUtc.Value > DateTimeOffset.UtcNow.Add(ScheduledEnRouteLeadTime))
+        {
+            return TripErrors.ScheduledEnRouteNotReady;
+        }
+
         Status = TripStatus.DriverEnRoute;
 
         AddDomainEvent(new DriverEnRoute
@@ -156,6 +175,11 @@ public sealed class Trip : AuditableEntity
         if (Status != TripStatus.DriverEnRoute)
         {
             return TripErrors.InvalidStatus(Status);
+        }
+
+        if (ScheduledAtUtc.HasValue && ScheduledAtUtc.Value > DateTimeOffset.UtcNow)
+        {
+            return TripErrors.ScheduledArrivalNotReady;
         }
 
         Status = TripStatus.DriverArrived;
@@ -176,6 +200,11 @@ public sealed class Trip : AuditableEntity
         if (Status != TripStatus.DriverArrived)
         {
             return TripErrors.InvalidStatus(Status);
+        }
+
+        if (ScheduledAtUtc.HasValue && ScheduledAtUtc.Value > DateTimeOffset.UtcNow)
+        {
+            return TripErrors.ScheduledStartNotReady;
         }
 
         Status = TripStatus.InProgress;

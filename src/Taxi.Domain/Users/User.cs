@@ -34,6 +34,7 @@ public sealed class User : AuditableEntity
     public string? FcmToken { get; private set; }
     public string PreferredLanguage { get; private set; } = "en";
     public string? StripeCustomerId { get; private set; }
+    public HomeAddress? HomeAddress { get; private set; }
 
     public static Result<User> Create(
         Guid id,
@@ -124,6 +125,7 @@ public sealed class User : AuditableEntity
         Email = null;
         ProfilePhotoUrl = null;
         FcmToken = null;
+        HomeAddress = null;
         return Result.Success;
     }
 
@@ -147,6 +149,32 @@ public sealed class User : AuditableEntity
             Email = trimmed.Length == 0 ? null : trimmed;
         }
 
+        return Result.Success;
+    }
+
+    /// <summary>
+    /// Sets or clears the optional home address. Passing all-null/blank values clears it.
+    /// When provided, a non-blank label and in-range coordinates are required.
+    /// </summary>
+    public Result<Success> UpdateHomeAddress(string? label, decimal? latitude, decimal? longitude)
+    {
+        if (string.IsNullOrWhiteSpace(label) && latitude is null && longitude is null)
+        {
+            HomeAddress = null;
+            return Result.Success;
+        }
+
+        if (string.IsNullOrWhiteSpace(label) || latitude is null || longitude is null)
+        {
+            return UserErrors.HomeAddressInvalid;
+        }
+
+        if (latitude is < -90m or > 90m || longitude is < -180m or > 180m)
+        {
+            return UserErrors.HomeAddressInvalid;
+        }
+
+        HomeAddress = new HomeAddress(label.Trim(), latitude.Value, longitude.Value);
         return Result.Success;
     }
 

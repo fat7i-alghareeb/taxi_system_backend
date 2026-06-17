@@ -20,6 +20,7 @@ public sealed class Invoice : AuditableEntity
         decimal taxRate,
         decimal taxAmount,
         decimal grossAmount,
+        decimal waitingFeeAmount,
         PaymentMethod paymentMethod,
         string? paymentReference,
         DateTimeOffset? paidAtUtc,
@@ -46,6 +47,7 @@ public sealed class Invoice : AuditableEntity
         TaxRate = taxRate;
         TaxAmount = taxAmount;
         GrossAmount = grossAmount;
+        WaitingFeeAmount = waitingFeeAmount;
         PaymentMethod = paymentMethod;
         PaymentReference = paymentReference;
         PaidAtUtc = paidAtUtc;
@@ -72,6 +74,11 @@ public sealed class Invoice : AuditableEntity
     public decimal TaxRate { get; private set; }
     public decimal TaxAmount { get; private set; }
     public decimal GrossAmount { get; private set; }
+
+    /// <summary>Portion of <see cref="GrossAmount"/> that is the accrued waiting fee
+    /// (per-minute charge beyond the free grace window). Itemised on the invoice.</summary>
+    public decimal WaitingFeeAmount { get; private set; }
+
     public PaymentMethod PaymentMethod { get; private set; }
     public string? PaymentReference { get; private set; }
     public DateTimeOffset? PaidAtUtc { get; private set; }
@@ -119,7 +126,8 @@ public sealed class Invoice : AuditableEntity
         string stopsJson,
         string? passengerPhone = null,
         string? stripePaymentMethodType = null,
-        decimal taxRate = 0m)
+        decimal taxRate = 0m,
+        decimal waitingFeeAmount = 0m)
     {
         if (tripId == Guid.Empty)
         {
@@ -168,6 +176,7 @@ public sealed class Invoice : AuditableEntity
             taxRate,
             taxAmount,
             grossAmount,
+            waitingFeeAmount,
             paymentMethod,
             paymentReference,
             paidAtUtc,
