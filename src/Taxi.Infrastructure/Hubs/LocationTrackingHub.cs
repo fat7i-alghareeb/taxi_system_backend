@@ -54,9 +54,9 @@ public sealed class LocationTrackingHub(IAppDbContext context, IHubContext<TripH
             // 2. Broadcast to Passenger (if driver has an active trip)
             var activeTrip = await _context.Trips.FirstOrDefaultAsync(t =>
                 t.DriverId == driver.Id &&
-                (t.Status == TripStatus.DriverAssigned ||
-                 t.Status == TripStatus.DriverEnRoute ||
-                 t.Status == TripStatus.DriverArrived ||
+                (t.Status == TripStatus.Accepted ||
+                 t.Status == TripStatus.EnRoute ||
+                 t.Status == TripStatus.Arrived ||
                  t.Status == TripStatus.InProgress));
 
             if (activeTrip != null)

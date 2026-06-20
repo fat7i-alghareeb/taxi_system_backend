@@ -8,51 +8,75 @@ namespace Taxi.Contracts.Notifications;
 public sealed record TripRequestedNotification(
     Guid TripId,
     Guid VehicleTypeId,
-    Guid PassengerId);
+    Guid PassengerId,
+    Guid EventId = default);
+
+public sealed record TripAwaitingAdminAcceptanceNotification(
+    Guid TripId,
+    Guid VehicleTypeId,
+    Guid PassengerId,
+    DateTimeOffset? ScheduledAtUtc,
+    Guid EventId = default);
+
+public sealed record AdminAcceptedTripNotification(
+    Guid TripId,
+    Guid PassengerId,
+    Guid AdminId,
+    Guid EventId = default);
 
 public sealed record DriverAssignedNotification(
     Guid TripId,
     Guid PassengerId,
-    Guid DriverId);
+    Guid DriverId,
+    Guid EventId = default);
 
 public sealed record DriverEnRouteNotification(
     Guid TripId,
     Guid PassengerId,
-    Guid DriverId);
+    Guid DriverId,
+    Guid EventId = default);
 
 public sealed record DriverArrivedNotification(
     Guid TripId,
     Guid PassengerId,
-    Guid DriverId);
+    Guid DriverId,
+    Guid EventId = default);
 
 public sealed record TripStartedNotification(
     Guid TripId,
-    Guid PassengerId);
+    Guid PassengerId,
+    Guid EventId = default);
 
 public sealed record TripCompletedNotification(
     Guid TripId,
-    Guid PassengerId);
+    Guid PassengerId,
+    Guid EventId = default);
 
 public sealed record TripCancelledNotification(
     Guid TripId,
-    Guid PassengerId);
+    Guid PassengerId,
+    Guid EventId = default);
 
 public sealed record PaymentConfirmedNotification(
     Guid TripId,
-    Guid PassengerId);
+    Guid PassengerId,
+    Guid EventId = default);
 
 public sealed record PaymentFailedNotification(
     Guid TripId,
     Guid PassengerId,
-    string Reason);
+    string Reason,
+    Guid EventId = default);
 
 public sealed record TripRefundedNotification(
     Guid TripId,
     Guid PassengerId,
-    decimal Amount);
+    decimal Amount,
+    Guid EventId = default);
 
 public sealed record TripStopCompletedNotification(
     Guid TripId,
     Guid PassengerId,
     Guid? DriverId,
-    int Sequence);
+    int Sequence,
+    Guid EventId = default);

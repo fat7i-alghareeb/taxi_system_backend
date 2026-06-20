@@ -72,6 +72,7 @@ public class UsersController(ISender sender) : ApiController
     {
         var command = new UpdateUserProfileCommand(
             request.Name,
+            request.Email,
             request.Photo?.OpenReadStream(),
             request.Photo?.ContentType,
             request.HomeAddressLabel,

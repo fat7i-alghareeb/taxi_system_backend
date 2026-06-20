@@ -15,19 +15,16 @@ public sealed class DriverCancelTripCommandHandler(
     IUser currentUser,
     IClientConfigProvider clientConfig,
     IStripePaymentService stripe,
+    TimeProvider timeProvider,
     ILogger<DriverCancelTripCommandHandler> logger) : IRequestHandler<DriverCancelTripCommand, Result<TripDto>>
 {
     public async Task<Result<TripDto>> Handle(DriverCancelTripCommand request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(currentUser.Id) || !Guid.TryParse(currentUser.Id, out var driverUserId))
+        if (!currentUser.IsAdmin ||
+            string.IsNullOrWhiteSpace(currentUser.Id) ||
+            !Guid.TryParse(currentUser.Id, out var adminId))
         {
-            return Error.Unauthorized(LocalizationKeys.Auth.UserIdClaimInvalid, "Invalid user ID claim.");
-        }
-
-        var driver = await context.Drivers.FirstOrDefaultAsync(d => d.UserId == driverUserId, ct);
-        if (driver is null)
-        {
-            return TripErrors.DriverNotFound;
+            return Error.Unauthorized(LocalizationKeys.Auth.UserIdClaimInvalid, "An authenticated admin is required.");
         }
 
         var trip = await context.Trips.FirstOrDefaultAsync(t => t.Id == request.TripId, ct);
@@ -36,12 +33,12 @@ public sealed class DriverCancelTripCommandHandler(
             return TripErrors.NotFound;
         }
 
-        if (trip.DriverId != driver.Id)
+        if (trip.AcceptedByAdminId != adminId)
         {
-            return Error.Validation(LocalizationKeys.Trip.DriverMismatch, "This trip is not assigned to you.");
+            return TripErrors.NotAcceptedByCurrentAdmin;
         }
 
-        if (trip.Status != TripStatus.DriverArrived || trip.ArrivedAtUtc is null)
+        if (trip.Status != TripStatus.Arrived || trip.ArrivedAtUtc is null)
         {
             return TripErrors.DriverCancelTooEarly;
         }
@@ -55,7 +52,7 @@ public sealed class DriverCancelTripCommandHandler(
             ? scheduledAt
             : trip.ArrivedAtUtc.Value;
 
-        if (DateTimeOffset.UtcNow < waitingStart.AddMinutes(graceMinutes))
+        if (timeProvider.GetUtcNow() < waitingStart.AddMinutes(graceMinutes))
         {
             return TripErrors.DriverCancelTooEarly;
         }
@@ -77,7 +74,7 @@ public sealed class DriverCancelTripCommandHandler(
         var cancellationResult = TripCancellation.Create(
             Guid.NewGuid(),
             trip.Id,
-            CancellationActor.Driver,
+            CancellationActor.Admin,
             reason,
             20,
             refundAmount,
@@ -128,6 +125,14 @@ public sealed class DriverCancelTripCommandHandler(
             trip.ScheduledAtUtc,
             trip.Stops.OrderBy(s => s.Sequence).Select(s => new TripStopDto(s.Coordinate.Latitude, s.Coordinate.Longitude, s.AddressLabel, s.Sequence, s.IsCompleted, s.CompletedAtUtc)).ToList(),
             Cancellation: cancellationResult.Value.ToDto(),
-            PassengerNote: trip.PassengerNote);
+            PassengerNote: trip.PassengerNote,
+            IsAirport: trip.IsAirport,
+            FlightNumber: trip.FlightNumber,
+            AcceptedByAdminId: trip.AcceptedByAdminId,
+            AcceptedAtUtc: trip.AcceptedAtUtc,
+            IsScheduled: trip.ScheduledAtUtc.HasValue,
+            DispatchWindowOpensAtUtc: trip.DispatchWindowOpensAtUtc,
+            CanMarkEnRoute: trip.CanMarkEnRoute(timeProvider.GetUtcNow()),
+            AttentionState: trip.GetAttentionState(timeProvider.GetUtcNow()).ToString());
     }
 }

@@ -12,7 +12,11 @@ namespace Taxi.Application.Features.Trips.Dtos;
 /// </summary>
 public static class TripDtoBuilder
 {
-    public static async Task<TripDto> BuildAsync(IAppDbContext context, Trip trip, CancellationToken ct)
+    public static async Task<TripDto> BuildAsync(
+        IAppDbContext context,
+        Trip trip,
+        DateTimeOffset now,
+        CancellationToken ct)
     {
         var quote = await context.PricingQuotes
             .FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
@@ -67,6 +71,12 @@ public static class TripDtoBuilder
 
         var passenger = await context.DomainUsers
             .FirstOrDefaultAsync(u => u.Id == trip.PassengerId, ct);
+        var acceptedAdminName = trip.AcceptedByAdminId.HasValue
+            ? await context.AdminProfiles
+                .Where(a => a.Id == trip.AcceptedByAdminId.Value)
+                .Select(a => a.Name)
+                .FirstOrDefaultAsync(ct)
+            : null;
 
         return new TripDto(
             trip.Id,
@@ -99,7 +109,15 @@ public static class TripDtoBuilder
             PassengerRating: trip.PassengerRating,
             RatingComment: trip.RatingComment,
             IsAirport: trip.IsAirport,
+            FlightNumber: trip.FlightNumber,
             WaitingFeeTotal: waitingFeeTotal,
-            WaitingBillableMinutes: waitingBillableMinutes);
+            WaitingBillableMinutes: waitingBillableMinutes,
+            AcceptedByAdminId: trip.AcceptedByAdminId,
+            AcceptedAdminName: acceptedAdminName,
+            AcceptedAtUtc: trip.AcceptedAtUtc,
+            IsScheduled: trip.ScheduledAtUtc.HasValue,
+            DispatchWindowOpensAtUtc: trip.DispatchWindowOpensAtUtc,
+            CanMarkEnRoute: trip.CanMarkEnRoute(now),
+            AttentionState: trip.GetAttentionState(now).ToString());
     }
 }

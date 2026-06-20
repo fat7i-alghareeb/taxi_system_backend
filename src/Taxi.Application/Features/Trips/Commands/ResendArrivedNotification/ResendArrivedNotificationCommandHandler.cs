@@ -34,14 +34,15 @@ public class ResendArrivedNotificationCommandHandler(
 
         if (!_currentUser.IsAdmin)
         {
-            var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.UserId == currentUserId, ct);
-            if (driver == null || trip.DriverId != driver.Id)
-            {
-                return Result.Failure<Success>(Error.Validation(LocalizationKeys.Trip.DriverMismatch, "This trip is not assigned to you."));
-            }
+            return Error.Forbidden(LocalizationKeys.Auth.Unauthorized, "Only admins can operate trips.");
         }
 
-        if (trip.Status != TripStatus.DriverArrived)
+        if (trip.AcceptedByAdminId != currentUserId)
+        {
+            return TripErrors.NotAcceptedByCurrentAdmin;
+        }
+
+        if (trip.Status != TripStatus.Arrived)
         {
             return Result.Failure<Success>(TripErrors.InvalidStatus(trip.Status));
         }
@@ -49,7 +50,7 @@ public class ResendArrivedNotificationCommandHandler(
         await _notifier.NotifyDriverArrivedAsync(
             trip.Id,
             trip.PassengerId,
-            trip.DriverId ?? Guid.Empty,
+            trip.AcceptedByAdminId ?? Guid.Empty,
             ct);
 
         await _notificationService.SendPushNotificationAsync(
@@ -59,7 +60,8 @@ public class ResendArrivedNotificationCommandHandler(
             new Dictionary<string, string>
             {
                 { "tripId", trip.Id.ToString() },
-                { "status", "DriverArrived" },
+                { "status", "Arrived" },
+                { "eventId", Guid.NewGuid().ToString() },
                 { "sound", "default" }
             },
             ct);

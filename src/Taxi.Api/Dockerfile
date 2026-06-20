@@ -36,4 +36,10 @@ RUN dotnet publish "./Taxi.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+# The publish copy overlays a root-owned wwwroot (read-only for $APP_UID), so the
+# app can't create runtime upload sub-dirs (e.g. wwwroot/chat, wwwroot/compensation).
+# Restore write access after the copy, then drop back to the non-root app user.
+USER root
+RUN mkdir -p /app/wwwroot && chmod -R 777 /app/wwwroot
+USER $APP_UID
 ENTRYPOINT ["dotnet", "Taxi.Api.dll"]

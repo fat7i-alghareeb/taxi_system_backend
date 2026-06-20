@@ -10,7 +10,8 @@ namespace Taxi.Application.Features.Trips.Commands.UpdatePassengerNote;
 
 public class UpdatePassengerNoteCommandHandler(
     IAppDbContext context,
-    IUser currentUser) : IRequestHandler<UpdatePassengerNoteCommand, Result<TripDto>>
+    IUser currentUser,
+    TimeProvider timeProvider) : IRequestHandler<UpdatePassengerNoteCommand, Result<TripDto>>
 {
     public async Task<Result<TripDto>> Handle(UpdatePassengerNoteCommand request, CancellationToken ct)
     {
@@ -106,6 +107,14 @@ public class UpdatePassengerNoteCommandHandler(
             ArrivedAtUtc: trip.ArrivedAtUtc,
             StartedAtUtc: trip.StartedAtUtc,
             CompletedAtUtc: trip.CompletedAtUtc,
-            PassengerNote: trip.PassengerNote);
+            PassengerNote: trip.PassengerNote,
+            IsAirport: trip.IsAirport,
+            FlightNumber: trip.FlightNumber,
+            AcceptedByAdminId: trip.AcceptedByAdminId,
+            AcceptedAtUtc: trip.AcceptedAtUtc,
+            IsScheduled: trip.ScheduledAtUtc.HasValue,
+            DispatchWindowOpensAtUtc: trip.DispatchWindowOpensAtUtc,
+            CanMarkEnRoute: trip.CanMarkEnRoute(timeProvider.GetUtcNow()),
+            AttentionState: trip.GetAttentionState(timeProvider.GetUtcNow()).ToString());
     }
 }

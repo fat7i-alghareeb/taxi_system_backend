@@ -15,5 +15,6 @@ public sealed class TripRefundedEventHandler(ITripNotifier notifier)
             notification.TripId,
             notification.PassengerId,
             notification.Amount,
-            ct);
+            ct,
+            notification.EventId);
 }

@@ -31,8 +31,16 @@ public record TripDto(
     int? PassengerRating = null,
     string? RatingComment = null,
     bool IsAirport = false,
+    string? FlightNumber = null,
     decimal WaitingFeeTotal = 0m,
-    int WaitingBillableMinutes = 0);
+    int WaitingBillableMinutes = 0,
+    Guid? AcceptedByAdminId = null,
+    string? AcceptedAdminName = null,
+    DateTimeOffset? AcceptedAtUtc = null,
+    bool IsScheduled = false,
+    DateTimeOffset? DispatchWindowOpensAtUtc = null,
+    bool CanMarkEnRoute = false,
+    string AttentionState = "Normal");
 
 public record TripRouteSegmentDto(
     int DistanceMeters,

@@ -7,14 +7,17 @@ using Taxi.Domain.Trips;
 
 namespace Taxi.Application.Features.Trips.Commands.StartTrip;
 
-public class StartTripCommandHandler(IAppDbContext context, IUser currentUser)
+public class StartTripCommandHandler(
+    IAppDbContext context,
+    IUser currentUser,
+    TimeProvider timeProvider)
     : IRequestHandler<StartTripCommand, Result<Success>>
 {
     private readonly IAppDbContext _context = context;
 
     public async Task<Result<Success>> Handle(StartTripCommand request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(currentUser.Id) || !Guid.TryParse(currentUser.Id, out var driverUserId))
+        if (string.IsNullOrWhiteSpace(currentUser.Id) || !Guid.TryParse(currentUser.Id, out var adminUserId))
         {
             return Result.Failure<Success>(Error.Validation(LocalizationKeys.Auth.Unauthorized, "Unauthorized user."));
         }
@@ -25,22 +28,17 @@ public class StartTripCommandHandler(IAppDbContext context, IUser currentUser)
             return Result.Failure<Success>(Error.NotFound(LocalizationKeys.Trip.NotFound, "Trip not found."));
         }
 
-        // Admins can act on any trip; drivers only on trips assigned to them.
         if (!currentUser.IsAdmin)
         {
-            var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.UserId == driverUserId, ct);
-            if (driver == null)
-            {
-                return Result.Failure<Success>(Error.NotFound(LocalizationKeys.Driver.NotFound, "Driver profile not found."));
-            }
-
-            if (trip.DriverId != driver.Id)
-            {
-                return Result.Failure<Success>(Error.Validation(LocalizationKeys.Trip.DriverMismatch, "This trip is not assigned to you."));
-            }
+            return Error.Forbidden(LocalizationKeys.Auth.Unauthorized, "Only admins can operate trips.");
         }
 
-        var transitionResult = trip.Start();
+        if (trip.AcceptedByAdminId != adminUserId)
+        {
+            return TripErrors.NotAcceptedByCurrentAdmin;
+        }
+
+        var transitionResult = trip.Start(timeProvider.GetUtcNow());
         if (transitionResult.IsFailure)
         {
             return transitionResult.Error;

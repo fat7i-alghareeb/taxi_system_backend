@@ -15,7 +15,8 @@ public class RequestTripCommandHandler(
     IAppDbContext context,
     IUser currentUser,
     IClientConfigProvider clientConfig,
-    IStripePaymentService stripe) : IRequestHandler<RequestTripCommand, Result<TripDto>>
+    IStripePaymentService stripe,
+    TimeProvider timeProvider) : IRequestHandler<RequestTripCommand, Result<TripDto>>
 {
     private readonly IAppDbContext _context = context;
 
@@ -63,6 +64,7 @@ public class RequestTripCommandHandler(
         }
 
         var stops = stopResults.Select(r => r.Value).ToList();
+        var isAirport = request.Stops.FirstOrDefault()?.IsAirport == true;
         var referenceCode = $"TRP-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
 
         var tripResult = Trip.Request(
@@ -73,7 +75,8 @@ public class RequestTripCommandHandler(
             stops,
             request.ScheduledAt,
             request.PassengerNote,
-            request.IsAirport);
+            isAirport,
+            request.FlightNumber);
 
         if (tripResult.IsFailure)
         {
@@ -90,9 +93,8 @@ public class RequestTripCommandHandler(
 
         if (!stripeEnabled)
         {
-            // Legacy paymentless flow: confirm payment so the trip moves to
-            // PendingDriver. We DO NOT auto-assign — admins/drivers receive the
-            // TripRequested event via SignalR and pick it up from their app.
+            // Paymentless flow still crosses the same confirmation boundary:
+            // the trip becomes eligible for manual admin acceptance.
             var confirmResult = trip.ConfirmPayment();
             if (confirmResult.IsFailure)
             {
@@ -188,7 +190,13 @@ public class RequestTripCommandHandler(
             vehicleTypeName,
             PassengerNote: trip.PassengerNote,
             EncodedOverviewPolyline: quote.EncodedOverviewPolyline,
-            RouteSegments: TripRouteSegmentMapper.FromJson(quote.RouteSegmentsJson));
+            RouteSegments: TripRouteSegmentMapper.FromJson(quote.RouteSegmentsJson),
+            IsAirport: trip.IsAirport,
+            FlightNumber: trip.FlightNumber,
+            IsScheduled: trip.ScheduledAtUtc.HasValue,
+            DispatchWindowOpensAtUtc: trip.DispatchWindowOpensAtUtc,
+            CanMarkEnRoute: trip.CanMarkEnRoute(timeProvider.GetUtcNow()),
+            AttentionState: trip.GetAttentionState(timeProvider.GetUtcNow()).ToString());
     }
 
     private void AddTripRouteIfAvailable(Trip trip, PricingQuote quote)

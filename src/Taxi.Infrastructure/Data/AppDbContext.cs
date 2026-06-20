@@ -1,6 +1,6 @@
-using MediatR;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Domain.Admins;
 using Taxi.Domain.Audit;
@@ -16,10 +16,11 @@ using Taxi.Domain.Trips;
 using Taxi.Domain.Users;
 using Taxi.Domain.Vehicles;
 using Taxi.Infrastructure.Identity;
+using Taxi.Infrastructure.Outbox;
 
 namespace Taxi.Infrastructure.Data;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options, IMediator mediator) : IdentityDbContext<AppUser>(options), IAppDbContext
+public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<AppUser>(options), IAppDbContext
 {
     public DbSet<AdminProfile> AdminProfiles => this.Set<AdminProfile>();
     public DbSet<RefreshToken> RefreshTokens => this.Set<RefreshToken>();
@@ -28,6 +29,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, IMediator medi
     public DbSet<Driver> Drivers => this.Set<Driver>();
     public DbSet<DriverDocument> DriverDocuments => this.Set<DriverDocument>();
     public DbSet<Trip> Trips => this.Set<Trip>();
+    public DbSet<TripMessage> TripMessages => this.Set<TripMessage>();
     public DbSet<Payment> Payments => this.Set<Payment>();
     public DbSet<AuditLog> AuditLogs => this.Set<AuditLog>();
     public DbSet<Notification> Notifications => this.Set<Notification>();
@@ -40,10 +42,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, IMediator medi
     public DbSet<TripWaitingSession> TripWaitingSessions => this.Set<TripWaitingSession>();
     public DbSet<Invoice> Invoices => this.Set<Invoice>();
     public DbSet<InvoiceCounter> InvoiceCounters => this.Set<InvoiceCounter>();
+    public DbSet<OutboxMessage> OutboxMessages => this.Set<OutboxMessage>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        await this.DispatchDomainEventsAsync(cancellationToken);
+        AddDomainEventsToOutbox();
         return await base.SaveChangesAsync(cancellationToken);
     }
 
@@ -53,21 +56,24 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, IMediator medi
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 
-    private async Task DispatchDomainEventsAsync(CancellationToken cancellationToken)
+    private void AddDomainEventsToOutbox()
     {
         var domainEntities = this.ChangeTracker.Entries()
             .Where(e => e.Entity is Entity baseEntity && baseEntity.DomainEvents.Count != 0)
             .Select(e => (Entity)e.Entity)
             .ToList();
 
-        var domainEvents = domainEntities
+        var messages = domainEntities
             .SelectMany(e => e.DomainEvents)
+            .Select(domainEvent => new OutboxMessage(
+                domainEvent.EventId,
+                domainEvent.OccurredAtUtc,
+                domainEvent.GetType().AssemblyQualifiedName
+                    ?? throw new InvalidOperationException("Domain event type name is unavailable."),
+                JsonSerializer.Serialize(domainEvent, domainEvent.GetType())))
             .ToList();
 
-        foreach (var domainEvent in domainEvents)
-        {
-            await mediator.Publish(domainEvent, cancellationToken);
-        }
+        OutboxMessages.AddRange(messages);
 
         foreach (var entity in domainEntities)
         {

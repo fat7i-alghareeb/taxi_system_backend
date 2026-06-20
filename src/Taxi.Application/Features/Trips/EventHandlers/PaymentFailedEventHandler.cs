@@ -15,5 +15,6 @@ public sealed class PaymentFailedEventHandler(ITripNotifier notifier)
             notification.TripId,
             notification.PassengerId,
             notification.Reason,
-            ct);
+            ct,
+            notification.EventId);
 }

@@ -17,6 +17,7 @@ public class CancelTripCommandHandler(
     IUser currentUser,
     IClientConfigProvider clientConfig,
     IStripePaymentService stripe,
+    TimeProvider timeProvider,
     ILogger<CancelTripCommandHandler> logger) : IRequestHandler<CancelTripCommand, Result<TripDto>>
 {
     public async Task<Result<TripDto>> Handle(CancelTripCommand request, CancellationToken ct)
@@ -51,7 +52,7 @@ public class CancelTripCommandHandler(
         }
 
         var preCancelStatus = trip.Status;
-        var isWithinPassengerWindow = DateTimeOffset.UtcNow <= trip.CreatedAtUtc.AddHours(1);
+        var isWithinPassengerWindow = timeProvider.GetUtcNow() <= trip.CreatedAtUtc.AddHours(1);
 
         // Cancellation policy:
         //   - Admin override: full refund (nothing charged yet => 0).
@@ -198,6 +199,14 @@ public class CancelTripCommandHandler(
             driverLongitude,
             vehicleTypeName,
             cancellationResult.Value.ToDto(),
-            PassengerNote: trip.PassengerNote);
+            PassengerNote: trip.PassengerNote,
+            IsAirport: trip.IsAirport,
+            FlightNumber: trip.FlightNumber,
+            AcceptedByAdminId: trip.AcceptedByAdminId,
+            AcceptedAtUtc: trip.AcceptedAtUtc,
+            IsScheduled: trip.ScheduledAtUtc.HasValue,
+            DispatchWindowOpensAtUtc: trip.DispatchWindowOpensAtUtc,
+            CanMarkEnRoute: trip.CanMarkEnRoute(timeProvider.GetUtcNow()),
+            AttentionState: trip.GetAttentionState(timeProvider.GetUtcNow()).ToString());
     }
 }

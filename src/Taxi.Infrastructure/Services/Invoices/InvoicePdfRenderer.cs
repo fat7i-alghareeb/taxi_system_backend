@@ -208,6 +208,11 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
                             {
                                 col.Item().PaddingTop(3).Text(invoice.PassengerPhone).FontColor(Muted);
                             }
+
+                            if (!string.IsNullOrWhiteSpace(invoice.PassengerEmail))
+                            {
+                                col.Item().PaddingTop(3).Text(invoice.PassengerEmail).FontColor(Muted);
+                            }
                         }));
 
                         row.ConstantItem(14);

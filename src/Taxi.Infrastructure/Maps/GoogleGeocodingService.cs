@@ -46,6 +46,9 @@ public class GoogleGeocodingService(
 
         [JsonPropertyName("geometry")]
         public GeometryResult Geometry { get; init; } = default!;
+
+        [JsonPropertyName("types")]
+        public List<string> Types { get; init; } = [];
     }
 
     private sealed class GeocodeResult
@@ -61,6 +64,9 @@ public class GoogleGeocodingService(
 
         [JsonPropertyName("geometry")]
         public GeometryResult Geometry { get; init; } = default!;
+
+        [JsonPropertyName("types")]
+        public List<string> Types { get; init; } = [];
     }
 
     private sealed class AddressComponent
@@ -120,7 +126,13 @@ public class GoogleGeocodingService(
             var primary = r.Name.Length > 0 ? r.Name : parts[0].Trim();
             var secondary = parts.Length > 1 ? parts[1].Trim() : r.FormattedAddress;
 
-            return new PlaceResult(r.PlaceId, primary, secondary, r.Geometry.Location.Lat, r.Geometry.Location.Lng);
+            return new PlaceResult(
+                r.PlaceId,
+                primary,
+                secondary,
+                r.Geometry.Location.Lat,
+                r.Geometry.Location.Lng,
+                r.Types.Contains("airport", StringComparer.OrdinalIgnoreCase));
         }).ToList();
     }
 
@@ -146,6 +158,8 @@ public class GoogleGeocodingService(
         }
 
         var result = apiResult.Results[0];
+        var isAirport = apiResult.Results.Any(r =>
+            r.Types.Contains("airport", StringComparer.OrdinalIgnoreCase));
 
         var streetNumber = result.AddressComponents
             .FirstOrDefault(c => c.Types.Contains("street_number"))?.LongName ?? string.Empty;
@@ -174,7 +188,13 @@ public class GoogleGeocodingService(
             secondary = result.FormattedAddress;
         }
 
-        return new PlaceResult(result.PlaceId, primary, secondary, result.Geometry.Location.Lat, result.Geometry.Location.Lng);
+        return new PlaceResult(
+            result.PlaceId,
+            primary,
+            secondary,
+            result.Geometry.Location.Lat,
+            result.Geometry.Location.Lng,
+            isAirport);
     }
 }
 

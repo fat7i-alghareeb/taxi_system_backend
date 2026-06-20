@@ -59,6 +59,7 @@ public class InvoicePdfRenderSmokeTests
             passengerName: "Ahmed Al Ali",
             stopsJson: "[{\"sequence\":0,\"label\":\"Amsterdam\"},{\"sequence\":1,\"label\":\"Utrecht\"}]",
             passengerPhone: "+31 6 12345678",
+            passengerEmail: "passenger@example.com",
             stripePaymentMethodType: "ideal").Value;
 
         var renderer = new InvoicePdfRenderer(new StubFactory());

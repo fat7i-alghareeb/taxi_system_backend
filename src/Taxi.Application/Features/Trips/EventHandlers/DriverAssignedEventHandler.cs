@@ -19,6 +19,7 @@ public sealed class DriverAssignedEventHandler(ITripNotifier notifier)
             notification.TripId,
             notification.PassengerId,
             notification.DriverId,
-            ct);
+            ct,
+            notification.EventId);
     }
 }

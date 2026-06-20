@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Taxi.Domain.Drivers;
+using Taxi.Domain.Admins;
 using Taxi.Domain.Trips;
 using Taxi.Domain.Users;
 using Taxi.Domain.Vehicles;
@@ -26,6 +27,11 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
             .HasForeignKey(t => t.DriverId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne<AdminProfile>()
+            .WithMany()
+            .HasForeignKey(t => t.AcceptedByAdminId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne<VehicleType>()
             .WithMany()
             .HasForeignKey(t => t.VehicleTypeId)
@@ -38,7 +44,8 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
 
         builder.Property(t => t.Status)
             .HasConversion<string>()
-            .HasMaxLength(20);
+            .HasMaxLength(30)
+            .IsConcurrencyToken();
 
         builder.OwnsMany(t => t.Stops, s =>
         {
@@ -63,6 +70,10 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
             .HasMaxLength(500)
             .IsRequired(false);
 
+        builder.Property(t => t.FlightNumber)
+            .HasMaxLength(15)
+            .IsRequired(false);
+
         builder.Property(t => t.CreatedAtUtc)
             .IsRequired();
 
@@ -73,6 +84,13 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
             .IsRequired(false);
 
         builder.Property(t => t.AssignedAtUtc)
+            .IsRequired(false);
+
+        builder.Property(t => t.AcceptedByAdminId)
+            .IsRequired(false)
+            .IsConcurrencyToken();
+
+        builder.Property(t => t.AcceptedAtUtc)
             .IsRequired(false);
 
         builder.Property(t => t.ArrivedAtUtc)
@@ -87,8 +105,12 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
         builder.Property(t => t.DeletedAtUtc)
             .IsRequired(false);
 
-        builder.Property(t => t.PreArrivalNotifiedAtUtc)
-            .IsRequired(false);
+        builder.Property(t => t.UnacceptedReminder60SentAtUtc).IsRequired(false);
+        builder.Property(t => t.UnacceptedReminder30SentAtUtc).IsRequired(false);
+        builder.Property(t => t.UnacceptedReminder15SentAtUtc).IsRequired(false);
+        builder.Property(t => t.UnacceptedOverdueSentAtUtc).IsRequired(false);
+        builder.Property(t => t.AcceptedReminder30SentAtUtc).IsRequired(false);
+        builder.Property(t => t.AcceptedReminder15SentAtUtc).IsRequired(false);
 
         builder.Property(t => t.PassengerRating)
             .IsRequired(false);
@@ -98,6 +120,8 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
             .IsRequired(false);
 
         builder.HasQueryFilter(t => t.DeletedAtUtc == null);
+        builder.HasIndex(t => new { t.Status, t.ScheduledAtUtc });
+        builder.HasIndex(t => t.AcceptedByAdminId);
     }
 }
 

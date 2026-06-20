@@ -17,6 +17,7 @@ public sealed class TripStartedEventHandler(ITripNotifier notifier)
         await _notifier.NotifyTripStartedAsync(
             notification.TripId,
             notification.PassengerId,
-            ct);
+            ct,
+            notification.EventId);
     }
 }

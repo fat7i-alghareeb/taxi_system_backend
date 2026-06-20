@@ -7,7 +7,7 @@ using Taxi.Domain.Trips;
 
 namespace Taxi.Application.Features.Trips.Queries.GetTripDetails;
 
-public class GetTripDetailsQueryHandler(IAppDbContext context)
+public class GetTripDetailsQueryHandler(IAppDbContext context, TimeProvider timeProvider)
     : IRequestHandler<GetTripDetailsQuery, Result<TripDetailsDto>>
 {
     private readonly IAppDbContext _context = context;
@@ -81,6 +81,13 @@ public class GetTripDetailsQueryHandler(IAppDbContext context)
 
         var tripRoute = await _context.TripRoutes
             .FirstOrDefaultAsync(r => r.TripId == trip.Id, ct);
+        var acceptedAdminName = trip.AcceptedByAdminId.HasValue
+            ? await _context.AdminProfiles
+                .Where(a => a.Id == trip.AcceptedByAdminId.Value)
+                .Select(a => a.Name)
+                .FirstOrDefaultAsync(ct)
+            : null;
+        var now = timeProvider.GetUtcNow();
 
         return new TripDetailsDto(
             trip.Id,
@@ -110,7 +117,15 @@ public class GetTripDetailsQueryHandler(IAppDbContext context)
             RouteSegments: TripRouteSegmentMapper.FromJson(tripRoute?.SegmentsJson),
             PassengerNote: trip.PassengerNote,
             IsAirport: trip.IsAirport,
+            FlightNumber: trip.FlightNumber,
             WaitingFeeTotal: waitingFeeTotal,
-            WaitingBillableMinutes: waitingBillableMinutes);
+            WaitingBillableMinutes: waitingBillableMinutes,
+            AcceptedByAdminId: trip.AcceptedByAdminId,
+            AcceptedAdminName: acceptedAdminName,
+            AcceptedAtUtc: trip.AcceptedAtUtc,
+            IsScheduled: trip.ScheduledAtUtc.HasValue,
+            DispatchWindowOpensAtUtc: trip.DispatchWindowOpensAtUtc,
+            CanMarkEnRoute: trip.CanMarkEnRoute(now),
+            AttentionState: trip.GetAttentionState(now).ToString());
     }
 }

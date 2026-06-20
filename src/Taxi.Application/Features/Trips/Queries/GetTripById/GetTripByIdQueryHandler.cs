@@ -10,7 +10,8 @@ using Taxi.Domain.Trips;
 namespace Taxi.Application.Features.Trips.Queries.GetTripById;
 
 public class GetTripByIdQueryHandler(
-    IAppDbContext context) : IRequestHandler<GetTripByIdQuery, Result<TripDto>>
+    IAppDbContext context,
+    TimeProvider timeProvider) : IRequestHandler<GetTripByIdQuery, Result<TripDto>>
 {
     private readonly IAppDbContext _context = context;
 
@@ -24,6 +25,6 @@ public class GetTripByIdQueryHandler(
             return TripErrors.NotFound;
         }
 
-        return await TripDtoBuilder.BuildAsync(_context, trip, ct);
+        return await TripDtoBuilder.BuildAsync(_context, trip, timeProvider.GetUtcNow(), ct);
     }
 }

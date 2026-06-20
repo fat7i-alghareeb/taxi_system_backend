@@ -6,6 +6,7 @@ namespace Taxi.Application.Features.Users.Commands.UpdateUserProfile;
 
 public record UpdateUserProfileCommand(
     string? Name,
+    string? Email,
     Stream? PhotoStream,
     string? PhotoContentType,
     string? HomeAddressLabel = null,

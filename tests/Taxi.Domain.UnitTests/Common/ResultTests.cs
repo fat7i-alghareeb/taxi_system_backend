@@ -7,6 +7,15 @@ namespace Taxi.Domain.UnitTests.Common;
 public class ResultTests
 {
     [Fact]
+    public void SuccessOrNull_WhenValueIsNull_CreatesSuccessfulNullableResult()
+    {
+        var result = Result<string?>.SuccessOrNull(null);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value);
+    }
+
+    [Fact]
     public void Match_WhenSuccess_UsesValueBranch()
     {
         Result<int> result = 5;

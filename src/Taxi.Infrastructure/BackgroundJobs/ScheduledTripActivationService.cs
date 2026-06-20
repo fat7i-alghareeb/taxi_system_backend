@@ -3,144 +3,114 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Taxi.Application.Common.Interfaces;
-using Taxi.Contracts.Common;
 using Taxi.Domain.Trips;
 
 namespace Taxi.Infrastructure.BackgroundJobs;
 
+/// <summary>
+/// Produces admin-only preparation and escalation reminders for scheduled trips.
+/// It never changes trip workflow status and never sends customer notifications.
+/// </summary>
 public sealed class ScheduledTripActivationService(
     IServiceScopeFactory scopeFactory,
+    TimeProvider timeProvider,
     ILogger<ScheduledTripActivationService> logger) : BackgroundService
 {
     private static readonly TimeSpan CheckInterval = TimeSpan.FromMinutes(1);
 
-    /// <summary>
-    /// How long before a scheduled trip's start time the passenger receives the
-    /// "driver on the way / arrives within 15 minutes" reminder.
-    /// </summary>
-    private static readonly TimeSpan PreArrivalLeadTime = TimeSpan.FromMinutes(15);
-
-    private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
-    private readonly ILogger<ScheduledTripActivationService> _logger = logger;
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("ScheduledTripActivationService started.");
+        logger.LogInformation("Scheduled trip reminder service started.");
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            await SendPreArrivalRemindersAsync(stoppingToken);
-            await ActivateDueTripsAsync(stoppingToken);
-            await Task.Delay(CheckInterval, stoppingToken);
+            await EnqueueDueRemindersAsync(stoppingToken);
+            await Task.Delay(CheckInterval, timeProvider, stoppingToken);
         }
     }
 
-    /// <summary>
-    /// Sends the "driver on the way" reminder to passengers 15 minutes before their
-    /// scheduled trip starts. Idempotent via <see cref="Trip.PreArrivalNotifiedAtUtc"/>.
-    /// </summary>
-    private async Task SendPreArrivalRemindersAsync(CancellationToken ct)
+    private async Task EnqueueDueRemindersAsync(CancellationToken ct)
     {
-        await using var scope = _scopeFactory.CreateAsyncScope();
+        await using var scope = scopeFactory.CreateAsyncScope();
         var context = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+        var now = timeProvider.GetUtcNow();
 
-        var threshold = DateTimeOffset.UtcNow.Add(PreArrivalLeadTime);
-
-        var dueTrips = await context.Trips
-            .Where(t => t.Status == TripStatus.Scheduled
-                && t.PreArrivalNotifiedAtUtc == null
-                && t.ScheduledAtUtc != null
-                && t.ScheduledAtUtc <= threshold)
+        var trips = await context.Trips
+            .Where(t => t.ScheduledAtUtc != null &&
+                (t.Status == TripStatus.AwaitingAdminAcceptance ||
+                 t.Status == TripStatus.Accepted))
+            .Where(t => t.ScheduledAtUtc <= now.AddHours(1))
             .ToListAsync(ct);
 
-        if (dueTrips.Count == 0)
+        var hasChanges = false;
+        foreach (var trip in trips)
         {
-            return;
-        }
-
-        foreach (var trip in dueTrips)
-        {
-            trip.MarkPreArrivalNotified();
-
-            try
+            var stage = ResolveCurrentStage(trip, now);
+            if (stage is null || trip.HasReminderBeenSent(stage.Value))
             {
-                await context.SaveChangesAsync(ct);
-
-                await notificationService.SendPushNotificationAsync(
-                    trip.PassengerId,
-                    LocalizationKeys.Notification.DriverEnRouteTitle,
-                    LocalizationKeys.Notification.DriverEnRouteBody,
-                    new Dictionary<string, string>
-                    {
-                        { "tripId", trip.Id.ToString() },
-                        { "status", "Scheduled" },
-                        { "type", "driver_en_route" },
-                    },
-                    ct);
-
-                _logger.LogInformation("Sent pre-arrival reminder for scheduled trip {TripId}.", trip.Id);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error sending pre-arrival reminder for scheduled trip {TripId}.", trip.Id);
-            }
-        }
-    }
-
-    private async Task ActivateDueTripsAsync(CancellationToken ct)
-    {
-        await using var scope = _scopeFactory.CreateAsyncScope();
-        var context = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
-
-        var now = DateTimeOffset.UtcNow;
-
-        var dueTrips = await context.Trips
-            .Where(t => t.Status == TripStatus.Scheduled && t.ScheduledAtUtc <= now)
-            .ToListAsync(ct);
-
-        if (dueTrips.Count == 0)
-        {
-            return;
-        }
-
-        _logger.LogInformation("Activating {Count} scheduled trip(s).", dueTrips.Count);
-
-        foreach (var trip in dueTrips)
-        {
-            var result = trip.ActivateScheduled();
-            if (result.IsFailure)
-            {
-                _logger.LogWarning(
-                    "Failed to activate scheduled trip {TripId}: {Error}",
-                    trip.Id,
-                    result.Error);
                 continue;
             }
 
-            try
-            {
-                // SaveChangesAsync dispatches domain events (TripRequested → admin FCM).
-                await context.SaveChangesAsync(ct);
-
-                await notificationService.SendPushNotificationAsync(
-                    trip.PassengerId,
-                    LocalizationKeys.Notification.TripScheduledActivatedTitle,
-                    LocalizationKeys.Notification.TripScheduledActivatedBody,
-                    new Dictionary<string, string>
-                    {
-                        { "tripId", trip.Id.ToString() },
-                        { "status", "PendingDriver" },
-                    },
-                    ct);
-
-                _logger.LogInformation("Activated scheduled trip {TripId}.", trip.Id);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving/notifying for scheduled trip {TripId}.", trip.Id);
-            }
+            trip.MarkReminderSent(stage.Value, now);
+            hasChanges = true;
+            logger.LogInformation(
+                "Queued scheduled trip reminder {Stage} for trip {TripId}.",
+                stage,
+                trip.Id);
         }
+
+        if (hasChanges)
+        {
+            await context.SaveChangesAsync(ct);
+        }
+    }
+
+    private static ScheduledTripReminderStage? ResolveCurrentStage(
+        Trip trip,
+        DateTimeOffset now)
+    {
+        var remaining = trip.ScheduledAtUtc!.Value - now;
+
+        if (trip.Status == TripStatus.AwaitingAdminAcceptance)
+        {
+            if (remaining <= TimeSpan.Zero)
+            {
+                return ScheduledTripReminderStage.UnacceptedOverdue;
+            }
+
+            if (remaining <= TimeSpan.FromMinutes(15))
+            {
+                return ScheduledTripReminderStage.Unaccepted15Minutes;
+            }
+
+            if (remaining <= TimeSpan.FromMinutes(30))
+            {
+                return ScheduledTripReminderStage.Unaccepted30Minutes;
+            }
+
+            if (remaining <= TimeSpan.FromMinutes(60))
+            {
+                return ScheduledTripReminderStage.Unaccepted60Minutes;
+            }
+
+            return null;
+        }
+
+        if (remaining <= TimeSpan.Zero)
+        {
+            return null;
+        }
+
+        if (remaining <= TimeSpan.FromMinutes(15))
+        {
+            return ScheduledTripReminderStage.Accepted15Minutes;
+        }
+
+        if (remaining <= TimeSpan.FromMinutes(30))
+        {
+            return ScheduledTripReminderStage.Accepted30Minutes;
+        }
+
+        return null;
     }
 }

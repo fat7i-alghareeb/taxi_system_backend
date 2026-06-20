@@ -30,19 +30,14 @@ public class CompleteStopCommandHandler(IAppDbContext context, IUser currentUser
             return Result.Failure<Success>(Error.NotFound(LocalizationKeys.Trip.NotFound, "Trip not found."));
         }
 
-        // Admins can act on any trip; drivers only on trips assigned to them.
         if (!currentUser.IsAdmin)
         {
-            var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.UserId == driverUserId, ct);
-            if (driver is null)
-            {
-                return Result.Failure<Success>(Error.NotFound(LocalizationKeys.Driver.NotFound, "Driver profile not found."));
-            }
+            return Error.Forbidden(LocalizationKeys.Auth.Unauthorized, "Only admins can operate trips.");
+        }
 
-            if (trip.DriverId != driver.Id)
-            {
-                return Result.Failure<Success>(Error.Validation(LocalizationKeys.Trip.DriverMismatch, "This trip is not assigned to you."));
-            }
+        if (trip.AcceptedByAdminId != driverUserId)
+        {
+            return TripErrors.NotAcceptedByCurrentAdmin;
         }
 
         var transitionResult = trip.CompleteStop(request.Sequence);

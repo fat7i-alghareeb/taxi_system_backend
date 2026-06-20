@@ -15,6 +15,7 @@ public class CompleteTripCommandHandler(
     IClientConfigProvider clientConfig,
     IStripePaymentService stripe,
     INotificationService notifications,
+    TimeProvider timeProvider,
     ILogger<CompleteTripCommandHandler> logger)
     : IRequestHandler<CompleteTripCommand, Result<Success>>
 {
@@ -22,7 +23,7 @@ public class CompleteTripCommandHandler(
 
     public async Task<Result<Success>> Handle(CompleteTripCommand request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(currentUser.Id) || !Guid.TryParse(currentUser.Id, out var driverUserId))
+        if (string.IsNullOrWhiteSpace(currentUser.Id) || !Guid.TryParse(currentUser.Id, out var adminUserId))
         {
             return Result.Failure<Success>(Error.Validation(LocalizationKeys.Auth.Unauthorized, "Unauthorized user."));
         }
@@ -35,19 +36,14 @@ public class CompleteTripCommandHandler(
             return Result.Failure<Success>(Error.NotFound(LocalizationKeys.Trip.NotFound, "Trip not found."));
         }
 
-        // Admins can act on any trip; drivers only on trips assigned to them.
         if (!currentUser.IsAdmin)
         {
-            var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.UserId == driverUserId, ct);
-            if (driver == null)
-            {
-                return Result.Failure<Success>(Error.NotFound(LocalizationKeys.Driver.NotFound, "Driver profile not found."));
-            }
+            return Error.Forbidden(LocalizationKeys.Auth.Unauthorized, "Only admins can operate trips.");
+        }
 
-            if (trip.DriverId != driver.Id)
-            {
-                return Result.Failure<Success>(Error.Validation(LocalizationKeys.Trip.DriverMismatch, "This trip is not assigned to you."));
-            }
+        if (trip.AcceptedByAdminId != adminUserId)
+        {
+            return TripErrors.NotAcceptedByCurrentAdmin;
         }
 
         // Settle any open waiting meter first so its accrued fee is computed and
@@ -57,7 +53,7 @@ public class CompleteTripCommandHandler(
             .FirstOrDefaultAsync(s => s.TripId == trip.Id && s.StoppedAtUtc == null, ct);
         activeWaiting?.Stop();
 
-        var transitionResult = trip.Complete();
+        var transitionResult = trip.Complete(timeProvider.GetUtcNow());
         if (transitionResult.IsFailure)
         {
             return transitionResult.Error;

@@ -23,6 +23,7 @@ using Taxi.Infrastructure.Data.Interceptors;
 using Taxi.Infrastructure.Identity;
 using Taxi.Infrastructure.Maps;
 using Taxi.Infrastructure.Notifications;
+using Taxi.Infrastructure.Outbox;
 using Taxi.Infrastructure.Payments;
 using Taxi.Infrastructure.RealTime;
 using Taxi.Infrastructure.Services.Invoices;
@@ -174,6 +175,8 @@ public static class DependencyInjection
         });
 
         services.AddHostedService<ScheduledTripActivationService>();
+        services.AddHostedService<OutboxDispatcherService>();
+        services.AddHostedService<TripChatCleanupService>();
 
         return services;
     }

@@ -2,7 +2,6 @@ using NSubstitute;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Trips.Commands.AssignDriverToTrip;
 using Taxi.Application.UnitTests.Infrastructure;
-using Taxi.Domain.Drivers;
 using Taxi.Domain.Payments;
 using Taxi.Domain.Trips;
 using Xunit;
@@ -14,33 +13,36 @@ using TripCoordinate = Taxi.Domain.Trips.Coordinate;
 public class AssignDriverToTripCommandHandlerTests
 {
     [Fact]
-    public async Task Handle_FutureScheduledTrip_AssignsDriverAndPreservesScheduledTime()
+    public async Task Handle_LegacyAssignmentRoute_AcceptsTripForCurrentAdmin()
     {
-        var passengerId = Guid.NewGuid();
-        var vehicleTypeId = Guid.NewGuid();
+        var adminId = Guid.NewGuid();
         var scheduledAtUtc = DateTimeOffset.UtcNow.AddHours(3);
-        var trip = CreateScheduledTrip(passengerId, vehicleTypeId, scheduledAtUtc);
-        var driver = CreateApprovedDriver(vehicleTypeId);
-        var context = BuildContext(trip, driver);
-        var handler = new AssignDriverToTripCommandHandler(context);
+        var trip = CreateScheduledTrip(scheduledAtUtc);
+        var context = BuildContext(trip);
+        var currentUser = Substitute.For<IUser>();
+        currentUser.Id.Returns(adminId.ToString());
+        currentUser.IsAdmin.Returns(true);
+        var handler = new AssignDriverToTripCommandHandler(
+            context,
+            currentUser,
+            TimeProvider.System);
 
         var result = await handler.Handle(
-            new AssignDriverToTripCommand(trip.Id, driver.Id),
+            new AssignDriverToTripCommand(trip.Id, Guid.NewGuid()),
             CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(TripStatus.DriverAssigned, trip.Status);
-        Assert.Equal(driver.Id, trip.DriverId);
+        Assert.Equal(TripStatus.Accepted, trip.Status);
+        Assert.Equal(adminId, trip.AcceptedByAdminId);
+        Assert.Null(trip.DriverId);
         Assert.Equal(scheduledAtUtc, trip.ScheduledAtUtc);
-        Assert.NotNull(trip.AssignedAtUtc);
         await context.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
-    private static Trip CreateScheduledTrip(
-        Guid passengerId,
-        Guid vehicleTypeId,
-        DateTimeOffset scheduledAtUtc)
+    private static Trip CreateScheduledTrip(DateTimeOffset scheduledAtUtc)
     {
+        var passengerId = Guid.NewGuid();
+        var vehicleTypeId = Guid.NewGuid();
         var quote = PricingQuote.Create(
             Guid.NewGuid(),
             passengerId,
@@ -53,13 +55,11 @@ public class AssignDriverToTripCommandHandlerTests
             "eur",
             DateTime.UtcNow.AddHours(1),
             [new TripCoordinate(52.37m, 4.89m), new TripCoordinate(52.38m, 4.90m)]).Value;
-
         var stops = new[]
         {
             TripStop.Create(new TripCoordinate(52.37m, 4.89m), 0, "From").Value,
             TripStop.Create(new TripCoordinate(52.38m, 4.90m), 1, "To").Value,
         };
-
         var trip = Trip.Request(
             Guid.NewGuid(),
             "TRP-SCHED",
@@ -67,28 +67,16 @@ public class AssignDriverToTripCommandHandlerTests
             quote,
             stops,
             scheduledAtUtc).Value;
-
         trip.ConfirmPayment();
-        Assert.Equal(TripStatus.Scheduled, trip.Status);
-
+        Assert.Equal(TripStatus.AwaitingAdminAcceptance, trip.Status);
         return trip;
     }
 
-    private static Driver CreateApprovedDriver(Guid vehicleTypeId)
+    private static IAppDbContext BuildContext(Trip trip)
     {
-        var driver = Driver.Create(Guid.NewGuid(), Guid.NewGuid(), "DL-SCHED-001").Value;
-        driver.Approve();
-        driver.SetVehicleType(vehicleTypeId);
-        return driver;
-    }
-
-    private static IAppDbContext BuildContext(Trip trip, Driver driver)
-    {
-        var tripsSet = DbSetMockFactory.Create([trip]);
-        var driversSet = DbSetMockFactory.Create([driver]);
         var context = Substitute.For<IAppDbContext>();
-        context.Trips.Returns(tripsSet);
-        context.Drivers.Returns(driversSet);
+        var trips = DbSetMockFactory.Create([trip]);
+        context.Trips.Returns(trips);
         context.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
         return context;
     }

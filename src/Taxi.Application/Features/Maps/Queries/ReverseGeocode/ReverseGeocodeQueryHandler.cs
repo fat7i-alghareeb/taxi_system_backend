@@ -22,7 +22,8 @@ public class ReverseGeocodeQueryHandler(IGeocodingService geocodingService)
             result.PrimaryName,
             result.SecondaryAddress,
             result.Latitude,
-            result.Longitude);
+            result.Longitude,
+            result.IsAirport);
     }
 }
 

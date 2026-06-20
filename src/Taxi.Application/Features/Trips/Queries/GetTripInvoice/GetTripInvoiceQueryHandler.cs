@@ -70,6 +70,7 @@ public class GetTripInvoiceQueryHandler(
             DurationMin: invoice.DurationMin,
             VehicleTypeName: invoice.VehicleTypeName,
             PassengerName: invoice.PassengerName,
+            PassengerEmail: invoice.PassengerEmail,
             Stops: stops);
     }
 

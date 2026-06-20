@@ -17,7 +17,8 @@ public sealed class DriverEnRouteEventHandler(ITripNotifier notifier, INotificat
             notification.TripId,
             notification.PassengerId,
             notification.DriverId,
-            ct);
+            ct,
+            notification.EventId);
 
         await _notificationService.SendPushNotificationAsync(
             notification.PassengerId,
@@ -26,7 +27,9 @@ public sealed class DriverEnRouteEventHandler(ITripNotifier notifier, INotificat
             new Dictionary<string, string>
             {
                 { "tripId", notification.TripId.ToString() },
-                { "status", "DriverEnRoute" }
+                { "status", "EnRoute" },
+                { "type", "trip_en_route" },
+                { "eventId", notification.EventId.ToString() },
             },
             ct);
     }

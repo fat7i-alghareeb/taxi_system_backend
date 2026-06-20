@@ -17,7 +17,8 @@ public class SearchPlacesQueryHandler(IGeocodingService geocodingService)
             r.PrimaryName,
             r.SecondaryAddress,
             r.Latitude,
-            r.Longitude)).ToList();
+            r.Longitude,
+            r.IsAirport)).ToList();
     }
 }
 

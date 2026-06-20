@@ -26,7 +26,7 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
         optionsBuilder.UseNpgsql(connectionString);
 
         // Pass a null mediator — safe at design time because SaveChangesAsync is never called.
-        return new AppDbContext(optionsBuilder.Options, null!);
+        return new AppDbContext(optionsBuilder.Options);
     }
 }
 

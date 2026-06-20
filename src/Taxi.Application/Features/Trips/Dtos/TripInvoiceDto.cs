@@ -22,6 +22,7 @@ public record TripInvoiceDto(
     decimal DurationMin,
     string VehicleTypeName,
     string? PassengerName,
+    string? PassengerEmail,
     List<TripInvoiceStopDto> Stops);
 
 public record TripInvoiceStopDto(

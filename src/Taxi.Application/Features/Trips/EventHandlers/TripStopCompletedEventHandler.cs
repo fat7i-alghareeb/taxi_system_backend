@@ -16,5 +16,6 @@ public sealed class TripStopCompletedEventHandler(ITripNotifier notifier)
             notification.PassengerId,
             notification.DriverId,
             notification.Sequence,
-            ct);
+            ct,
+            notification.EventId);
 }

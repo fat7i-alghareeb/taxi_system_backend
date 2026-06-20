@@ -93,9 +93,8 @@ public class HandleStripeWebhookCommandHandler(
             return completeResult.Error;
         }
 
-        // If the trip is still AwaitingPayment, just confirm payment so the trip
-        // moves to PendingDriver. Admins/drivers receive the TripRequested event
-        // via SignalR and pick it up themselves — no auto-dispatch.
+        // Payment is the boundary that makes the trip visible for admin
+        // acceptance. Notifications are emitted from the committed outbox.
         if (trip.Status == TripStatus.AwaitingPayment)
         {
             var confirmResult = trip.ConfirmPayment();

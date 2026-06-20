@@ -8,7 +8,10 @@ using Taxi.Domain.Trips;
 
 namespace Taxi.Application.Features.Trips.Queries.GetMyActiveTrip;
 
-public class GetMyActiveTripQueryHandler(IAppDbContext context, IUser currentUser)
+public class GetMyActiveTripQueryHandler(
+    IAppDbContext context,
+    IUser currentUser,
+    TimeProvider timeProvider)
     : IRequestHandler<GetMyActiveTripQuery, Result<TripDto?>>
 {
     private readonly IAppDbContext _context = context;
@@ -18,11 +21,10 @@ public class GetMyActiveTripQueryHandler(IAppDbContext context, IUser currentUse
     // and PendingQuote are excluded — those are still part of the booking flow.
     private static readonly TripStatus[] ActiveStatuses =
     [
-        TripStatus.Scheduled,
-        TripStatus.PendingDriver,
-        TripStatus.DriverAssigned,
-        TripStatus.DriverEnRoute,
-        TripStatus.DriverArrived,
+        TripStatus.AwaitingAdminAcceptance,
+        TripStatus.Accepted,
+        TripStatus.EnRoute,
+        TripStatus.Arrived,
         TripStatus.InProgress,
     ];
 
@@ -40,6 +42,14 @@ public class GetMyActiveTripQueryHandler(IAppDbContext context, IUser currentUse
             .OrderByDescending(t => t.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
 
+        if (trip is null && _currentUser.IsAdmin)
+        {
+            trip = await _context.Trips
+                .Where(t => t.AcceptedByAdminId == userId && ActiveStatuses.Contains(t.Status))
+                .OrderByDescending(t => t.AcceptedAtUtc)
+                .FirstOrDefaultAsync(ct);
+        }
+
         if (trip is null)
         {
             var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.UserId == userId, ct);
@@ -54,9 +64,9 @@ public class GetMyActiveTripQueryHandler(IAppDbContext context, IUser currentUse
 
         if (trip is null)
         {
-            return (TripDto?)null;
+            return Result<TripDto?>.SuccessOrNull(null);
         }
 
-        return await TripDtoBuilder.BuildAsync(_context, trip, ct);
+        return await TripDtoBuilder.BuildAsync(_context, trip, timeProvider.GetUtcNow(), ct);
     }
 }

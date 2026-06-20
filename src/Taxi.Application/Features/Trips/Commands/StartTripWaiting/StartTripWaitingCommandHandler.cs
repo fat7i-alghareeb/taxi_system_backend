@@ -8,7 +8,10 @@ using Taxi.Domain.Trips;
 
 namespace Taxi.Application.Features.Trips.Commands.StartTripWaiting;
 
-public sealed class StartTripWaitingCommandHandler(IAppDbContext context, IUser currentUser)
+public sealed class StartTripWaitingCommandHandler(
+    IAppDbContext context,
+    IUser currentUser,
+    TimeProvider timeProvider)
     : IRequestHandler<StartTripWaitingCommand, Result<WaitingSessionDto>>
 {
     public async Task<Result<WaitingSessionDto>> Handle(StartTripWaitingCommand request, CancellationToken ct)
@@ -24,22 +27,17 @@ public sealed class StartTripWaitingCommandHandler(IAppDbContext context, IUser 
             return TripErrors.NotFound;
         }
 
-        // Admins can act on any trip; drivers only on trips assigned to them.
         if (!currentUser.IsAdmin)
         {
-            var driver = await context.Drivers.FirstOrDefaultAsync(d => d.UserId == driverUserId, ct);
-            if (driver is null)
-            {
-                return TripErrors.DriverNotFound;
-            }
-
-            if (trip.DriverId != driver.Id)
-            {
-                return Error.Validation(LocalizationKeys.Trip.DriverMismatch, "This trip is not assigned to you.");
-            }
+            return Error.Forbidden(LocalizationKeys.Auth.Unauthorized, "Only admins can operate trips.");
         }
 
-        if (trip.Status != TripStatus.DriverArrived)
+        if (trip.AcceptedByAdminId != driverUserId)
+        {
+            return TripErrors.NotAcceptedByCurrentAdmin;
+        }
+
+        if (trip.Status != TripStatus.Arrived)
         {
             return TripErrors.InvalidStatus(trip.Status);
         }
@@ -50,7 +48,8 @@ public sealed class StartTripWaitingCommandHandler(IAppDbContext context, IUser 
             return TripErrors.ActiveWaitingSessionExists;
         }
 
-        if (trip.DriverId is null)
+        var operatorId = trip.DriverId ?? trip.AcceptedByAdminId;
+        if (operatorId is null)
         {
             return Error.Validation(LocalizationKeys.Trip.DriverMismatch, "Trip has no assigned driver.");
         }
@@ -60,7 +59,7 @@ public sealed class StartTripWaitingCommandHandler(IAppDbContext context, IUser 
         var graceMinutes = trip.IsAirport
             ? TripWaitingSession.AirportGraceMinutes
             : TripWaitingSession.DefaultGraceMinutes;
-        var now = DateTimeOffset.UtcNow;
+        var now = timeProvider.GetUtcNow();
         var effectiveWaitingStart = trip.ScheduledAtUtc is { } scheduledAt && scheduledAt > now
             ? scheduledAt
             : now;
@@ -68,7 +67,7 @@ public sealed class StartTripWaitingCommandHandler(IAppDbContext context, IUser 
         var sessionResult = TripWaitingSession.Start(
             Guid.NewGuid(),
             trip.Id,
-            trip.DriverId.Value,
+            operatorId.Value,
             ratePerMinute,
             graceMinutes,
             effectiveWaitingStart);

@@ -34,6 +34,7 @@ public sealed class Invoice : AuditableEntity
         string vehicleTypeName,
         string? passengerName,
         string? passengerPhone,
+        string? passengerEmail,
         string? stripePaymentMethodType,
         string stopsJson)
         : base(id)
@@ -61,6 +62,7 @@ public sealed class Invoice : AuditableEntity
         VehicleTypeName = vehicleTypeName;
         PassengerName = passengerName;
         PassengerPhone = passengerPhone;
+        PassengerEmail = passengerEmail;
         StripePaymentMethodType = stripePaymentMethodType;
         StopsJson = stopsJson;
     }
@@ -95,6 +97,9 @@ public sealed class Invoice : AuditableEntity
     /// <summary>Passenger phone snapshot, printed in the "billed to" block.</summary>
     public string? PassengerPhone { get; private set; }
 
+    /// <summary>Passenger email snapshot, printed in the "billed to" block when present.</summary>
+    public string? PassengerEmail { get; private set; }
+
     /// <summary>
     /// Exact Stripe method used (e.g. "ideal", "klarna", "card") snapshot, so the
     /// invoice can print "Betaald via: iDEAL". Null for cash / non-Stripe payments.
@@ -125,6 +130,7 @@ public sealed class Invoice : AuditableEntity
         string? passengerName,
         string stopsJson,
         string? passengerPhone = null,
+        string? passengerEmail = null,
         string? stripePaymentMethodType = null,
         decimal taxRate = 0m,
         decimal waitingFeeAmount = 0m)
@@ -190,6 +196,7 @@ public sealed class Invoice : AuditableEntity
             vehicleTypeName,
             passengerName,
             passengerPhone,
+            passengerEmail,
             stripePaymentMethodType,
             stopsJson);
 

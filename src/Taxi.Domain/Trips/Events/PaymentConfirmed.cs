@@ -8,5 +8,9 @@ public sealed class PaymentConfirmed : DomainEvent
 
     public Guid PassengerId { get; init; }
 
+    public Guid VehicleTypeId { get; init; }
+
+    public string ReferenceCode { get; init; } = string.Empty;
+
     public DateTimeOffset? ScheduledAtUtc { get; init; }
 }

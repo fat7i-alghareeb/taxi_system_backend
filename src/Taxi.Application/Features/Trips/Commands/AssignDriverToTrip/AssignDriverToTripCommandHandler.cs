@@ -1,68 +1,50 @@
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
 
 using Taxi.Application.Common.Interfaces;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
-using Taxi.Domain.Drivers;
 using Taxi.Domain.Trips;
 
 namespace Taxi.Application.Features.Trips.Commands.AssignDriverToTrip;
 
-public class AssignDriverToTripCommandHandler(IAppDbContext context)
+/// <summary>
+/// Compatibility handler for the legacy assignment route. In the admin-only
+/// workflow the current admin accepts the trip; the driver id is ignored.
+/// </summary>
+public class AssignDriverToTripCommandHandler(
+    IAppDbContext context,
+    IUser currentUser,
+    TimeProvider timeProvider)
     : IRequestHandler<AssignDriverToTripCommand, Result<Success>>
 {
-    private readonly IAppDbContext _context = context;
-
     public async Task<Result<Success>> Handle(AssignDriverToTripCommand request, CancellationToken ct)
     {
-        var trip = await _context.Trips.FirstOrDefaultAsync(t => t.Id == request.TripId, ct);
-        if (trip == null)
+        if (!Guid.TryParse(currentUser.Id, out var adminUserId) || !currentUser.IsAdmin)
         {
-            return Result.Failure<Success>(Error.NotFound(LocalizationKeys.Trip.NotFound, "Trip not found."));
+            return Error.Unauthorized(LocalizationKeys.Auth.Unauthorized, "Unauthorized user.");
         }
 
-        var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.Id == request.DriverId, ct);
-        if (driver == null)
+        var trip = await context.Trips.FirstOrDefaultAsync(t => t.Id == request.TripId, ct);
+        if (trip is null)
         {
-            return Result.Failure<Success>(Error.NotFound(LocalizationKeys.Driver.NotFound, "Driver not found."));
+            return TripErrors.NotFound;
         }
 
-        if (driver.ApprovalStatus != DriverApprovalStatus.Approved)
+        var acceptResult = trip.AcceptByAdmin(adminUserId, timeProvider.GetUtcNow());
+        if (acceptResult.IsFailure)
         {
-            return Result.Failure<Success>(Error.Validation(LocalizationKeys.Driver.NotApproved, "Selected driver is not approved."));
+            return acceptResult.Error;
         }
 
-        if (!driver.IsActive)
+        try
         {
-            return Result.Failure<Success>(Error.Validation(LocalizationKeys.Driver.Inactive, "Selected driver is inactive."));
+            await context.SaveChangesAsync(ct);
         }
-
-        if (driver.VehicleTypeId is null)
+        catch (DbUpdateConcurrencyException)
         {
-            return Result.Failure<Success>(Error.Validation(LocalizationKeys.Driver.NoActiveVehicle, "Selected driver has no vehicle type assigned."));
+            return TripErrors.AlreadyAccepted;
         }
-
-        if (driver.VehicleTypeId != trip.VehicleTypeId)
-        {
-            return Result.Failure<Success>(Error.Validation(LocalizationKeys.Trip.VehicleTypeNotFound, "Selected driver does not operate the requested vehicle type."));
-        }
-
-        var assignResult = trip.AssignDriver(driver.Id);
-        if (assignResult.IsFailure)
-        {
-            return assignResult.Error;
-        }
-
-        // Set driver status to OnTrip (or keep as is, but setting Status = OnTrip is standard)
-        var statusResult = driver.SetStatus(DriverStatus.OnTrip);
-        if (statusResult.IsFailure)
-        {
-            return statusResult.Error;
-        }
-
-        await _context.SaveChangesAsync(ct);
 
         return Result.Success;
     }

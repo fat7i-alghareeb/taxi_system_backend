@@ -18,23 +18,15 @@ public sealed class StopTripWaitingCommandHandler(IAppDbContext context, IUser c
             return Error.Unauthorized(LocalizationKeys.Auth.UserIdClaimInvalid, "Invalid user ID claim.");
         }
 
-        // Admins can act on any trip; drivers only on trips assigned to them.
-        Guid? driverId = null;
         if (!currentUser.IsAdmin)
         {
-            var driver = await context.Drivers.FirstOrDefaultAsync(d => d.UserId == driverUserId, ct);
-            if (driver is null)
-            {
-                return TripErrors.DriverNotFound;
-            }
-
-            driverId = driver.Id;
+            return Error.Forbidden(LocalizationKeys.Auth.Unauthorized, "Only admins can operate trips.");
         }
 
         var session = await context.TripWaitingSessions.FirstOrDefaultAsync(
             s =>
                 s.TripId == request.TripId &&
-                (driverId == null || s.DriverId == driverId) &&
+                s.DriverId == driverUserId &&
                 s.StoppedAtUtc == null,
             ct);
         if (session is null)

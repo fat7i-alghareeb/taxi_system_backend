@@ -503,6 +503,10 @@ namespace Taxi.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("PaidAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("PassengerEmail")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
                     b.Property<Guid>("PassengerId")
                         .HasColumnType("uuid");
 
@@ -835,6 +839,19 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("AcceptedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("AcceptedByAdminId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("AcceptedReminder15SentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("AcceptedReminder30SentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset?>("ArrivedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -856,6 +873,10 @@ namespace Taxi.Infrastructure.Data.Migrations
                     b.Property<Guid?>("DriverId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("FlightNumber")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
                     b.Property<bool>("IsAirport")
                         .HasColumnType("boolean");
 
@@ -874,9 +895,6 @@ namespace Taxi.Infrastructure.Data.Migrations
 
                     b.Property<int?>("PassengerRating")
                         .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset?>("PreArrivalNotifiedAtUtc")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("QuoteId")
                         .HasColumnType("uuid");
@@ -897,14 +915,29 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Status")
+                        .IsConcurrencyToken()
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTimeOffset?>("UnacceptedOverdueSentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("UnacceptedReminder15SentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("UnacceptedReminder30SentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("UnacceptedReminder60SentAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("VehicleTypeId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AcceptedByAdminId");
 
                     b.HasIndex("DriverId");
 
@@ -913,6 +946,8 @@ namespace Taxi.Infrastructure.Data.Migrations
                     b.HasIndex("QuoteId");
 
                     b.HasIndex("VehicleTypeId");
+
+                    b.HasIndex("Status", "ScheduledAtUtc");
 
                     b.ToTable("Trips");
                 });
@@ -1033,6 +1068,53 @@ namespace Taxi.Infrastructure.Data.Migrations
                     b.HasIndex("TripId");
 
                     b.ToTable("TripCompensationClaims");
+                });
+
+            modelBuilder.Entity("Taxi.Domain.Trips.TripMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastModifiedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<Guid>("SenderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SenderRole")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("SentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TripId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TripId", "SentAtUtc");
+
+                    b.ToTable("TripMessages");
                 });
 
             modelBuilder.Entity("Taxi.Domain.Trips.TripRoute", b =>
@@ -1322,6 +1404,41 @@ namespace Taxi.Infrastructure.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("Taxi.Infrastructure.Outbox.OutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ProcessedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProcessedAtUtc", "OccurredAtUtc");
+
+                    b.ToTable("OutboxMessages", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -1451,6 +1568,11 @@ namespace Taxi.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Taxi.Domain.Trips.Trip", b =>
                 {
+                    b.HasOne("Taxi.Domain.Admins.AdminProfile", null)
+                        .WithMany()
+                        .HasForeignKey("AcceptedByAdminId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Taxi.Domain.Drivers.Driver", null)
                         .WithMany()
                         .HasForeignKey("DriverId")
@@ -1548,6 +1670,15 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("TripId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Taxi.Domain.Trips.TripMessage", b =>
+                {
+                    b.HasOne("Taxi.Domain.Trips.Trip", null)
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

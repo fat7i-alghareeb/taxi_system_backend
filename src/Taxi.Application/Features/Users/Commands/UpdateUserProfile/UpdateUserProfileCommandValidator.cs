@@ -8,9 +8,15 @@ public class UpdateUserProfileCommandValidator : AbstractValidator<UpdateUserPro
 {
     public UpdateUserProfileCommandValidator()
     {
-        // Both Name and Photo are optional individually, but at least one must be provided.
+        // Profile fields are optional individually, but at least one update must be provided.
         RuleFor(c => c)
-            .Must(c => !string.IsNullOrWhiteSpace(c.Name) || c.PhotoStream is not null)
+            .Must(c =>
+                !string.IsNullOrWhiteSpace(c.Name)
+                || c.Email is not null
+                || c.PhotoStream is not null
+                || c.HomeAddressLabel is not null
+                || c.HomeAddressLatitude is not null
+                || c.HomeAddressLongitude is not null)
             .WithErrorCode(LocalizationKeys.Validation.RequiredField);
 
         When(c => !string.IsNullOrWhiteSpace(c.Name), () =>
@@ -18,6 +24,12 @@ public class UpdateUserProfileCommandValidator : AbstractValidator<UpdateUserPro
             RuleFor(c => c.Name!)
                 .NotEmpty().WithErrorCode(LocalizationKeys.User.ProfileNameRequired);
         });
+
+        RuleFor(c => c.Email)
+            .MaximumLength(150)
+            .EmailAddress()
+            .WithErrorCode(LocalizationKeys.Validation.EmailInvalid)
+            .When(c => !string.IsNullOrWhiteSpace(c.Email));
 
         When(c => c.PhotoStream is not null, () =>
         {

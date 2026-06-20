@@ -142,6 +142,7 @@ public sealed class InvoiceIssuanceService(
             passengerName: passenger?.Name,
             stopsJson: stopsJson,
             passengerPhone: passenger?.Phone,
+            passengerEmail: passenger?.Email,
             stripePaymentMethodType: stripePaymentMethodType,
             waitingFeeAmount: waitingFeeTotal);
 

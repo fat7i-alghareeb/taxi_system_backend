@@ -7,14 +7,17 @@ using Taxi.Domain.Trips;
 
 namespace Taxi.Application.Features.Trips.Commands.ArriveTrip;
 
-public class ArriveTripCommandHandler(IAppDbContext context, IUser currentUser)
+public class ArriveTripCommandHandler(
+    IAppDbContext context,
+    IUser currentUser,
+    TimeProvider timeProvider)
     : IRequestHandler<ArriveTripCommand, Result<Success>>
 {
     private readonly IAppDbContext _context = context;
 
     public async Task<Result<Success>> Handle(ArriveTripCommand request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(currentUser.Id) || !Guid.TryParse(currentUser.Id, out var driverUserId))
+        if (string.IsNullOrWhiteSpace(currentUser.Id) || !Guid.TryParse(currentUser.Id, out var adminUserId))
         {
             return Result.Failure<Success>(Error.Validation(LocalizationKeys.Auth.Unauthorized, "Unauthorized user."));
         }
@@ -25,22 +28,18 @@ public class ArriveTripCommandHandler(IAppDbContext context, IUser currentUser)
             return Result.Failure<Success>(Error.NotFound(LocalizationKeys.Trip.NotFound, "Trip not found."));
         }
 
-        // Admins can act on any trip; drivers only on trips assigned to them.
         if (!currentUser.IsAdmin)
         {
-            var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.UserId == driverUserId, ct);
-            if (driver == null)
-            {
-                return Result.Failure<Success>(Error.NotFound(LocalizationKeys.Driver.NotFound, "Driver profile not found."));
-            }
-
-            if (trip.DriverId != driver.Id)
-            {
-                return Result.Failure<Success>(Error.Validation(LocalizationKeys.Trip.DriverMismatch, "This trip is not assigned to you."));
-            }
+            return Error.Forbidden(LocalizationKeys.Auth.Unauthorized, "Only admins can operate trips.");
         }
 
-        var transitionResult = trip.DriverArrived();
+        if (trip.AcceptedByAdminId != adminUserId)
+        {
+            return TripErrors.NotAcceptedByCurrentAdmin;
+        }
+
+        var now = timeProvider.GetUtcNow();
+        var transitionResult = trip.DriverArrived(now);
         if (transitionResult.IsFailure)
         {
             return transitionResult.Error;
@@ -49,7 +48,8 @@ public class ArriveTripCommandHandler(IAppDbContext context, IUser currentUser)
         // Auto-start the waiting meter the moment the driver arrives. The first
         // TripWaitingSession.GraceMinutes are free; beyond that the passenger is
         // billed per minute at the vehicle type's RatePerMin (settled on completion).
-        if (trip.DriverId is { } driverId)
+        var operatorId = trip.DriverId ?? trip.AcceptedByAdminId;
+        if (operatorId is { } driverId)
         {
             var hasActive = await _context.TripWaitingSessions
                 .AnyAsync(s => s.TripId == trip.Id && s.StoppedAtUtc == null, ct);
@@ -61,7 +61,6 @@ public class ArriveTripCommandHandler(IAppDbContext context, IUser currentUser)
                 var graceMinutes = trip.IsAirport
                     ? TripWaitingSession.AirportGraceMinutes
                     : TripWaitingSession.DefaultGraceMinutes;
-                var now = DateTimeOffset.UtcNow;
                 var effectiveWaitingStart = trip.ScheduledAtUtc is { } scheduledAt && scheduledAt > now
                     ? scheduledAt
                     : now;

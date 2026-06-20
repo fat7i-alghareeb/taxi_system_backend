@@ -23,6 +23,7 @@ public interface IAppDbContext
     public DbSet<Driver> Drivers { get; }
     public DbSet<DriverDocument> DriverDocuments { get; }
     public DbSet<Trip> Trips { get; }
+    public DbSet<TripMessage> TripMessages { get; }
     public DbSet<Payment> Payments { get; }
     public DbSet<AuditLog> AuditLogs { get; }
     public DbSet<Notification> Notifications { get; }

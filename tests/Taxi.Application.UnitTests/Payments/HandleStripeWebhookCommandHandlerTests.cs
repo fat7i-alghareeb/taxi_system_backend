@@ -81,7 +81,7 @@ public class HandleStripeWebhookCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_PaymentIntentSucceeded_ConfirmsTripAndLeavesItPendingDriver()
+    public async Task Handle_PaymentIntentSucceeded_ConfirmsTripForAdminAcceptance()
     {
         var trip = PaymentTestBuilders.CreateAwaitingPaymentTrip(Guid.NewGuid(), Guid.NewGuid());
         var payment = PaymentTestBuilders.CreatePendingStripePayment(trip.Id, "pi_test_123");
@@ -103,7 +103,7 @@ public class HandleStripeWebhookCommandHandlerTests
 
         await handler.Handle(new HandleStripeWebhookCommand("json", "sig"), default);
 
-        Assert.Equal(TripStatus.PendingDriver, trip.Status);
+        Assert.Equal(TripStatus.AwaitingAdminAcceptance, trip.Status);
         Assert.Null(trip.DriverId);
     }
 
@@ -217,11 +217,11 @@ public class HandleStripeWebhookCommandHandlerTests
     {
         var trip = PaymentTestBuilders.CreateAwaitingPaymentTrip(Guid.NewGuid(), Guid.NewGuid());
         trip.ConfirmPayment();
-        trip.AssignDriver(Guid.NewGuid());
-        trip.DriverEnRoute();
-        trip.DriverArrived();
-        trip.Start();
-        trip.Complete();
+        trip.AcceptByAdmin(Guid.NewGuid(), DateTimeOffset.UtcNow);
+        trip.DriverEnRoute(DateTimeOffset.UtcNow);
+        trip.DriverArrived(DateTimeOffset.UtcNow);
+        trip.Start(DateTimeOffset.UtcNow);
+        trip.Complete(DateTimeOffset.UtcNow);
         var payment = PaymentTestBuilders.CreatePendingStripePayment(trip.Id, "pi_test_123");
         payment.MarkAsCompleted("ch_test");
 

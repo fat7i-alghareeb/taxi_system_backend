@@ -57,6 +57,14 @@ public static class TripErrors
         code: LocalizationKeys.Trip.ScheduledStartNotReady,
         description: "This scheduled trip cannot be started before its scheduled time.");
 
+    public static readonly Error AlreadyAccepted = Error.Conflict(
+        code: LocalizationKeys.Trip.AlreadyAccepted,
+        description: "This trip has already been accepted by another admin.");
+
+    public static readonly Error NotAcceptedByCurrentAdmin = Error.Forbidden(
+        code: LocalizationKeys.Trip.NotAcceptedByCurrentAdmin,
+        description: "This trip is owned by another admin.");
+
     public static readonly Error CannotCancel = Error.Validation(
         code: LocalizationKeys.Trip.CannotCancel,
         description: "This trip cannot be cancelled in its current status.");
@@ -117,8 +125,32 @@ public static class TripErrors
         code: LocalizationKeys.Trip.CannotUpdatePassengerNote,
         description: "Passenger note cannot be updated after the trip has started.");
 
+    public static readonly Error FlightNumberRequired = Error.Validation(
+        code: LocalizationKeys.Trip.FlightNumberRequired,
+        description: "A flight number is required for airport pickups.");
+
+    public static readonly Error InvalidFlightNumber = Error.Validation(
+        code: LocalizationKeys.Trip.FlightNumberInvalid,
+        description: "The flight number format is invalid.");
+
     public static readonly Error InvalidRating = Error.Validation(
         code: LocalizationKeys.Trip.InvalidRating,
         description: "The rating must be between 1 and 5 stars.");
+
+    public static readonly Error ChatClosed = Error.Validation(
+        code: LocalizationKeys.Trip.ChatClosed,
+        description: "The chat for this trip is closed.");
+
+    public static readonly Error NotAChatParticipant = Error.Forbidden(
+        code: LocalizationKeys.Trip.ChatNotParticipant,
+        description: "You are not a participant of this trip's chat.");
+
+    public static readonly Error EmptyMessage = Error.Validation(
+        code: LocalizationKeys.Trip.ChatEmptyMessage,
+        description: "A message must contain text or a photo.");
+
+    public static readonly Error MessageTooLong = Error.Validation(
+        code: LocalizationKeys.Trip.ChatMessageTooLong,
+        description: "The message is too long.");
 }
 

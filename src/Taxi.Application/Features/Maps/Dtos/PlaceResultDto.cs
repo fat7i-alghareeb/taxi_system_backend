@@ -5,5 +5,6 @@ public record PlaceResultDto(
     string PrimaryName,
     string SecondaryAddress,
     decimal Latitude,
-    decimal Longitude);
+    decimal Longitude,
+    bool IsAirport);
 

@@ -79,7 +79,7 @@ public class TripListQueryPaymentVisibilityTests
                 CreateQuote(passengerId, awaitingTrip.VehicleTypeId, awaitingQuoteId),
                 CreateQuote(passengerId, visibleTrip.VehicleTypeId, visibleQuoteId),
             ]);
-        var handler = new GetAllTripsQueryHandler(context);
+        var handler = new GetAllTripsQueryHandler(context, TimeProvider.System);
 
         var result = await handler.Handle(new GetAllTripsQuery(), CancellationToken.None);
 
@@ -98,7 +98,7 @@ public class TripListQueryPaymentVisibilityTests
         var context = BuildContext(
             [awaitingTrip],
             [CreateQuote(passengerId, awaitingTrip.VehicleTypeId, quoteId)]);
-        var handler = new GetAllTripsQueryHandler(context);
+        var handler = new GetAllTripsQueryHandler(context, TimeProvider.System);
 
         var result = await handler.Handle(
             new GetAllTripsQuery(Status: TripStatus.AwaitingPayment.ToString()),
@@ -124,15 +124,15 @@ public class TripListQueryPaymentVisibilityTests
                 CreateQuote(passengerId, awaitingTrip.VehicleTypeId, awaitingQuoteId),
                 CreateQuote(passengerId, pendingTrip.VehicleTypeId, pendingQuoteId),
             ]);
-        var handler = new GetAllTripsQueryHandler(context);
+        var handler = new GetAllTripsQueryHandler(context, TimeProvider.System);
 
         var result = await handler.Handle(
-            new GetAllTripsQuery(Status: TripStatus.PendingDriver.ToString()),
+            new GetAllTripsQuery(Status: TripStatus.AwaitingAdminAcceptance.ToString()),
             CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Value);
-        Assert.Equal(TripStatus.PendingDriver.ToString(), result.Value[0].Status);
+        Assert.Equal(TripStatus.AwaitingAdminAcceptance.ToString(), result.Value[0].Status);
     }
 
     private static IAppDbContext BuildContext(
@@ -147,6 +147,8 @@ public class TripListQueryPaymentVisibilityTests
         var cancellationsSet = DbSetMockFactory.Create(new List<TripCancellation>());
         var compensationClaimsSet = DbSetMockFactory.Create(new List<TripCompensationClaim>());
         var waitingSessionsSet = DbSetMockFactory.Create(new List<TripWaitingSession>());
+        var adminProfilesSet = DbSetMockFactory.Create(
+            new List<Taxi.Domain.Admins.AdminProfile>());
 
         context.Trips.Returns(tripsSet);
         context.PricingQuotes.Returns(pricingQuotesSet);
@@ -155,6 +157,7 @@ public class TripListQueryPaymentVisibilityTests
         context.TripCancellations.Returns(cancellationsSet);
         context.TripCompensationClaims.Returns(compensationClaimsSet);
         context.TripWaitingSessions.Returns(waitingSessionsSet);
+        context.AdminProfiles.Returns(adminProfilesSet);
         return context;
     }
 

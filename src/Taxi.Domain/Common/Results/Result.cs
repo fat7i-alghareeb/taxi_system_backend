@@ -79,6 +79,18 @@ public sealed class Result<TValue> : IResult<TValue>
         this.IsSuccess = true;
     }
 
+    private Result(TValue? value, bool allowNullSuccess)
+    {
+        if (!allowNullSuccess && value is null)
+        {
+            throw new ArgumentNullException(nameof(value));
+        }
+
+        this.value = value;
+        this.errors = [];
+        this.IsSuccess = true;
+    }
+
     public bool IsSuccess { get; }
 
     public bool IsError => !this.IsSuccess;
@@ -95,6 +107,14 @@ public sealed class Result<TValue> : IResult<TValue>
 
     public TNextValue Match<TNextValue>(Func<TValue, TNextValue> onValue, Func<List<Error>, TNextValue> onError)
         => this.IsSuccess ? onValue(this.Value!) : onError(this.Errors);
+
+    /// <summary>
+    /// Creates a successful result whose value may intentionally be null.
+    /// Use only for nullable query results where null has domain meaning, such as
+    /// "no current resource"; ordinary implicit success construction remains null-safe.
+    /// </summary>
+    public static Result<TValue> SuccessOrNull(TValue? value)
+        => new(value, allowNullSuccess: true);
 
     public static implicit operator Result<TValue>(TValue value)
         => new(value);

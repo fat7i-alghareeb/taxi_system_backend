@@ -3,11 +3,10 @@ namespace Taxi.Domain.Trips;
 public enum TripStatus
 {
     PendingQuote,
-    Scheduled,
-    PendingDriver,
-    DriverAssigned,
-    DriverEnRoute,
-    DriverArrived,
+    AwaitingAdminAcceptance,
+    Accepted,
+    EnRoute,
+    Arrived,
     InProgress,
     Completed,
     Cancelled,

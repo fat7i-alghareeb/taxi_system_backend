@@ -31,5 +31,32 @@ public class LocalFileStorage(
         // Return absolute URL when base URL is configured, otherwise relative.
         return string.IsNullOrEmpty(_apiBaseUrl) ? relativeUrl : $"{_apiBaseUrl}{relativeUrl}";
     }
+
+    public Task DeleteAsync(string relativePathOrUrl, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(relativePathOrUrl))
+        {
+            return Task.CompletedTask;
+        }
+
+        // Accept either the absolute URL returned by SaveAsync or the raw relative path.
+        var relativePath = relativePathOrUrl;
+        if (!string.IsNullOrEmpty(_apiBaseUrl) && relativePath.StartsWith(_apiBaseUrl, StringComparison.OrdinalIgnoreCase))
+        {
+            relativePath = relativePath[_apiBaseUrl.Length..];
+        }
+
+        relativePath = relativePath.TrimStart('/', '\\');
+
+        var rootPath = environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot");
+        var fullPath = Path.Combine(rootPath, relativePath);
+
+        if (File.Exists(fullPath))
+        {
+            File.Delete(fullPath);
+        }
+
+        return Task.CompletedTask;
+    }
 }
 

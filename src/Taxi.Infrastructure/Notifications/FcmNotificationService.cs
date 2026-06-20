@@ -20,7 +20,14 @@ public class FcmNotificationService(
     private readonly IAppDbContext _context = context;
     private readonly ILogger<FcmNotificationService> _logger = logger;
 
-    public async Task SendPushNotificationAsync(Guid userId, string title, string body, Dictionary<string, string>? data = null, CancellationToken ct = default)
+    public async Task SendPushNotificationAsync(
+        Guid userId,
+        string title,
+        string body,
+        Dictionary<string, string>? data = null,
+        CancellationToken ct = default,
+        object[]? titleArgs = null,
+        object[]? bodyArgs = null)
     {
         _logger.LogInformation(
             "[FCM] SendPushNotification called. UserId={UserId} TitleKey={TitleKey} BodyKey={BodyKey} DataKeys=[{DataKeys}]",
@@ -51,7 +58,7 @@ public class FcmNotificationService(
             : user.FcmToken;
 
         var lang = string.IsNullOrWhiteSpace(user.PreferredLanguage) ? "en" : user.PreferredLanguage;
-        var (localizedTitle, localizedBody) = Localize(title, body, lang);
+        var (localizedTitle, localizedBody) = Localize(title, body, lang, titleArgs, bodyArgs);
 
         _logger.LogInformation(
             "[FCM] Sending to user {UserId}. TokenPreview={TokenPreview} Lang={Lang} Title=\"{Title}\" Body=\"{Body}\" Data={Data}",
@@ -94,7 +101,14 @@ public class FcmNotificationService(
         }
     }
 
-    public async Task SendPushNotificationToTopicAsync(string topic, string title, string body, Dictionary<string, string>? data = null, CancellationToken ct = default)
+    public async Task SendPushNotificationToTopicAsync(
+        string topic,
+        string title,
+        string body,
+        Dictionary<string, string>? data = null,
+        CancellationToken ct = default,
+        object[]? titleArgs = null,
+        object[]? bodyArgs = null)
     {
         if (string.IsNullOrWhiteSpace(topic))
         {
@@ -109,7 +123,12 @@ public class FcmNotificationService(
         // Topic broadcasts have no per-recipient language, so resolve any
         // localization keys in a single default culture. Free-text titles/bodies
         // (e.g. admin broadcasts) are left untouched when no resource matches.
-        var (localizedTitle, localizedBody) = Localize(title, body, DefaultTopicCulture);
+        var (localizedTitle, localizedBody) = Localize(
+            title,
+            body,
+            DefaultTopicCulture,
+            titleArgs,
+            bodyArgs);
 
         _logger.LogInformation(
             "[FCM] Sending to topic={Topic} Title=\"{Title}\" Body=\"{Body}\" Data={Data}",
@@ -145,7 +164,12 @@ public class FcmNotificationService(
         }
     }
 
-    private (string Title, string Body) Localize(string title, string body, string lang)
+    private (string Title, string Body) Localize(
+        string title,
+        string body,
+        string lang,
+        object[]? titleArgs,
+        object[]? bodyArgs)
     {
         var localizer = localizerFactory.Create("Taxi.Api.SharedResource", "Taxi.Api");
         var originalCulture = System.Globalization.CultureInfo.CurrentUICulture;
@@ -156,8 +180,12 @@ public class FcmNotificationService(
         try
         {
             System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo(lang);
-            var titleLoc = localizer[title];
-            var bodyLoc = localizer[body];
+            var titleLoc = titleArgs is { Length: > 0 }
+                ? localizer[title, titleArgs]
+                : localizer[title];
+            var bodyLoc = bodyArgs is { Length: > 0 }
+                ? localizer[body, bodyArgs]
+                : localizer[body];
 
             if (!titleLoc.ResourceNotFound)
             {

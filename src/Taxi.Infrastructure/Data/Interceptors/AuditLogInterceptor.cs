@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Domain.Audit;
+using Taxi.Infrastructure.Outbox;
 
 namespace Taxi.Infrastructure.Data.Interceptors;
 
@@ -37,7 +38,7 @@ public class AuditLogInterceptor(IUser user) : SaveChangesInterceptor
 
         foreach (var entry in entries)
         {
-            if (entry.Entity is AuditLog || entry.Metadata.IsOwned())
+            if (entry.Entity is AuditLog or OutboxMessage || entry.Metadata.IsOwned())
             {
                 continue;
             }

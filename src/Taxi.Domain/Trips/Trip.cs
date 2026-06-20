@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Taxi.Domain.Common;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Trips.Events;
@@ -7,6 +8,9 @@ namespace Taxi.Domain.Trips;
 public sealed class Trip : AuditableEntity
 {
     private static readonly TimeSpan ScheduledEnRouteLeadTime = TimeSpan.FromMinutes(15);
+    private static readonly Regex FlightNumberPattern = new(
+        @"^[A-Z0-9](?:[A-Z0-9 -]{0,13}[A-Z0-9])?$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private readonly List<TripStop> _stops = [];
 
@@ -21,7 +25,8 @@ public sealed class Trip : AuditableEntity
         IEnumerable<TripStop> stops,
         DateTimeOffset? scheduledAtUtc,
         string? passengerNote,
-        bool isAirport)
+        bool isAirport,
+        string? flightNumber)
         : base(id)
     {
         PassengerId = passengerId;
@@ -31,6 +36,7 @@ public sealed class Trip : AuditableEntity
         ScheduledAtUtc = scheduledAtUtc;
         PassengerNote = NormalizePassengerNote(passengerNote);
         IsAirport = isAirport;
+        FlightNumber = isAirport ? NormalizeFlightNumber(flightNumber) : null;
         Status = TripStatus.AwaitingPayment;
         _stops.AddRange(stops);
     }
@@ -38,6 +44,7 @@ public sealed class Trip : AuditableEntity
     public Guid PassengerId { get; private set; }
     public string ReferenceCode { get; private set; } = default!;
     public Guid? DriverId { get; private set; }
+    public Guid? AcceptedByAdminId { get; private set; }
     public Guid VehicleTypeId { get; private set; }
     public TripStatus Status { get; private set; }
     public Guid QuoteId { get; private set; }
@@ -50,19 +57,21 @@ public sealed class Trip : AuditableEntity
     /// after it, which cancels the trip with a 20% passenger refund.
     /// </summary>
     public bool IsAirport { get; private set; }
+    public string? FlightNumber { get; private set; }
     public DateTimeOffset? ScheduledAtUtc { get; private set; }
     public DateTimeOffset? AssignedAtUtc { get; private set; }
+    public DateTimeOffset? AcceptedAtUtc { get; private set; }
     public DateTimeOffset? ArrivedAtUtc { get; private set; }
     public DateTimeOffset? StartedAtUtc { get; private set; }
     public DateTimeOffset? CompletedAtUtc { get; private set; }
     public DateTimeOffset? DeletedAtUtc { get; private set; }
 
-    /// <summary>
-    /// Set once the passenger has been sent the "driver on the way" reminder for a
-    /// scheduled trip (15 minutes before <see cref="ScheduledAtUtc"/>). Used by the
-    /// background activation service to avoid sending the reminder more than once.
-    /// </summary>
-    public DateTimeOffset? PreArrivalNotifiedAtUtc { get; private set; }
+    public DateTimeOffset? UnacceptedReminder60SentAtUtc { get; private set; }
+    public DateTimeOffset? UnacceptedReminder30SentAtUtc { get; private set; }
+    public DateTimeOffset? UnacceptedReminder15SentAtUtc { get; private set; }
+    public DateTimeOffset? UnacceptedOverdueSentAtUtc { get; private set; }
+    public DateTimeOffset? AcceptedReminder30SentAtUtc { get; private set; }
+    public DateTimeOffset? AcceptedReminder15SentAtUtc { get; private set; }
 
     /// <summary>Passenger's star rating (1-5) for a completed trip; null until rated.</summary>
     public int? PassengerRating { get; private set; }
@@ -76,7 +85,8 @@ public sealed class Trip : AuditableEntity
         IEnumerable<TripStop> stops,
         DateTimeOffset? scheduledAtUtc = null,
         string? passengerNote = null,
-        bool isAirport = false)
+        bool isAirport = false,
+        string? flightNumber = null)
     {
         if (quote.IsExpired())
         {
@@ -88,6 +98,17 @@ public sealed class Trip : AuditableEntity
             return TripErrors.InvalidStops;
         }
 
+        var normalizedFlightNumber = NormalizeFlightNumber(flightNumber);
+        if (isAirport && normalizedFlightNumber is null)
+        {
+            return TripErrors.FlightNumberRequired;
+        }
+
+        if (isAirport && !FlightNumberPattern.IsMatch(normalizedFlightNumber!))
+        {
+            return TripErrors.InvalidFlightNumber;
+        }
+
         var trip = new Trip(
             id,
             referenceCode,
@@ -97,14 +118,8 @@ public sealed class Trip : AuditableEntity
             stops,
             scheduledAtUtc,
             passengerNote,
-            isAirport);
-
-        trip.AddDomainEvent(new TripRequested
-        {
-            TripId = trip.Id,
-            VehicleTypeId = quote.VehicleTypeId,
-            PassengerId = passengerId,
-        });
+            isAirport,
+            normalizedFlightNumber);
 
         return trip;
     }
@@ -126,13 +141,13 @@ public sealed class Trip : AuditableEntity
 
     public Result<Success> AssignDriver(Guid driverId)
     {
-        if (Status != TripStatus.PendingDriver && Status != TripStatus.Scheduled)
+        if (Status != TripStatus.AwaitingAdminAcceptance)
         {
             return TripErrors.InvalidStatus(Status);
         }
 
         DriverId = driverId;
-        Status = TripStatus.DriverAssigned;
+        Status = TripStatus.Accepted;
         AssignedAtUtc = DateTimeOffset.UtcNow;
 
         AddDomainEvent(new DriverAssigned
@@ -145,70 +160,92 @@ public sealed class Trip : AuditableEntity
         return Result.Success;
     }
 
-    public Result<Success> DriverEnRoute()
+    public Result<Success> AcceptByAdmin(Guid adminId, DateTimeOffset acceptedAtUtc)
     {
-        if (Status != TripStatus.DriverAssigned)
+        if (Status != TripStatus.AwaitingAdminAcceptance || AcceptedByAdminId.HasValue)
+        {
+            return TripErrors.AlreadyAccepted;
+        }
+
+        AcceptedByAdminId = adminId;
+        AcceptedAtUtc = acceptedAtUtc;
+        Status = TripStatus.Accepted;
+
+        AddDomainEvent(new AdminAcceptedTrip
+        {
+            TripId = Id,
+            PassengerId = PassengerId,
+            AdminId = adminId,
+            ScheduledAtUtc = ScheduledAtUtc,
+        });
+
+        return Result.Success;
+    }
+
+    public Result<Success> DriverEnRoute(DateTimeOffset now)
+    {
+        if (Status != TripStatus.Accepted)
         {
             return TripErrors.InvalidStatus(Status);
         }
 
         if (ScheduledAtUtc.HasValue &&
-            ScheduledAtUtc.Value > DateTimeOffset.UtcNow.Add(ScheduledEnRouteLeadTime))
+            ScheduledAtUtc.Value > now.Add(ScheduledEnRouteLeadTime))
         {
             return TripErrors.ScheduledEnRouteNotReady;
         }
 
-        Status = TripStatus.DriverEnRoute;
+        Status = TripStatus.EnRoute;
 
         AddDomainEvent(new DriverEnRoute
         {
             TripId = Id,
-            DriverId = DriverId ?? Guid.Empty,
+            DriverId = DriverId ?? AcceptedByAdminId ?? Guid.Empty,
             PassengerId = PassengerId,
         });
 
         return Result.Success;
     }
 
-    public Result<Success> DriverArrived()
+    public Result<Success> DriverArrived(DateTimeOffset now)
     {
-        if (Status != TripStatus.DriverEnRoute)
+        if (Status != TripStatus.EnRoute)
         {
             return TripErrors.InvalidStatus(Status);
         }
 
-        if (ScheduledAtUtc.HasValue && ScheduledAtUtc.Value > DateTimeOffset.UtcNow)
+        if (ScheduledAtUtc.HasValue && ScheduledAtUtc.Value > now)
         {
             return TripErrors.ScheduledArrivalNotReady;
         }
 
-        Status = TripStatus.DriverArrived;
-        ArrivedAtUtc = DateTimeOffset.UtcNow;
+        Status = TripStatus.Arrived;
+        ArrivedAtUtc = now;
 
         AddDomainEvent(new DriverArrived
         {
             TripId = Id,
-            DriverId = DriverId ?? Guid.Empty,
+            DriverId = DriverId ?? AcceptedByAdminId ?? Guid.Empty,
             PassengerId = PassengerId,
         });
 
         return Result.Success;
     }
 
-    public Result<Success> Start()
+    public Result<Success> Start(DateTimeOffset now)
     {
-        if (Status != TripStatus.DriverArrived)
+        if (Status != TripStatus.Arrived)
         {
             return TripErrors.InvalidStatus(Status);
         }
 
-        if (ScheduledAtUtc.HasValue && ScheduledAtUtc.Value > DateTimeOffset.UtcNow)
+        if (ScheduledAtUtc.HasValue && ScheduledAtUtc.Value > now)
         {
             return TripErrors.ScheduledStartNotReady;
         }
 
         Status = TripStatus.InProgress;
-        StartedAtUtc = DateTimeOffset.UtcNow;
+        StartedAtUtc = now;
 
         AddDomainEvent(new TripStarted
         {
@@ -219,7 +256,7 @@ public sealed class Trip : AuditableEntity
         return Result.Success;
     }
 
-    public Result<Success> Complete()
+    public Result<Success> Complete(DateTimeOffset now)
     {
         if (Status != TripStatus.InProgress)
         {
@@ -237,7 +274,7 @@ public sealed class Trip : AuditableEntity
         }
 
         Status = TripStatus.Completed;
-        CompletedAtUtc = DateTimeOffset.UtcNow;
+        CompletedAtUtc = now;
 
         AddDomainEvent(new TripCompleted
         {
@@ -312,26 +349,6 @@ public sealed class Trip : AuditableEntity
         return Result.Success;
     }
 
-    public Result<Success> ActivateScheduled()
-    {
-        if (Status != TripStatus.Scheduled)
-        {
-            return TripErrors.InvalidStatus(Status);
-        }
-
-        Status = TripStatus.PendingDriver;
-
-        AddDomainEvent(new TripRequested
-        {
-            TripId = Id,
-            VehicleTypeId = VehicleTypeId,
-            PassengerId = PassengerId,
-            WasScheduled = true,
-        });
-
-        return Result.Success;
-    }
-
     public Result<Success> ConfirmPayment()
     {
         if (Status != TripStatus.AwaitingPayment)
@@ -339,12 +356,14 @@ public sealed class Trip : AuditableEntity
             return TripErrors.InvalidStatus(Status);
         }
 
-        Status = ScheduledAtUtc.HasValue ? TripStatus.Scheduled : TripStatus.PendingDriver;
+        Status = TripStatus.AwaitingAdminAcceptance;
 
         AddDomainEvent(new PaymentConfirmed
         {
             TripId = Id,
             PassengerId = PassengerId,
+            VehicleTypeId = VehicleTypeId,
+            ReferenceCode = ReferenceCode,
             ScheduledAtUtc = ScheduledAtUtc,
         });
 
@@ -395,13 +414,88 @@ public sealed class Trip : AuditableEntity
         return Result.Success;
     }
 
-    /// <summary>
-    /// Records that the pre-arrival ("driver on the way") reminder has been sent for a
-    /// scheduled trip, so the activation service does not send it again.
-    /// </summary>
-    public void MarkPreArrivalNotified()
+    public DateTimeOffset? DispatchWindowOpensAtUtc =>
+        ScheduledAtUtc?.Subtract(ScheduledEnRouteLeadTime);
+
+    public bool CanMarkEnRoute(DateTimeOffset now) =>
+        Status == TripStatus.Accepted &&
+        (!ScheduledAtUtc.HasValue || now >= DispatchWindowOpensAtUtc!.Value);
+
+    public TripAttentionState GetAttentionState(DateTimeOffset now)
     {
-        PreArrivalNotifiedAtUtc = DateTimeOffset.UtcNow;
+        if (!ScheduledAtUtc.HasValue ||
+            Status is TripStatus.EnRoute
+                or TripStatus.Arrived
+                or TripStatus.InProgress
+                or TripStatus.Completed
+                or TripStatus.Cancelled
+                or TripStatus.PaymentFailed
+                or TripStatus.Refunded)
+        {
+            return TripAttentionState.Normal;
+        }
+
+        var remaining = ScheduledAtUtc.Value - now;
+        if (remaining <= TimeSpan.Zero)
+        {
+            return TripAttentionState.Overdue;
+        }
+
+        if (remaining <= TimeSpan.FromMinutes(15))
+        {
+            return TripAttentionState.Urgent;
+        }
+
+        var dueSoonThreshold = Status == TripStatus.Accepted
+            ? TimeSpan.FromMinutes(30)
+            : TimeSpan.FromMinutes(60);
+        return remaining <= dueSoonThreshold
+            ? TripAttentionState.DueSoon
+            : TripAttentionState.Normal;
+    }
+
+    public bool HasReminderBeenSent(ScheduledTripReminderStage stage) => stage switch
+    {
+        ScheduledTripReminderStage.Unaccepted60Minutes => UnacceptedReminder60SentAtUtc.HasValue,
+        ScheduledTripReminderStage.Unaccepted30Minutes => UnacceptedReminder30SentAtUtc.HasValue,
+        ScheduledTripReminderStage.Unaccepted15Minutes => UnacceptedReminder15SentAtUtc.HasValue,
+        ScheduledTripReminderStage.UnacceptedOverdue => UnacceptedOverdueSentAtUtc.HasValue,
+        ScheduledTripReminderStage.Accepted30Minutes => AcceptedReminder30SentAtUtc.HasValue,
+        ScheduledTripReminderStage.Accepted15Minutes => AcceptedReminder15SentAtUtc.HasValue,
+        _ => false,
+    };
+
+    public void MarkReminderSent(ScheduledTripReminderStage stage, DateTimeOffset sentAtUtc)
+    {
+        switch (stage)
+        {
+            case ScheduledTripReminderStage.Unaccepted60Minutes:
+                UnacceptedReminder60SentAtUtc = sentAtUtc;
+                break;
+            case ScheduledTripReminderStage.Unaccepted30Minutes:
+                UnacceptedReminder30SentAtUtc = sentAtUtc;
+                break;
+            case ScheduledTripReminderStage.Unaccepted15Minutes:
+                UnacceptedReminder15SentAtUtc = sentAtUtc;
+                break;
+            case ScheduledTripReminderStage.UnacceptedOverdue:
+                UnacceptedOverdueSentAtUtc = sentAtUtc;
+                break;
+            case ScheduledTripReminderStage.Accepted30Minutes:
+                AcceptedReminder30SentAtUtc = sentAtUtc;
+                break;
+            case ScheduledTripReminderStage.Accepted15Minutes:
+                AcceptedReminder15SentAtUtc = sentAtUtc;
+                break;
+        }
+
+        AddDomainEvent(new ScheduledTripAdminReminder
+        {
+            TripId = Id,
+            ReferenceCode = ReferenceCode,
+            ScheduledAtUtc = ScheduledAtUtc!.Value,
+            Stage = stage,
+        });
     }
 
     /// <summary>Stores the passenger's 1-5 star rating for a completed trip.</summary>
@@ -426,6 +520,17 @@ public sealed class Trip : AuditableEntity
     {
         var normalized = passengerNote?.Trim();
         return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
+    }
+
+    private static string? NormalizeFlightNumber(string? flightNumber)
+    {
+        if (string.IsNullOrWhiteSpace(flightNumber))
+        {
+            return null;
+        }
+
+        var collapsed = Regex.Replace(flightNumber.Trim(), @"\s+", " ");
+        return collapsed.ToUpperInvariant();
     }
 }
 

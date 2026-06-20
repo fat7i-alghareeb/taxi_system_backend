@@ -50,7 +50,7 @@ public class UpdateUserProfileCommandHandler(
 
         // 2. Update Profile
         var nameToUpdate = request.Name ?? user.Name;
-        var updateResult = user.UpdateProfile(nameToUpdate, photoUrl);
+        var updateResult = user.UpdateProfile(nameToUpdate, photoUrl, request.Email);
 
         if (updateResult.IsError)
         {

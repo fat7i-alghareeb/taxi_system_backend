@@ -145,6 +145,8 @@ public static class LocalizationKeys
         public const string ScheduledEnRouteNotReady = "Trip.Scheduled.EnRouteNotReady";
         public const string ScheduledArrivalNotReady = "Trip.Scheduled.ArrivalNotReady";
         public const string ScheduledStartNotReady = "Trip.Scheduled.StartNotReady";
+        public const string AlreadyAccepted = "Trip.AlreadyAccepted";
+        public const string NotAcceptedByCurrentAdmin = "Trip.NotAcceptedByCurrentAdmin";
         public const string CannotCancel = "Trip.CannotCancel";
         public const string CancellationWindowExpired = "Trip.Cancellation.WindowExpired";
         public const string DriverCancelTooEarly = "Trip.Cancellation.DriverTooEarly";
@@ -162,7 +164,13 @@ public static class LocalizationKeys
         public const string TooManyStops = "Trip.Stops.TooMany";
         public const string PassengerNoteTooLong = "Trip.PassengerNote.TooLong";
         public const string CannotUpdatePassengerNote = "Trip.PassengerNote.CannotUpdate";
+        public const string FlightNumberRequired = "Trip.FlightNumber.Required";
+        public const string FlightNumberInvalid = "Trip.FlightNumber.Invalid";
         public const string InvalidRating = "Trip.Rating.Invalid";
+        public const string ChatClosed = "Trip.Chat.Closed";
+        public const string ChatNotParticipant = "Trip.Chat.NotParticipant";
+        public const string ChatEmptyMessage = "Trip.Chat.EmptyMessage";
+        public const string ChatMessageTooLong = "Trip.Chat.MessageTooLong";
     }
 
     public static class Maps
@@ -298,9 +306,29 @@ public static class LocalizationKeys
 
         public const string TripScheduledActivatedTitle = "Notification.TripScheduledActivated.Title";
         public const string TripScheduledActivatedBody = "Notification.TripScheduledActivated.Body";
+        public const string TripAcceptedTitle = "Notification.TripAccepted.Title";
+        public const string TripAcceptedBody = "Notification.TripAccepted.Body";
+        public const string AdminScheduledTripTitle = "Notification.AdminScheduledTrip.Title";
+        public const string AdminScheduledTripBody = "Notification.AdminScheduledTrip.Body";
+        public const string AdminTripReminder60Title = "Notification.AdminTripReminder60.Title";
+        public const string AdminTripReminder60Body = "Notification.AdminTripReminder60.Body";
+        public const string AdminTripReminder30Title = "Notification.AdminTripReminder30.Title";
+        public const string AdminTripReminder30Body = "Notification.AdminTripReminder30.Body";
+        public const string AdminTripReminder15Title = "Notification.AdminTripReminder15.Title";
+        public const string AdminTripReminder15Body = "Notification.AdminTripReminder15.Body";
+        public const string AdminTripOverdueTitle = "Notification.AdminTripOverdue.Title";
+        public const string AdminTripOverdueBody = "Notification.AdminTripOverdue.Body";
+        public const string AdminAcceptedReminder30Title = "Notification.AdminAcceptedReminder30.Title";
+        public const string AdminAcceptedReminder30Body = "Notification.AdminAcceptedReminder30.Body";
+        public const string AdminAcceptedReminder15Title = "Notification.AdminAcceptedReminder15.Title";
+        public const string AdminAcceptedReminder15Body = "Notification.AdminAcceptedReminder15.Body";
 
         public const string WaitingFeeDueTitle = "Notification.WaitingFeeDue.Title";
         public const string WaitingFeeDueBody = "Notification.WaitingFeeDue.Body";
+
+        public const string NewMessageTitle = "Notification.NewMessage.Title";
+        public const string NewMessageBody = "Notification.NewMessage.Body";
+        public const string NewPhotoMessageBody = "Notification.NewMessage.PhotoBody";
     }
 }
 

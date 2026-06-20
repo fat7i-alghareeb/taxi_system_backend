@@ -30,7 +30,7 @@ public class RequestTripCommandHandlerStripeTests
     {
         _clientConfig.GetClientConfig().Returns(new ClientConfig(StripeEnabled: false, StripePublishableKey: string.Empty, SignalREnabled: true));
         var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId);
-        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe);
+        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, TimeProvider.System);
 
         var result = await handler.Handle(new RequestTripCommand(quoteId, TwoStops()), default);
 
@@ -39,16 +39,39 @@ public class RequestTripCommandHandlerStripeTests
     }
 
     [Fact]
-    public async Task Handle_StripeDisabled_TripStatusIsPendingDriver()
+    public async Task Handle_StripeDisabled_TripStatusIsAwaitingAdminAcceptance()
     {
         _clientConfig.GetClientConfig().Returns(new ClientConfig(StripeEnabled: false, StripePublishableKey: string.Empty, SignalREnabled: true));
         var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId);
-        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe);
+        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, TimeProvider.System);
 
         var result = await handler.Handle(new RequestTripCommand(quoteId, TwoStops()), default);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("PendingDriver", result.Value.Status);
+        Assert.Equal("AwaitingAdminAcceptance", result.Value.Status);
+    }
+
+    [Fact]
+    public async Task Handle_AirportPickup_NormalizesAndReturnsFlightNumber()
+    {
+        _clientConfig.GetClientConfig().Returns(new ClientConfig(StripeEnabled: false, StripePublishableKey: string.Empty, SignalREnabled: true));
+        var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId);
+        var handler = new RequestTripCommandHandler(
+            context,
+            _user,
+            _clientConfig,
+            _stripe,
+            TimeProvider.System);
+        var stops = TwoStops();
+        stops[0] = stops[0] with { IsAirport = true };
+
+        var result = await handler.Handle(
+            new RequestTripCommand(quoteId, stops, FlightNumber: " tk   1864 "),
+            default);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(result.Value.IsAirport);
+        Assert.Equal("TK 1864", result.Value.FlightNumber);
     }
 
     // ── Stripe enabled (payment path) ────────────────────────────────────────
@@ -64,7 +87,7 @@ public class RequestTripCommandHandlerStripeTests
                 Arg.Any<CancellationToken>())
             .Returns(new StripePaymentIntentResult("pi_test_123", "cs_test_secret", "pk_test", "cus_test_123", "ek_test_secret"));
         var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId);
-        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe);
+        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, TimeProvider.System);
 
         var result = await handler.Handle(new RequestTripCommand(quoteId, TwoStops()), default);
 
@@ -85,7 +108,7 @@ public class RequestTripCommandHandlerStripeTests
                 Arg.Any<CancellationToken>())
             .Returns(new StripePaymentIntentResult("pi_test_123", "cs_test_secret", "pk_test", "cus_test_123", "ek_test_secret"));
         var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId);
-        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe);
+        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, TimeProvider.System);
 
         await handler.Handle(new RequestTripCommand(quoteId, TwoStops()), default);
 
@@ -105,7 +128,7 @@ public class RequestTripCommandHandlerStripeTests
                 Arg.Any<CancellationToken>())
             .Returns(PaymentErrors.StripeInitiationFailed);
         var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId);
-        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe);
+        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, TimeProvider.System);
 
         var result = await handler.Handle(new RequestTripCommand(quoteId, TwoStops()), default);
 
@@ -118,7 +141,7 @@ public class RequestTripCommandHandlerStripeTests
     {
         _clientConfig.GetClientConfig().Returns(new ClientConfig(StripeEnabled: false, StripePublishableKey: string.Empty, SignalREnabled: true));
         var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId, quoteUsed: true);
-        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe);
+        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, TimeProvider.System);
 
         var result = await handler.Handle(new RequestTripCommand(quoteId, TwoStops()), default);
 

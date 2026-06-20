@@ -24,6 +24,29 @@ public class RequestTripCommandValidator : AbstractValidator<RequestTripCommand>
             .MaximumLength(500)
             .WithErrorCode(LocalizationKeys.Trip.PassengerNoteTooLong)
             .WithMessage(LocalizationKeys.Trip.PassengerNoteTooLong);
+        RuleFor(v => v.FlightNumber)
+            .NotEmpty()
+            .WithErrorCode(LocalizationKeys.Trip.FlightNumberRequired)
+            .WithMessage(LocalizationKeys.Trip.FlightNumberRequired)
+            .When(v => v.Stops.FirstOrDefault()?.IsAirport == true);
+        RuleFor(v => v.FlightNumber)
+            .Must(BeValidFlightNumber)
+            .WithErrorCode(LocalizationKeys.Trip.FlightNumberInvalid)
+            .WithMessage(LocalizationKeys.Trip.FlightNumberInvalid)
+            .When(v => v.Stops.FirstOrDefault()?.IsAirport == true
+                && !string.IsNullOrWhiteSpace(v.FlightNumber));
+    }
+
+    private static bool BeValidFlightNumber(string? value)
+    {
+        var normalized = System.Text.RegularExpressions.Regex.Replace(
+            value!.Trim().ToUpperInvariant(),
+            @"\s+",
+            " ");
+        return normalized.Length is >= 2 and <= 15
+            && System.Text.RegularExpressions.Regex.IsMatch(
+                normalized,
+                @"^[A-Z0-9](?:[A-Z0-9 -]{0,13}[A-Z0-9])?$");
     }
 }
 
