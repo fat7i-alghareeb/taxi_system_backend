@@ -164,7 +164,12 @@ public sealed class User : AuditableEntity
             return Result.Success;
         }
 
-        if (string.IsNullOrWhiteSpace(label) || latitude is null || longitude is null)
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            return UserErrors.HomeAddressInvalid;
+        }
+
+        if (latitude.HasValue != longitude.HasValue)
         {
             return UserErrors.HomeAddressInvalid;
         }
@@ -174,7 +179,7 @@ public sealed class User : AuditableEntity
             return UserErrors.HomeAddressInvalid;
         }
 
-        HomeAddress = new HomeAddress(label.Trim(), latitude.Value, longitude.Value);
+        HomeAddress = new HomeAddress(label.Trim(), latitude, longitude);
         return Result.Success;
     }
 

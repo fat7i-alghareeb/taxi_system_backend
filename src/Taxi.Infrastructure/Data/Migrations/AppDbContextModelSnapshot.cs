@@ -171,6 +171,10 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
+                    b.Property<string>("FcmToken")
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -1117,6 +1121,59 @@ namespace Taxi.Infrastructure.Data.Migrations
                     b.ToTable("TripMessages");
                 });
 
+            modelBuilder.Entity("Taxi.Domain.Trips.TripRecording", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DurationSeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("FileUrl")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastModifiedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PassengerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("RecordedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TripId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TripId", "RecordedAtUtc");
+
+                    b.ToTable("TripRecordings");
+                });
+
             modelBuilder.Entity("Taxi.Domain.Trips.TripRoute", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1414,9 +1471,21 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb");
 
+                    b.Property<DateTimeOffset?>("DeadLetteredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Error")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid?>("LockId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("LockedUntilUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("NextAttemptAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset>("OccurredAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -1434,7 +1503,7 @@ namespace Taxi.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProcessedAtUtc", "OccurredAtUtc");
+                    b.HasIndex("ProcessedAtUtc", "DeadLetteredAtUtc", "NextAttemptAtUtc", "LockedUntilUtc", "OccurredAtUtc");
 
                     b.ToTable("OutboxMessages", (string)null);
                 });
@@ -1682,6 +1751,15 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Taxi.Domain.Trips.TripRecording", b =>
+                {
+                    b.HasOne("Taxi.Domain.Trips.Trip", null)
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Taxi.Domain.Trips.TripWaitingSession", b =>
                 {
                     b.HasOne("Taxi.Domain.Trips.Trip", null)
@@ -1704,12 +1782,12 @@ namespace Taxi.Infrastructure.Data.Migrations
                                 .HasColumnType("character varying(500)")
                                 .HasColumnName("HomeAddressLabel");
 
-                            b1.Property<decimal>("Latitude")
+                            b1.Property<decimal?>("Latitude")
                                 .HasPrecision(18, 10)
                                 .HasColumnType("numeric(18,10)")
                                 .HasColumnName("HomeAddressLatitude");
 
-                            b1.Property<decimal>("Longitude")
+                            b1.Property<decimal?>("Longitude")
                                 .HasPrecision(18, 10)
                                 .HasColumnType("numeric(18,10)")
                                 .HasColumnName("HomeAddressLongitude");

@@ -40,7 +40,18 @@ builder.Host.UseSerilog((context, loggerConfig) =>
 
 var app = builder.Build();
 
-await app.ApplyMigrationsWithRetryAsync();
+var applyMigrationsOnStartup =
+    builder.Configuration.GetValue<bool?>("Database:ApplyMigrationsOnStartup")
+    ?? !app.Environment.IsProduction();
+if (applyMigrationsOnStartup)
+{
+    await app.ApplyMigrationsWithRetryAsync();
+}
+else
+{
+    app.Logger.LogInformation(
+        "Database migrations are disabled at API startup; deployment must apply migrations before traffic is enabled.");
+}
 
 app.UseForwardedHeaders();
 
@@ -67,9 +78,9 @@ else
 
 app.UseCoreMiddlewares(builder.Configuration);
 
-app.MapControllers();
-app.MapHub<TripHub>(TripHub.HubUrl);
-app.MapHub<LocationTrackingHub>("/hubs/location");
+app.MapControllers().RequireRateLimiting("SlidingWindow");
+app.MapHub<TripHub>(TripHub.HubUrl).RequireRateLimiting("SignalRConnections");
+app.MapHub<LocationTrackingHub>("/hubs/location").RequireRateLimiting("SignalRConnections");
 
 app.Run();
 

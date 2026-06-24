@@ -24,6 +24,7 @@ public class GetTripMessagesQueryHandler(IAppDbContext context, IUser currentUse
         }
 
         var trip = await _context.Trips
+            .AsNoTracking()
             .Where(t => t.Id == request.TripId)
             .Select(t => new { t.PassengerId, t.DriverId })
             .FirstOrDefaultAsync(ct);
@@ -38,6 +39,7 @@ public class GetTripMessagesQueryHandler(IAppDbContext context, IUser currentUse
         if (!isParticipant && trip.DriverId is { } driverId)
         {
             isParticipant = await _context.Drivers
+                .AsNoTracking()
                 .AnyAsync(d => d.Id == driverId && d.UserId == userId, ct);
         }
 
@@ -47,6 +49,7 @@ public class GetTripMessagesQueryHandler(IAppDbContext context, IUser currentUse
         }
 
         var messages = await _context.TripMessages
+            .AsNoTracking()
             .Where(m => m.TripId == request.TripId)
             .OrderBy(m => m.SentAtUtc)
             .ToListAsync(ct);

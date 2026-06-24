@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Taxi.Domain.Drivers;
 using Taxi.Domain.Admins;
+using Taxi.Domain.Drivers;
 using Taxi.Domain.Trips;
 using Taxi.Domain.Users;
 using Taxi.Domain.Vehicles;

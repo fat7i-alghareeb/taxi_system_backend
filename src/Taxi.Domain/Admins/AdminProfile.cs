@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Taxi.Domain.Common;
 using Taxi.Domain.Common.Results;
+using Taxi.Domain.Users;
 
 namespace Taxi.Domain.Admins;
 
@@ -34,6 +35,8 @@ public sealed class AdminProfile : AuditableEntity
     public string? Phone2 { get; private set; }
 
     public bool IsActive { get; private set; }
+
+    public string? FcmToken { get; private set; }
 
     public static Result<AdminProfile> Create(
         Guid id,
@@ -73,6 +76,17 @@ public sealed class AdminProfile : AuditableEntity
         Phone1 = NormalizeOptionalPhone(phone1);
         Phone2 = NormalizeOptionalPhone(phone2);
 
+        return Result.Success;
+    }
+
+    public Result<Success> UpdateFcmToken(string? fcmToken)
+    {
+        if (fcmToken?.Length > 4096)
+        {
+            return UserErrors.FcmTokenInvalid;
+        }
+
+        FcmToken = string.IsNullOrWhiteSpace(fcmToken) ? null : fcmToken.Trim();
         return Result.Success;
     }
 

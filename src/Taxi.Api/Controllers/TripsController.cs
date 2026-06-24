@@ -3,6 +3,7 @@ using Asp.Versioning;
 using MediatR;
 
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using Taxi.Application.Features.Trips.Commands.AdminTakeTrip;
@@ -24,6 +25,7 @@ using Taxi.Application.Features.Trips.Commands.StartTripWaiting;
 using Taxi.Application.Features.Trips.Commands.StopTripWaiting;
 using Taxi.Application.Features.Trips.Commands.SubmitCompensationClaim;
 using Taxi.Application.Features.Trips.Commands.UpdatePassengerNote;
+using Taxi.Application.Features.Trips.Commands.UploadTripRecording;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Application.Features.Trips.Queries.GetAllTrips;
 using Taxi.Application.Features.Trips.Queries.GetCompensationClaims;
@@ -35,6 +37,7 @@ using Taxi.Application.Features.Trips.Queries.GetTripDetails;
 using Taxi.Application.Features.Trips.Queries.GetTripInvoice;
 using Taxi.Application.Features.Trips.Queries.GetTripInvoicePdf;
 using Taxi.Application.Features.Trips.Queries.GetTripReceipt;
+using Taxi.Application.Features.Uploads.Commands.UploadCompensationEvidence;
 using Taxi.Contracts.Requests.Trips;
 
 namespace Taxi.Api.Controllers;
@@ -201,6 +204,34 @@ public class TripsController(ISender sender) : ApiController
     {
         var result = await sender.Send(new SubmitCompensationClaimCommand(id, request.Note, request.EvidenceUrls), ct);
         return result.Match(Ok, Problem);
+    }
+
+    [HttpPost("{id:guid}/recordings")]
+    [Authorize(Roles = "Passenger")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [EndpointSummary("Uploads an in-trip safety audio recording and returns its URL.")]
+    [EndpointName("UploadTripRecording")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> UploadTripRecording(
+        Guid id,
+        [FromForm] IFormFile file,
+        [FromForm] int? durationSeconds,
+        CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest("No file was uploaded.");
+        }
+
+        // Map IFormFile → UploadFileItem so the Application layer never sees ASP.NET types.
+        var item = new UploadFileItem(file.OpenReadStream(), file.FileName);
+
+        var result = await sender.Send(new UploadTripRecordingCommand(id, item, durationSeconds), ct);
+
+        return result.Match(
+            url => Ok(new { url }),
+            Problem);
     }
 
     [HttpGet("compensation-claims")]

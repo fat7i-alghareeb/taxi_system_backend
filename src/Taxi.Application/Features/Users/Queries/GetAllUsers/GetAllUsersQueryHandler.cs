@@ -13,6 +13,7 @@ public class GetAllUsersQueryHandler(IAppDbContext context)
     public async Task<Result<List<UserDto>>> Handle(GetAllUsersQuery request, CancellationToken ct)
     {
         var users = await _context.DomainUsers
+            .AsNoTracking()
             .Where(u => u.DeletedAtUtc == null)
             .OrderByDescending(u => u.CreatedAtUtc)
             .Skip((request.PageNumber - 1) * request.PageSize)

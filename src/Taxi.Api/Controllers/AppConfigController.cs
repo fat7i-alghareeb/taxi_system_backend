@@ -5,9 +5,11 @@ using Microsoft.AspNetCore.Mvc;
 using Taxi.Application.Features.Config.GetClientConfig;
 using Taxi.Application.Features.Config.GetCompanyContact;
 using Taxi.Application.Features.Config.GetCurrency;
+using Taxi.Application.Features.Config.GetSupportContact;
 using Taxi.Application.Features.Config.GetTripDiscount;
 using Taxi.Application.Features.Config.UpdateCompanyContact;
 using Taxi.Application.Features.Config.UpdateCurrency;
+using Taxi.Application.Features.Config.UpdateSupportContact;
 using Taxi.Application.Features.Config.UpdateTripDiscount;
 using Taxi.Contracts.Requests.Config;
 using Taxi.Contracts.Responses.Config;
@@ -110,6 +112,33 @@ public class AppConfigController(ISender sender) : ApiController
     {
         var result = await sender.Send(
             new UpdateCompanyContactCommand(request.Email, request.Phone, request.Website), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpGet("support-contact")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(SupportContactDto), StatusCodes.Status200OK)]
+    [EndpointSummary("Gets the support WhatsApp number used by the in-trip \"Report problem\" action.")]
+    [EndpointName("GetSupportContact")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetSupportContact(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetSupportContactQuery(), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpPut("support-contact")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(SupportContactDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [EndpointSummary("Updates the support WhatsApp number used by the in-trip \"Report problem\" action.")]
+    [EndpointName("UpdateSupportContact")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> UpdateSupportContact(
+        [FromBody] UpdateSupportContactRequest request,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(new UpdateSupportContactCommand(request.WhatsApp), ct);
         return result.Match(Ok, Problem);
     }
 }

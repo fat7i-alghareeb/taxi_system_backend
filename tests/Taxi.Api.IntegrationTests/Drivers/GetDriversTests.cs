@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text.Json;
 
 using Taxi.Api.IntegrationTests.Infrastructure;
@@ -19,6 +21,11 @@ public class GetDriversTests(ApiTestFixture fixture)
     {
         var client = fixture.CreateClient();
         var token = await LoginAsAdminAsync(client);
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+        Assert.Contains(
+            jwt.Claims,
+            claim => (claim.Type == ClaimTypes.Role || claim.Type == "role") &&
+                claim.Value == "Admin");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var response = await client.GetAsync("/api/v1/drivers");

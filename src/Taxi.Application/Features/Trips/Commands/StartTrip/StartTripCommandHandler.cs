@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Features.Trips.Common;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Trips;
@@ -35,7 +36,7 @@ public class StartTripCommandHandler(
 
         if (trip.AcceptedByAdminId != adminUserId)
         {
-            return TripErrors.NotAcceptedByCurrentAdmin;
+            return await TripOwnershipHelper.NotOwnedByCurrentAdminAsync(_context, trip.AcceptedByAdminId, ct);
         }
 
         var transitionResult = trip.Start(timeProvider.GetUtcNow());

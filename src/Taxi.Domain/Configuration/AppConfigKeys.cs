@@ -9,4 +9,7 @@ public static class AppConfigKeys
     public const string CompanyEmail = "CompanyEmail";
     public const string CompanyPhone = "CompanyPhone";
     public const string CompanyWebsite = "CompanyWebsite";
+
+    // Admin-editable support contact used by the in-trip "Report problem" action.
+    public const string SupportWhatsApp = "SupportWhatsApp";
 }

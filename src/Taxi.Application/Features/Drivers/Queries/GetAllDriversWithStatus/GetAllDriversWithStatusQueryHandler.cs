@@ -15,6 +15,7 @@ public class GetAllDriversWithStatusQueryHandler(IAppDbContext context)
     public async Task<Result<List<DriverWithStatusDto>>> Handle(GetAllDriversWithStatusQuery request, CancellationToken ct)
     {
         var drivers = await _context.Drivers
+            .AsNoTracking()
             .Where(d => d.DeletedAtUtc == null)
             .ToListAsync(ct);
 
@@ -22,7 +23,9 @@ public class GetAllDriversWithStatusQueryHandler(IAppDbContext context)
 
         foreach (var driver in drivers)
         {
-            var user = await _context.DomainUsers.FirstOrDefaultAsync(u => u.Id == driver.UserId, ct);
+            var user = await _context.DomainUsers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == driver.UserId, ct);
             if (user == null)
             {
                 continue;
@@ -31,7 +34,9 @@ public class GetAllDriversWithStatusQueryHandler(IAppDbContext context)
             string? vehicleTypeName = null;
             if (driver.VehicleTypeId.HasValue)
             {
-                var vehicleType = await _context.VehicleTypes.FirstOrDefaultAsync(v => v.Id == driver.VehicleTypeId.Value, ct);
+                var vehicleType = await _context.VehicleTypes
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(v => v.Id == driver.VehicleTypeId.Value, ct);
                 vehicleTypeName = vehicleType?.Name.En;
             }
 

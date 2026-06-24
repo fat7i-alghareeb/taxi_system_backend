@@ -50,8 +50,7 @@ public sealed class PaymentConfirmedEventHandler(
                 bodyArgs: [scheduledLabel]);
         }
 
-        await notificationService.SendPushNotificationToTopicAsync(
-            NotificationTopics.Admins,
+        await notificationService.SendPushNotificationToAdminsAsync(
             LocalizationKeys.Notification.AdminScheduledTripTitle,
             LocalizationKeys.Notification.AdminScheduledTripBody,
             data,

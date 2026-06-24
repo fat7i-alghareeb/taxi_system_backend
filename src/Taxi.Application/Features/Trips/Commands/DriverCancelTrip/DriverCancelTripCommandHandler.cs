@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Features.Trips.Common;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
@@ -35,7 +36,7 @@ public sealed class DriverCancelTripCommandHandler(
 
         if (trip.AcceptedByAdminId != adminId)
         {
-            return TripErrors.NotAcceptedByCurrentAdmin;
+            return await TripOwnershipHelper.NotOwnedByCurrentAdminAsync(context, trip.AcceptedByAdminId, ct);
         }
 
         if (trip.Status != TripStatus.Arrived || trip.ArrivedAtUtc is null)

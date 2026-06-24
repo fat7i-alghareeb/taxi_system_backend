@@ -23,13 +23,17 @@ public class GetCurrentDriverProfileQueryHandler(
             return Error.Unauthorized(LocalizationKeys.Auth.UserIdClaimInvalid, "Invalid user ID claim.");
         }
 
-        var user = await _context.DomainUsers.FirstOrDefaultAsync(u => u.Id == userId, ct);
+        var user = await _context.DomainUsers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId, ct);
         if (user is null)
         {
             return Error.NotFound(LocalizationKeys.User.NotFound, "User not found.");
         }
 
-        var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.UserId == userId, ct);
+        var driver = await _context.Drivers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(d => d.UserId == userId, ct);
         if (driver is null)
         {
             return Error.NotFound(LocalizationKeys.Driver.NotFound, "Driver profile not found.");
@@ -39,6 +43,7 @@ public class GetCurrentDriverProfileQueryHandler(
         if (driver.VehicleTypeId.HasValue)
         {
             var vehicleType = await _context.VehicleTypes
+                .AsNoTracking()
                 .FirstOrDefaultAsync(v => v.Id == driver.VehicleTypeId.Value, ct);
             vehicleTypeName = vehicleType?.Name.En;
         }

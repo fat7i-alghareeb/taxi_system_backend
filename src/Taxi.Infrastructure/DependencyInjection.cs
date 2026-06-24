@@ -36,6 +36,7 @@ public static class DependencyInjection
     {
         services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
         services.Configure<InvoiceIssuerOptions>(configuration.GetSection(InvoiceIssuerOptions.SectionName));
+        services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.SectionName));
 
         if (FirebaseApp.DefaultInstance == null)
         {
@@ -66,6 +67,10 @@ public static class DependencyInjection
 
         services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
         services.AddScoped<ISaveChangesInterceptor, AuditLogInterceptor>();
+
+        // Registered last so it adds OutboxMessage rows after audit scanning has run
+        // (AuditLogInterceptor already ignores OutboxMessage, so ordering is safe either way).
+        services.AddScoped<ISaveChangesInterceptor, ConvertDomainEventsToOutboxInterceptor>();
 
         services.AddDbContext<AppDbContext>((sp, options) =>
         {
@@ -157,6 +162,8 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(10);
         });
         services.AddScoped<ITripNotifier, SignalRTripNotifier>();
+        services.AddScoped<IDriverLocationNotifier, SignalRDriverLocationNotifier>();
+        services.AddSingleton<PickupRouteCache>();
         services.AddScoped<INotificationService, FcmNotificationService>();
         services.AddScoped<IFileStorage, LocalFileStorage>();
 

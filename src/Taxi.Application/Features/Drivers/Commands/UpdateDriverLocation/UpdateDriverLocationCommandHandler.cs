@@ -6,7 +6,10 @@ using Taxi.Domain.Common.Results;
 
 namespace Taxi.Application.Features.Drivers.Commands.UpdateDriverLocation;
 
-public class UpdateDriverLocationCommandHandler(IAppDbContext context, IUser currentUser)
+public class UpdateDriverLocationCommandHandler(
+    IAppDbContext context,
+    IUser currentUser,
+    IDriverLocationNotifier locationNotifier)
     : IRequestHandler<UpdateDriverLocationCommand, Result<Success>>
 {
     private readonly IAppDbContext _context = context;
@@ -31,6 +34,29 @@ public class UpdateDriverLocationCommandHandler(IAppDbContext context, IUser cur
         }
 
         await _context.SaveChangesAsync(ct);
+
+        // Broadcast to the customer only once the driver is moving toward them (EnRoute+),
+        // mirroring LocationTrackingHub so the car appears only after the trip starts moving.
+        var activeTripId = await _context.Trips
+            .Where(trip => trip.DriverId == driver.Id &&
+                (trip.Status == Taxi.Domain.Trips.TripStatus.EnRoute ||
+                 trip.Status == Taxi.Domain.Trips.TripStatus.Arrived ||
+                 trip.Status == Taxi.Domain.Trips.TripStatus.InProgress))
+            .Select(trip => (Guid?)trip.Id)
+            .FirstOrDefaultAsync(ct);
+
+        // The realtime SignalR hub is the primary path and carries the live arrival ETA/distance;
+        // this REST fallback only refreshes position, so the estimates are left for the next push.
+        await locationNotifier.NotifyLocationUpdatedAsync(
+            driver.Id,
+            request.Latitude,
+            request.Longitude,
+            driver.Status.ToString(),
+            activeTripId,
+            null,
+            null,
+            null,
+            ct);
 
         return Result.Success;
     }

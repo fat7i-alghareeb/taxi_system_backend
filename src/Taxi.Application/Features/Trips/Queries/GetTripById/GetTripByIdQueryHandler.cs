@@ -18,6 +18,7 @@ public class GetTripByIdQueryHandler(
     public async Task<Result<TripDto>> Handle(GetTripByIdQuery request, CancellationToken ct)
     {
         var trip = await _context.Trips
+            .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == request.Id, ct);
 
         if (trip is null)

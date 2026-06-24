@@ -19,4 +19,12 @@ public interface INotificationService
         CancellationToken ct = default,
         object[]? titleArgs = null,
         object[]? bodyArgs = null);
+
+    Task SendPushNotificationToAdminsAsync(
+        string title,
+        string body,
+        Dictionary<string, string>? data = null,
+        CancellationToken ct = default,
+        object[]? titleArgs = null,
+        object[]? bodyArgs = null);
 }

@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Features.Trips.Common;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
@@ -34,7 +35,7 @@ public sealed class StartTripWaitingCommandHandler(
 
         if (trip.AcceptedByAdminId != driverUserId)
         {
-            return TripErrors.NotAcceptedByCurrentAdmin;
+            return await TripOwnershipHelper.NotOwnedByCurrentAdminAsync(context, trip.AcceptedByAdminId, ct);
         }
 
         if (trip.Status != TripStatus.Arrived)
@@ -55,7 +56,9 @@ public sealed class StartTripWaitingCommandHandler(
         }
 
         var vehicleType = await context.VehicleTypes.FirstOrDefaultAsync(v => v.Id == trip.VehicleTypeId, ct);
-        var ratePerMinute = vehicleType?.RatePerMin ?? TripWaitingSession.DefaultFeePerMinute;
+        var ratePerMinute = trip.IsAirport
+            ? TripWaitingSession.DefaultFeePerMinute
+            : vehicleType?.RatePerMin ?? TripWaitingSession.DefaultFeePerMinute;
         var graceMinutes = trip.IsAirport
             ? TripWaitingSession.AirportGraceMinutes
             : TripWaitingSession.DefaultGraceMinutes;

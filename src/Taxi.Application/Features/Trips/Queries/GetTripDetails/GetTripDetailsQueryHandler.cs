@@ -14,13 +14,17 @@ public class GetTripDetailsQueryHandler(IAppDbContext context, TimeProvider time
 
     public async Task<Result<TripDetailsDto>> Handle(GetTripDetailsQuery request, CancellationToken ct)
     {
-        var trip = await _context.Trips.FirstOrDefaultAsync(t => t.Id == request.TripId && t.DeletedAtUtc == null, ct);
+        var trip = await _context.Trips
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == request.TripId && t.DeletedAtUtc == null, ct);
         if (trip == null)
         {
             return Result.Failure<TripDetailsDto>(Error.NotFound("Trip.NotFound", "Trip not found."));
         }
 
-        var passenger = await _context.DomainUsers.FirstOrDefaultAsync(u => u.Id == trip.PassengerId, ct);
+        var passenger = await _context.DomainUsers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == trip.PassengerId, ct);
         var passengerName = passenger?.Name ?? "Unknown";
         var passengerPhone = passenger?.Phone ?? string.Empty;
 
@@ -29,19 +33,27 @@ public class GetTripDetailsQueryHandler(IAppDbContext context, TimeProvider time
 
         if (trip.DriverId.HasValue)
         {
-            var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.Id == trip.DriverId.Value, ct);
+            var driver = await _context.Drivers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(d => d.Id == trip.DriverId.Value, ct);
             if (driver != null)
             {
-                var driverUser = await _context.DomainUsers.FirstOrDefaultAsync(u => u.Id == driver.UserId, ct);
+                var driverUser = await _context.DomainUsers
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Id == driver.UserId, ct);
                 driverName = driverUser?.Name;
                 driverPhone = driverUser?.Phone;
             }
         }
 
-        var vehicleType = await _context.VehicleTypes.FirstOrDefaultAsync(v => v.Id == trip.VehicleTypeId, ct);
+        var vehicleType = await _context.VehicleTypes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(v => v.Id == trip.VehicleTypeId, ct);
         var vehicleTypeName = vehicleType?.Name.En ?? "Unknown";
 
-        var quote = await _context.PricingQuotes.FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
+        var quote = await _context.PricingQuotes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
         var fare = quote?.FinalFare ?? 0;
         var currency = quote?.CurrencyCode ?? "EUR";
 
@@ -57,16 +69,19 @@ public class GetTripDetailsQueryHandler(IAppDbContext context, TimeProvider time
             .ToList();
 
         var cancellation = await _context.TripCancellations
+            .AsNoTracking()
             .Where(c => c.TripId == trip.Id)
             .OrderByDescending(c => c.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
 
         var claim = await _context.TripCompensationClaims
+            .AsNoTracking()
             .Where(c => c.TripId == trip.Id)
             .OrderByDescending(c => c.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
 
         var waitingSession = await _context.TripWaitingSessions
+            .AsNoTracking()
             .Where(s => s.TripId == trip.Id && s.StoppedAtUtc == null)
             .OrderByDescending(s => s.StartedAtUtc)
             .FirstOrDefaultAsync(ct);
@@ -74,15 +89,18 @@ public class GetTripDetailsQueryHandler(IAppDbContext context, TimeProvider time
         // Aggregate every session (active + settled) so the accrued waiting fee
         // remains visible after the session has stopped.
         var allWaitingSessions = await _context.TripWaitingSessions
+            .AsNoTracking()
             .Where(s => s.TripId == trip.Id)
             .ToListAsync(ct);
         var waitingFeeTotal = allWaitingSessions.Sum(s => s.EstimatedFee ?? 0m);
         var waitingBillableMinutes = allWaitingSessions.Sum(s => s.BillableMinutes ?? 0);
 
         var tripRoute = await _context.TripRoutes
+            .AsNoTracking()
             .FirstOrDefaultAsync(r => r.TripId == trip.Id, ct);
         var acceptedAdminName = trip.AcceptedByAdminId.HasValue
             ? await _context.AdminProfiles
+                .AsNoTracking()
                 .Where(a => a.Id == trip.AcceptedByAdminId.Value)
                 .Select(a => a.Name)
                 .FirstOrDefaultAsync(ct)

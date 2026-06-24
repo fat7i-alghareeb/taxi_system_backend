@@ -80,19 +80,38 @@ public sealed class SignalRTripNotifier(IHubContext<TripHub> hubContext, ILogger
     }
 
     public Task NotifyDriverAssignedAsync(Guid tripId, Guid passengerId, Guid driverId, CancellationToken ct = default, Guid? eventId = null) =>
-        SendToPassengerAsync("DriverAssigned", tripId, passengerId, new DriverAssignedNotification(tripId, passengerId, driverId, ResolveEventId(eventId)), ct);
+        SendLifecycleAsync("DriverAssigned", tripId, passengerId, new DriverAssignedNotification(tripId, passengerId, driverId, ResolveEventId(eventId)), ct);
 
     public Task NotifyDriverEnRouteAsync(Guid tripId, Guid passengerId, Guid driverId, CancellationToken ct = default, Guid? eventId = null) =>
-        SendToPassengerAsync("DriverEnRoute", tripId, passengerId, new DriverEnRouteNotification(tripId, passengerId, driverId, ResolveEventId(eventId)), ct);
+        SendLifecycleAsync("DriverEnRoute", tripId, passengerId, new DriverEnRouteNotification(tripId, passengerId, driverId, ResolveEventId(eventId)), ct);
 
     public Task NotifyDriverArrivedAsync(Guid tripId, Guid passengerId, Guid driverId, CancellationToken ct = default, Guid? eventId = null) =>
-        SendToPassengerAsync("DriverArrived", tripId, passengerId, new DriverArrivedNotification(tripId, passengerId, driverId, ResolveEventId(eventId)), ct);
+        SendLifecycleAsync("DriverArrived", tripId, passengerId, new DriverArrivedNotification(tripId, passengerId, driverId, ResolveEventId(eventId)), ct);
 
-    public Task NotifyTripStartedAsync(Guid tripId, Guid passengerId, CancellationToken ct = default, Guid? eventId = null) =>
-        SendToPassengerAsync("TripStarted", tripId, passengerId, new TripStartedNotification(tripId, passengerId, ResolveEventId(eventId)), ct);
+    public Task NotifyTripStartedAsync(
+        Guid tripId,
+        Guid passengerId,
+        Guid? driverUserId,
+        CancellationToken ct = default,
+        Guid? eventId = null)
+    {
+        var payload = new TripStartedNotification(tripId, passengerId, ResolveEventId(eventId));
+        var sends = new List<Task>
+        {
+            _hubContext.Clients.Group($"Trip_{tripId}").SendAsync("TripStarted", payload, ct),
+            _hubContext.Clients.Group($"User_{passengerId}").SendAsync("TripStarted", payload, ct),
+            _hubContext.Clients.Group(TripHub.AdminsGroup).SendAsync("TripStarted", payload, ct),
+        };
+        if (driverUserId is { } driver)
+        {
+            sends.Add(_hubContext.Clients.Group($"User_{driver}").SendAsync("TripStarted", payload, ct));
+        }
+
+        return Task.WhenAll(sends);
+    }
 
     public Task NotifyTripCompletedAsync(Guid tripId, Guid passengerId, CancellationToken ct = default, Guid? eventId = null) =>
-        SendToPassengerAsync("TripCompleted", tripId, passengerId, new TripCompletedNotification(tripId, passengerId, ResolveEventId(eventId)), ct);
+        SendLifecycleAsync("TripCompleted", tripId, passengerId, new TripCompletedNotification(tripId, passengerId, ResolveEventId(eventId)), ct);
 
     public Task NotifyTripCancelledAsync(Guid tripId, Guid passengerId, CancellationToken ct = default, Guid? eventId = null) =>
         SendToPassengerAsync("TripCancelled", tripId, passengerId, new TripCancelledNotification(tripId, passengerId, ResolveEventId(eventId)), ct);
@@ -131,7 +150,7 @@ public sealed class SignalRTripNotifier(IHubContext<TripHub> hubContext, ILogger
         SendToPassengerAsync("TripRefunded", tripId, passengerId, new TripRefundedNotification(tripId, passengerId, amount, ResolveEventId(eventId)), ct);
 
     public Task NotifyTripStopCompletedAsync(Guid tripId, Guid passengerId, Guid? driverId, int sequence, CancellationToken ct = default, Guid? eventId = null) =>
-        SendToPassengerAsync("TripStopCompleted", tripId, passengerId, new TripStopCompletedNotification(tripId, passengerId, driverId, sequence, ResolveEventId(eventId)), ct);
+        SendLifecycleAsync("TripStopCompleted", tripId, passengerId, new TripStopCompletedNotification(tripId, passengerId, driverId, sequence, ResolveEventId(eventId)), ct);
 
     public Task NotifyTripMessageAsync(TripMessageNotification message, Guid passengerId, Guid? driverUserId, CancellationToken ct = default) =>
         SendToChatParticipantsAsync("TripMessageReceived", message.TripId, passengerId, driverUserId, message, ct);
@@ -191,6 +210,21 @@ public sealed class SignalRTripNotifier(IHubContext<TripHub> hubContext, ILogger
         return Task.WhenAll(
             _hubContext.Clients.Group($"Trip_{tripId}").SendAsync(eventName, payload, ct),
             _hubContext.Clients.Group($"User_{passengerId}").SendAsync(eventName, payload, ct));
+    }
+
+    private Task SendLifecycleAsync(string eventName, Guid tripId, Guid passengerId, object payload, CancellationToken ct)
+    {
+        _logger.LogInformation(
+            "[SignalRTripNotifier] => {EventName} groups=Trip_{TripId},User_{PassengerId},Admins tripId={TripId}",
+            eventName,
+            tripId,
+            passengerId,
+            tripId);
+
+        return Task.WhenAll(
+            _hubContext.Clients.Group($"Trip_{tripId}").SendAsync(eventName, payload, ct),
+            _hubContext.Clients.Group($"User_{passengerId}").SendAsync(eventName, payload, ct),
+            _hubContext.Clients.Group(TripHub.AdminsGroup).SendAsync(eventName, payload, ct));
     }
 
     private static Guid ResolveEventId(Guid? eventId) =>

@@ -61,9 +61,10 @@ public static class TripErrors
         code: LocalizationKeys.Trip.AlreadyAccepted,
         description: "This trip has already been accepted by another admin.");
 
-    public static readonly Error NotAcceptedByCurrentAdmin = Error.Forbidden(
+    public static Error NotAcceptedByCurrentAdmin(string ownerName) => Error.Forbidden(
         code: LocalizationKeys.Trip.NotAcceptedByCurrentAdmin,
-        description: "This trip is owned by another admin.");
+        description: $"This ride is owned by another admin with name : {ownerName}.",
+        ownerName);
 
     public static readonly Error CannotCancel = Error.Validation(
         code: LocalizationKeys.Trip.CannotCancel,

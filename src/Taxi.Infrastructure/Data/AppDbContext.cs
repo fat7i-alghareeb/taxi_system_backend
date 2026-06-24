@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Domain.Admins;
 using Taxi.Domain.Audit;
@@ -30,6 +29,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<DriverDocument> DriverDocuments => this.Set<DriverDocument>();
     public DbSet<Trip> Trips => this.Set<Trip>();
     public DbSet<TripMessage> TripMessages => this.Set<TripMessage>();
+    public DbSet<TripRecording> TripRecordings => this.Set<TripRecording>();
     public DbSet<Payment> Payments => this.Set<Payment>();
     public DbSet<AuditLog> AuditLogs => this.Set<AuditLog>();
     public DbSet<Notification> Notifications => this.Set<Notification>();
@@ -42,43 +42,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<TripWaitingSession> TripWaitingSessions => this.Set<TripWaitingSession>();
     public DbSet<Invoice> Invoices => this.Set<Invoice>();
     public DbSet<InvoiceCounter> InvoiceCounters => this.Set<InvoiceCounter>();
-    public DbSet<OutboxMessage> OutboxMessages => this.Set<OutboxMessage>();
 
-    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        AddDomainEventsToOutbox();
-        return await base.SaveChangesAsync(cancellationToken);
-    }
+    // Transactional outbox table. Rows are written automatically by
+    // ConvertDomainEventsToOutboxInterceptor on save, and drained by OutboxDispatcherService.
+    public DbSet<OutboxMessage> OutboxMessages => this.Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-    }
-
-    private void AddDomainEventsToOutbox()
-    {
-        var domainEntities = this.ChangeTracker.Entries()
-            .Where(e => e.Entity is Entity baseEntity && baseEntity.DomainEvents.Count != 0)
-            .Select(e => (Entity)e.Entity)
-            .ToList();
-
-        var messages = domainEntities
-            .SelectMany(e => e.DomainEvents)
-            .Select(domainEvent => new OutboxMessage(
-                domainEvent.EventId,
-                domainEvent.OccurredAtUtc,
-                domainEvent.GetType().AssemblyQualifiedName
-                    ?? throw new InvalidOperationException("Domain event type name is unavailable."),
-                JsonSerializer.Serialize(domainEvent, domainEvent.GetType())))
-            .ToList();
-
-        OutboxMessages.AddRange(messages);
-
-        foreach (var entity in domainEntities)
-        {
-            entity.ClearDomainEvents();
-        }
     }
 }
 

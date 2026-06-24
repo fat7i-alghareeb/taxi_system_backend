@@ -12,7 +12,7 @@ public sealed class GetCompensationClaimsQueryHandler(IAppDbContext context)
 {
     public async Task<Result<List<CompensationClaimDto>>> Handle(GetCompensationClaimsQuery request, CancellationToken ct)
     {
-        var query = context.TripCompensationClaims.AsQueryable();
+        var query = context.TripCompensationClaims.AsNoTracking();
         if (Enum.TryParse<CompensationClaimStatus>(request.Status, ignoreCase: true, out var status))
         {
             query = query.Where(c => c.Status == status);

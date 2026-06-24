@@ -13,6 +13,7 @@ public class GetDriverDocumentsQueryHandler(IAppDbContext context)
     public async Task<Result<List<DriverDocumentDto>>> Handle(GetDriverDocumentsQuery request, CancellationToken ct)
     {
         var documents = await _context.DriverDocuments
+            .AsNoTracking()
             .Where(dd => dd.DriverId == request.DriverId && dd.DeletedAtUtc == null)
             .Select(dd => new DriverDocumentDto(
                 dd.Id,

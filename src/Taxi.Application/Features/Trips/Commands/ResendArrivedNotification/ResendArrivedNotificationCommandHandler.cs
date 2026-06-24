@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Features.Trips.Common;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Trips;
@@ -39,7 +40,7 @@ public class ResendArrivedNotificationCommandHandler(
 
         if (trip.AcceptedByAdminId != currentUserId)
         {
-            return TripErrors.NotAcceptedByCurrentAdmin;
+            return await TripOwnershipHelper.NotOwnedByCurrentAdminAsync(_context, trip.AcceptedByAdminId, ct);
         }
 
         if (trip.Status != TripStatus.Arrived)

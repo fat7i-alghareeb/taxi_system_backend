@@ -53,16 +53,12 @@ public class FcmNotificationService(
             return;
         }
 
-        var tokenPreview = user.FcmToken.Length > 12
-            ? $"{user.FcmToken[..8]}…(len={user.FcmToken.Length})"
-            : user.FcmToken;
-
         var lang = string.IsNullOrWhiteSpace(user.PreferredLanguage) ? "en" : user.PreferredLanguage;
         var (localizedTitle, localizedBody) = Localize(title, body, lang, titleArgs, bodyArgs);
 
         _logger.LogInformation(
-            "[FCM] Sending to user {UserId}. TokenPreview={TokenPreview} Lang={Lang} Title=\"{Title}\" Body=\"{Body}\" Data={Data}",
-            userId, tokenPreview, lang, localizedTitle, localizedBody,
+            "[FCM] Sending to user {UserId}. Lang={Lang} Title=\"{Title}\" Body=\"{Body}\" Data={Data}",
+            userId, lang, localizedTitle, localizedBody,
             data != null ? string.Join(", ", data.Select(kv => $"{kv.Key}={kv.Value}")) : "none");
 
         try
@@ -82,13 +78,13 @@ public class FcmNotificationService(
 
             var response = await FirebaseMessaging.DefaultInstance.SendAsync(message, ct);
             _logger.LogInformation(
-                "[FCM] SUCCESS. UserId={UserId} TokenPreview={TokenPreview} Response={Response}",
-                userId, tokenPreview, response);
+                "[FCM] SUCCESS. UserId={UserId} Response={Response}",
+                userId, response);
         }
         catch (FirebaseMessagingException ex)
         {
-            _logger.LogError(ex, "[FCM] FirebaseMessagingException for user {UserId}. ErrorCode={ErrorCode} HttpCode={HttpCode} TokenPreview={TokenPreview}",
-                userId, ex.MessagingErrorCode, ex.HttpResponse?.StatusCode, tokenPreview);
+            _logger.LogError(ex, "[FCM] FirebaseMessagingException for user {UserId}. ErrorCode={ErrorCode} HttpCode={HttpCode}",
+                userId, ex.MessagingErrorCode, ex.HttpResponse?.StatusCode);
             if (IsInvalidUserToken(ex))
             {
                 _logger.LogWarning("[FCM] Token is invalid/unregistered for user {UserId}. Clearing token.", userId);
@@ -161,6 +157,63 @@ public class FcmNotificationService(
         catch (Exception ex)
         {
             _logger.LogError(ex, "[FCM] Unexpected error sending push to topic={Topic}.", topic);
+        }
+    }
+
+    public async Task SendPushNotificationToAdminsAsync(
+        string title,
+        string body,
+        Dictionary<string, string>? data = null,
+        CancellationToken ct = default,
+        object[]? titleArgs = null,
+        object[]? bodyArgs = null)
+    {
+        var admins = await _context.AdminProfiles
+            .AsNoTracking()
+            .Where(admin => admin.IsActive && admin.FcmToken != null)
+            .Select(admin => new { admin.Id, admin.FcmToken })
+            .ToListAsync(ct);
+
+        var (localizedTitle, localizedBody) = Localize(
+            title,
+            body,
+            DefaultTopicCulture,
+            titleArgs,
+            bodyArgs);
+
+        foreach (var admin in admins)
+        {
+            try
+            {
+                var message = new Message
+                {
+                    Token = admin.FcmToken,
+                    Notification = new Notification
+                    {
+                        Title = localizedTitle,
+                        Body = localizedBody,
+                    },
+                    Data = data,
+                    Android = CreateAndroidConfig(),
+                    Apns = CreateApnsConfig(localizedTitle, localizedBody),
+                };
+
+                await FirebaseMessaging.DefaultInstance.SendAsync(message, ct);
+            }
+            catch (FirebaseMessagingException ex) when (IsInvalidUserToken(ex))
+            {
+                _logger.LogWarning(
+                    ex,
+                    "[FCM] Clearing invalid admin token for admin {AdminId}.",
+                    admin.Id);
+                var trackedAdmin = await _context.AdminProfiles
+                    .FirstOrDefaultAsync(profile => profile.Id == admin.Id, ct);
+                if (trackedAdmin is not null)
+                {
+                    trackedAdmin.UpdateFcmToken(null);
+                    await _context.SaveChangesAsync(ct);
+                }
+            }
         }
     }
 

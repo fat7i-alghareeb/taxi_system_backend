@@ -75,6 +75,7 @@ public class UsersController(ISender sender) : ApiController
             request.Email,
             request.Photo?.OpenReadStream(),
             request.Photo?.ContentType,
+            request.HomeAddressOperation,
             request.HomeAddressLabel,
             request.HomeAddressLatitude,
             request.HomeAddressLongitude);

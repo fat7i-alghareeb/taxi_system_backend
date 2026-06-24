@@ -18,16 +18,19 @@ public class GetDriverEarningsQueryHandler(IAppDbContext context, IUser currentU
             return Result.Failure<DriverEarningsDto>(Error.Validation("Identity.Unauthorized", "Unauthorized user."));
         }
 
-        var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.UserId == driverUserId, ct);
+        var driver = await _context.Drivers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(d => d.UserId == driverUserId, ct);
         if (driver == null)
         {
             return Result.Failure<DriverEarningsDto>(Error.NotFound("Driver.NotFound", "Driver profile not found."));
         }
 
         var completedTrips = await _context.Trips
+            .AsNoTracking()
             .Where(t => t.DriverId == driver.Id && t.Status == TripStatus.Completed && t.DeletedAtUtc == null)
             .Join(
-                _context.PricingQuotes,
+                _context.PricingQuotes.AsNoTracking(),
                 t => t.QuoteId,
                 q => q.Id,
                 (t, q) => new DriverTripEarningDto(

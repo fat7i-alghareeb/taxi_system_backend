@@ -12,7 +12,10 @@
 # 1. Provision Postgres + Seq
 docker-compose up -d
 
-# 2. Run the API (migrations + Admin seeding run automatically on startup)
+# 2. Apply migrations as a deployment step
+dotnet ef database update --project src/Taxi.Infrastructure --startup-project src/Taxi.Api
+
+# 3. Run the API
 dotnet run --project src/Taxi.Api
 ```
 
@@ -25,7 +28,7 @@ Default admin credentials: `admin@taxi.com` / `Admin123!`
 |               |                                                                                        |
 | ------------- | -------------------------------------------------------------------------------------- |
 | Runtime       | .NET 10                                                                                |
-| ORM           | EF Core 9 (Npgsql / PostgreSQL) — Code-First, UTC strategy, JSONB for bilingual fields |
+| ORM           | EF Core 10 (Npgsql / PostgreSQL) — Code-First, UTC strategy, JSONB for bilingual fields |
 | CQRS          | MediatR + FluentValidation pipeline behaviors                                          |
 | Auth          | ASP.NET Identity + JWT + refresh tokens                                                |
 | Payments      | Stripe.net — PaymentIntent + webhook handler                                           |

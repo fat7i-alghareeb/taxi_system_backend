@@ -3,7 +3,6 @@ using NSubstitute;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Trips.EventHandlers;
 using Taxi.Contracts.Common;
-using Taxi.Contracts.Notifications;
 using Taxi.Domain.Trips.Events;
 
 using Xunit;
@@ -44,8 +43,7 @@ public class PaymentConfirmedEventHandlerTests
             scheduledAt,
             Arg.Any<CancellationToken>(),
             domainEvent.EventId);
-        await notifications.Received(1).SendPushNotificationToTopicAsync(
-            NotificationTopics.Admins,
+        await notifications.Received(1).SendPushNotificationToAdminsAsync(
             LocalizationKeys.Notification.AdminScheduledTripTitle,
             LocalizationKeys.Notification.AdminScheduledTripBody,
             Arg.Is<Dictionary<string, string>>(data =>

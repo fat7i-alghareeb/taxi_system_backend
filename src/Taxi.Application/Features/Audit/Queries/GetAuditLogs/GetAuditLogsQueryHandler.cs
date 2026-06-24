@@ -13,6 +13,7 @@ public class GetAuditLogsQueryHandler(IAppDbContext context)
     public async Task<Result<List<AuditLogDto>>> Handle(GetAuditLogsQuery request, CancellationToken ct)
     {
         var logs = await _context.AuditLogs
+            .AsNoTracking()
             .OrderByDescending(l => l.CreatedAtUtc)
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
@@ -25,7 +26,9 @@ public class GetAuditLogsQueryHandler(IAppDbContext context)
             string? userName = null;
             if (log.UserId.HasValue)
             {
-                var user = await _context.DomainUsers.FirstOrDefaultAsync(u => u.Id == log.UserId.Value, ct);
+                var user = await _context.DomainUsers
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Id == log.UserId.Value, ct);
                 userName = user?.Name;
             }
 

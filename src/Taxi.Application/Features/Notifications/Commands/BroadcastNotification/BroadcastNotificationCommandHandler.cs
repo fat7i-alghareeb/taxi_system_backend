@@ -26,11 +26,20 @@ public class BroadcastNotificationCommandHandler(INotificationService notificati
         // Implicitly map strongly-typed client inputs to secure FCM topics.
         // The client only sends 0 (Customers), 1 (Drivers), or 2 (Admins) which
         // prevents any arbitrary, unsecured topic names from being passed.
+        if (request.Audience == NotificationAudience.Admins)
+        {
+            await _notificationService.SendPushNotificationToAdminsAsync(
+                request.Title,
+                request.Body,
+                request.Data,
+                ct);
+            return Result.Success;
+        }
+
         string topic = request.Audience switch
         {
             NotificationAudience.Customers => NotificationTopics.Customers,
             NotificationAudience.Drivers => NotificationTopics.Drivers,
-            NotificationAudience.Admins => NotificationTopics.Admins,
             _ => throw new ArgumentOutOfRangeException(nameof(request.Audience), "Invalid target audience group.")
         };
 

@@ -36,8 +36,7 @@ public sealed class ScheduledTripAdminReminderEventHandler(
             _ => throw new ArgumentOutOfRangeException(),
         };
 
-        return notificationService.SendPushNotificationToTopicAsync(
-            NotificationTopics.Admins,
+        return notificationService.SendPushNotificationToAdminsAsync(
             title,
             body,
             new Dictionary<string, string>

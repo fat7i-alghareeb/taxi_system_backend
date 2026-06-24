@@ -29,6 +29,10 @@ public class AdminProfileConfiguration : IEntityTypeConfiguration<AdminProfile>
         builder.Property(x => x.IsActive)
             .HasDefaultValue(true);
 
+        builder.Property(x => x.FcmToken)
+            .HasMaxLength(4096)
+            .IsRequired(false);
+
         builder.Property(x => x.CreatedAtUtc)
             .IsRequired();
 

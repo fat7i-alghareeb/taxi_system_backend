@@ -39,13 +39,14 @@ public sealed class SubmitCompensationClaimCommandHandler(IAppDbContext context,
         var quote = await context.PricingQuotes.FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
         var fare = quote?.FinalFare ?? 0;
         var currency = quote?.CurrencyCode ?? "EUR";
+
+        // Policy: driver >20 min late (with proof) => 5% of the fare compensated.
         var claimResult = TripCompensationClaim.Create(
             Guid.NewGuid(),
             trip.Id,
             passengerId,
             request.Note,
             request.EvidenceUrls ?? [],
-            // Policy: driver >20 min late (with proof) => 5% of the fare compensated.
             Math.Round(fare * 0.05m, 2, MidpointRounding.AwayFromZero),
             currency);
 

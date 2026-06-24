@@ -12,8 +12,9 @@ public class UpdateUserProfileCommandHandler(
     IUser currentUser,
     IFileStorage fileStorage) : IRequestHandler<UpdateUserProfileCommand, Result<UserDto>>
 {
-    private const long MaxFileSizeBytes = 5 * 1024 * 1024;
-    private static readonly string[] AllowedContentTypes = ["image/jpeg", "image/png"];
+    private const long MaxFileSizeBytes = 10 * 1024 * 1024;
+    private static readonly string[] AllowedContentTypes =
+        ["image/jpeg", "image/png", "image/webp"];
 
     public async Task<Result<UserDto>> Handle(UpdateUserProfileCommand request, CancellationToken ct)
     {
@@ -44,7 +45,12 @@ public class UpdateUserProfileCommandHandler(
                 return Error.Validation(LocalizationKeys.User.ProfilePhotoInvalid, "Photo must be under 5MB.");
             }
 
-            var extension = request.PhotoContentType == "image/png" ? ".png" : ".jpg";
+            var extension = request.PhotoContentType switch
+            {
+                "image/png" => ".png",
+                "image/webp" => ".webp",
+                _ => ".jpg",
+            };
             photoUrl = await fileStorage.SaveAsync(request.PhotoStream, $"photos/{userId}{extension}", ct);
         }
 
@@ -57,15 +63,21 @@ public class UpdateUserProfileCommandHandler(
             return updateResult.Errors;
         }
 
-        // 3. Update optional home address (all-null clears it).
-        var addressResult = user.UpdateHomeAddress(
-            request.HomeAddressLabel,
-            request.HomeAddressLatitude,
-            request.HomeAddressLongitude);
-
-        if (addressResult.IsError)
+        // 3. Apply an explicit address operation so unrelated profile updates
+        // never accidentally clear the stored address.
+        Result<Success>? addressResult = request.HomeAddressOperation switch
         {
-            return addressResult.Errors;
+            HomeAddressUpdateMode.Set => user.UpdateHomeAddress(
+                request.HomeAddressLabel,
+                request.HomeAddressLatitude,
+                request.HomeAddressLongitude),
+            HomeAddressUpdateMode.Clear => user.UpdateHomeAddress(null, null, null),
+            _ => null,
+        };
+
+        if (addressResult?.IsError == true)
+        {
+            return addressResult!.Errors;
         }
 
         await context.SaveChangesAsync(ct);

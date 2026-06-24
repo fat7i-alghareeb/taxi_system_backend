@@ -22,7 +22,9 @@ public class GetCurrentUserQueryHandler(
 
         var requiresPasswordReset = await identityService.RequiresPasswordResetAsync(userId.ToString());
 
-        var adminProfile = await context.AdminProfiles.FirstOrDefaultAsync(a => a.Id == userId, ct);
+        var adminProfile = await context.AdminProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == userId, ct);
         if (adminProfile is not null)
         {
             return new UserDto
@@ -37,6 +39,7 @@ public class GetCurrentUserQueryHandler(
         }
 
         var user = await context.DomainUsers
+            .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == userId, ct);
 
         if (user is null)
@@ -49,14 +52,18 @@ public class GetCurrentUserQueryHandler(
 
         Guid? driverId = null;
         string? approvalStatus = null;
+        Guid? vehicleTypeId = null;
 
         if (user.Role == UserRole.Driver)
         {
-            var driver = await context.Drivers.FirstOrDefaultAsync(d => d.UserId == user.Id, ct);
+            var driver = await context.Drivers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(d => d.UserId == user.Id, ct);
             if (driver != null)
             {
                 driverId = driver.Id;
                 approvalStatus = driver.ApprovalStatus.ToString();
+                vehicleTypeId = driver.VehicleTypeId;
             }
         }
 
@@ -70,6 +77,7 @@ public class GetCurrentUserQueryHandler(
             Name = isPlaceholder ? null : resolvedName,
             DriverId = driverId,
             ApprovalStatus = approvalStatus,
+            VehicleTypeId = vehicleTypeId,
             RequiresPasswordReset = requiresPasswordReset,
             HomeAddressLabel = user.HomeAddress?.Label,
             HomeAddressLatitude = user.HomeAddress?.Latitude,

@@ -18,7 +18,9 @@ public class GetCurrentAdminProfileQueryHandler(
             return Error.Unauthorized(LocalizationKeys.Auth.UserIdClaimInvalid, "Invalid user ID claim.");
         }
 
-        var admin = await context.AdminProfiles.FirstOrDefaultAsync(a => a.Id == adminId, ct);
+        var admin = await context.AdminProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == adminId, ct);
         if (admin is null)
         {
             return Error.NotFound(LocalizationKeys.User.NotFound, "Admin profile not found.");

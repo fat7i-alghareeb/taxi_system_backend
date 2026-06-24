@@ -36,7 +36,7 @@ public interface ITripNotifier
     Task NotifyDriverArrivedAsync(Guid tripId, Guid passengerId, Guid driverId, CancellationToken ct = default, Guid? eventId = null);
 
     /// <summary>Sends to the trip group that the ride has started.</summary>
-    Task NotifyTripStartedAsync(Guid tripId, Guid passengerId, CancellationToken ct = default, Guid? eventId = null);
+    Task NotifyTripStartedAsync(Guid tripId, Guid passengerId, Guid? driverUserId, CancellationToken ct = default, Guid? eventId = null);
 
     /// <summary>Sends to the trip group that the ride has been completed.</summary>
     Task NotifyTripCompletedAsync(Guid tripId, Guid passengerId, CancellationToken ct = default, Guid? eventId = null);

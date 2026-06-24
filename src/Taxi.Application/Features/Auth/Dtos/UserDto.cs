@@ -10,6 +10,7 @@ public class UserDto
     public string? ProfilePhotoUrl { get; set; }
     public Guid? DriverId { get; set; }
     public string? ApprovalStatus { get; set; }
+    public Guid? VehicleTypeId { get; set; }
     public bool RequiresPasswordReset { get; set; }
     public string? HomeAddressLabel { get; set; }
     public decimal? HomeAddressLatitude { get; set; }

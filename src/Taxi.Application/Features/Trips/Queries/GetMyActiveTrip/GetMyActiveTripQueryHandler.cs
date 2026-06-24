@@ -38,6 +38,7 @@ public class GetMyActiveTripQueryHandler(
         // A user may be a passenger and/or a driver; prefer a trip they are riding,
         // then fall back to one they are driving.
         var trip = await _context.Trips
+            .AsNoTracking()
             .Where(t => t.PassengerId == userId && ActiveStatuses.Contains(t.Status))
             .OrderByDescending(t => t.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
@@ -45,6 +46,7 @@ public class GetMyActiveTripQueryHandler(
         if (trip is null && _currentUser.IsAdmin)
         {
             trip = await _context.Trips
+                .AsNoTracking()
                 .Where(t => t.AcceptedByAdminId == userId && ActiveStatuses.Contains(t.Status))
                 .OrderByDescending(t => t.AcceptedAtUtc)
                 .FirstOrDefaultAsync(ct);
@@ -52,10 +54,13 @@ public class GetMyActiveTripQueryHandler(
 
         if (trip is null)
         {
-            var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.UserId == userId, ct);
+            var driver = await _context.Drivers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(d => d.UserId == userId, ct);
             if (driver is not null)
             {
                 trip = await _context.Trips
+                    .AsNoTracking()
                     .Where(t => t.DriverId == driver.Id && ActiveStatuses.Contains(t.Status))
                     .OrderByDescending(t => t.CreatedAtUtc)
                     .FirstOrDefaultAsync(ct);

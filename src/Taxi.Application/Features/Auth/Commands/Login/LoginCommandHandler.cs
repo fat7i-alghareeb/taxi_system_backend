@@ -123,6 +123,7 @@ public sealed class LoginCommandHandler(
 
         Guid? driverId = null;
         string? approvalStatus = null;
+        Guid? vehicleTypeId = null;
 
         if (domainUser.Role == UserRole.Driver)
         {
@@ -131,6 +132,7 @@ public sealed class LoginCommandHandler(
             {
                 driverId = driver.Id;
                 approvalStatus = driver.ApprovalStatus.ToString();
+                vehicleTypeId = driver.VehicleTypeId;
             }
         }
 
@@ -144,6 +146,7 @@ public sealed class LoginCommandHandler(
             Name = isPlaceholder ? null : resolvedName,
             DriverId = driverId,
             ApprovalStatus = approvalStatus,
+            VehicleTypeId = vehicleTypeId,
         };
 
         return new AuthResponse(

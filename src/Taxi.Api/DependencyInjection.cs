@@ -125,6 +125,14 @@ public static class DependencyInjection
                 limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
                 limiterOptions.AutoReplenishment = true;
             });
+            options.AddSlidingWindowLimiter("SignalRConnections", limiterOptions =>
+            {
+                limiterOptions.PermitLimit = 30;
+                limiterOptions.Window = TimeSpan.FromMinutes(1);
+                limiterOptions.SegmentsPerWindow = 6;
+                limiterOptions.QueueLimit = 0;
+                limiterOptions.AutoReplenishment = true;
+            });
 
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
         });
