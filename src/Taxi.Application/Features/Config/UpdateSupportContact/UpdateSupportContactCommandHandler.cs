@@ -26,21 +26,9 @@ public class UpdateSupportContactCommandHandler(IAppDbContext context)
         return new SupportContactDto(whatsApp);
     }
 
-    // The AppConfig invariant forbids empty values, so a blank field is modelled
-    // as the absence of its key: upsert when set, delete the row when cleared.
     private async Task UpsertAsync(string key, string value, string description, CancellationToken ct)
     {
         var config = await _context.AppConfigs.FirstOrDefaultAsync(c => c.Key == key, ct);
-
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            if (config is not null)
-            {
-                _context.AppConfigs.Remove(config);
-            }
-
-            return;
-        }
 
         if (config is null)
         {

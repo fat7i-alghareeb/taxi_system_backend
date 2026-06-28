@@ -6,10 +6,13 @@ public class UpdateSupportContactCommandValidator : AbstractValidator<UpdateSupp
 {
     public UpdateSupportContactCommandValidator()
     {
-        // The number is optional (a blank clears it). Validate format only when provided.
+        // The number is required — a blank value would delete the row and break
+        // the customer app's in-trip "Report problem" action.
         // Accept digits with an optional leading '+' (E.164-style, no spaces/dashes),
         // which is what wa.me expects.
         RuleFor(x => x.WhatsApp)
+            .NotEmpty()
+            .WithErrorCode("SupportContact.WhatsAppRequired")
             .MaximumLength(20)
             .WithErrorCode("SupportContact.WhatsAppInvalid")
             .Matches(@"^\+?[0-9]{6,15}$")

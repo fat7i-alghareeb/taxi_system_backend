@@ -148,6 +148,7 @@ public class ApplicationDbContextInitialiser(
         await SeedCompanyContactAsync(AppConfigKeys.CompanyEmail, "info@fat7i.dev", "Company email shown on invoices.");
         await SeedCompanyContactAsync(AppConfigKeys.CompanyPhone, "0639550352", "Company phone shown on invoices.");
         await SeedCompanyContactAsync(AppConfigKeys.CompanyWebsite, "www.fat7i.dev", "Company website shown on invoices.");
+        await SeedCompanyContactAsync(AppConfigKeys.SupportWhatsApp, "+31639550352", "Support WhatsApp number used by the customer app's in-trip 'Report problem' action.");
 
         // 4. Seed admin users
         await SeedAdminAsync(AdminUserName, AdminPassword, AdminDisplayName, AdminEmail);
