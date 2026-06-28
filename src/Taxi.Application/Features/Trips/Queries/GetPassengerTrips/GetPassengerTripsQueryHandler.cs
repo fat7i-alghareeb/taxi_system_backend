@@ -31,8 +31,8 @@ public class GetPassengerTripsQueryHandler(
 
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
-            var search = request.Search.Trim();
-            query = query.Where(t => EF.Functions.ILike(t.ReferenceCode, $"%{search}%"));
+            var search = request.Search.Trim().ToLower();
+            query = query.Where(t => t.ReferenceCode.ToLower().Contains(search));
         }
 
         var totalCount = await query.CountAsync(ct);
