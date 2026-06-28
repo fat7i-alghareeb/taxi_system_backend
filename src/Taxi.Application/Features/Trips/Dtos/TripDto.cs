@@ -40,7 +40,8 @@ public record TripDto(
     bool IsScheduled = false,
     DateTimeOffset? DispatchWindowOpensAtUtc = null,
     bool CanMarkEnRoute = false,
-    string AttentionState = "Normal");
+    string AttentionState = "Normal",
+    int RecordingCount = 0);
 
 public record TripRouteSegmentDto(
     int DistanceMeters,

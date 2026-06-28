@@ -164,9 +164,63 @@ public class TripListQueryPaymentVisibilityTests
         Assert.Equal(tripA.Id, result.Value.Items[0].Id);
     }
 
+    [Fact]
+    public async Task GetAllTrips_ReportsRecordingCountPerTrip()
+    {
+        var passengerId = Guid.NewGuid();
+        var quoteId = Guid.NewGuid();
+        var trip = PaymentTestBuilders.CreateAwaitingPaymentTrip(passengerId, quoteId);
+        trip.ConfirmPayment();
+
+        var recordings = new List<TripRecording>
+        {
+            TripRecording.Create(trip.Id, passengerId, RecordingType.Audio, "/recordings/a.m4a", 1000, 30),
+            TripRecording.Create(trip.Id, passengerId, RecordingType.Audio, "/recordings/b.m4a", 2000, 45),
+            // A different trip's recording must not be counted here.
+            TripRecording.Create(Guid.NewGuid(), passengerId, RecordingType.Audio, "/recordings/c.m4a", 3000, 12),
+        };
+
+        var context = BuildContext(
+            [trip],
+            [CreateQuote(passengerId, trip.VehicleTypeId, quoteId)],
+            recordings);
+        var handler = new GetAllTripsQueryHandler(context, TimeProvider.System);
+
+        var result = await handler.Handle(new GetAllTripsQuery(), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value.Items);
+        Assert.Equal(2, result.Value.Items[0].RecordingCount);
+    }
+
+    [Fact]
+    public async Task GetTripRecordings_ReturnsTripRecordingsOrderedAndExcludesDeleted()
+    {
+        var passengerId = Guid.NewGuid();
+        var tripId = Guid.NewGuid();
+        var recordings = new List<TripRecording>
+        {
+            TripRecording.Create(tripId, passengerId, RecordingType.Audio, "/recordings/a.m4a", 1000, 30),
+            TripRecording.Create(Guid.NewGuid(), passengerId, RecordingType.Audio, "/recordings/other.m4a", 2000, 45),
+        };
+
+        var context = BuildContext([], [], recordings);
+        var handler = new Taxi.Application.Features.Trips.Queries.GetTripRecordings
+            .GetTripRecordingsQueryHandler(context);
+
+        var result = await handler.Handle(
+            new Taxi.Application.Features.Trips.Queries.GetTripRecordings.GetTripRecordingsQuery(tripId),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value);
+        Assert.Equal(tripId, result.Value[0].TripId);
+    }
+
     private static IAppDbContext BuildContext(
         List<Trip> trips,
-        List<PricingQuote> pricingQuotes)
+        List<PricingQuote> pricingQuotes,
+        List<TripRecording>? recordings = null)
     {
         var context = Substitute.For<IAppDbContext>();
         var tripsSet = DbSetMockFactory.Create(trips);
@@ -176,6 +230,7 @@ public class TripListQueryPaymentVisibilityTests
         var cancellationsSet = DbSetMockFactory.Create(new List<TripCancellation>());
         var compensationClaimsSet = DbSetMockFactory.Create(new List<TripCompensationClaim>());
         var waitingSessionsSet = DbSetMockFactory.Create(new List<TripWaitingSession>());
+        var recordingsSet = DbSetMockFactory.Create(recordings ?? new List<TripRecording>());
         var adminProfilesSet = DbSetMockFactory.Create(
             new List<Taxi.Domain.Admins.AdminProfile>());
 
@@ -186,6 +241,7 @@ public class TripListQueryPaymentVisibilityTests
         context.TripCancellations.Returns(cancellationsSet);
         context.TripCompensationClaims.Returns(compensationClaimsSet);
         context.TripWaitingSessions.Returns(waitingSessionsSet);
+        context.TripRecordings.Returns(recordingsSet);
         context.AdminProfiles.Returns(adminProfilesSet);
         return context;
     }

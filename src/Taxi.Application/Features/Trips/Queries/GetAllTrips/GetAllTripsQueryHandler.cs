@@ -54,6 +54,14 @@ public class GetAllTripsQueryHandler(IAppDbContext context, TimeProvider timePro
             .Take(request.PageSize)
             .ToListAsync(ct);
 
+        var tripIds = trips.Select(t => t.Id).ToList();
+        var recordingCounts = await _context.TripRecordings
+            .AsNoTracking()
+            .Where(r => tripIds.Contains(r.TripId) && r.DeletedAtUtc == null)
+            .GroupBy(r => r.TripId)
+            .Select(g => new { TripId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.TripId, x => x.Count, ct);
+
         var vehicleTypes = await _context.VehicleTypes.AsNoTracking().ToListAsync(ct);
         var vehicleTypeMap = vehicleTypes.ToDictionary(v => v.Id, v => v.Name.En ?? "Unknown");
         var adminNames = await _context.AdminProfiles
@@ -151,7 +159,8 @@ public class GetAllTripsQueryHandler(IAppDbContext context, TimeProvider timePro
                 IsScheduled: trip.ScheduledAtUtc.HasValue,
                 DispatchWindowOpensAtUtc: trip.DispatchWindowOpensAtUtc,
                 CanMarkEnRoute: trip.CanMarkEnRoute(now),
-                AttentionState: trip.GetAttentionState(now).ToString()));
+                AttentionState: trip.GetAttentionState(now).ToString(),
+                RecordingCount: recordingCounts.GetValueOrDefault(trip.Id)));
         }
 
         return new PagedResult<TripDto>(tripDtos, totalCount, request.PageNumber, request.PageSize);

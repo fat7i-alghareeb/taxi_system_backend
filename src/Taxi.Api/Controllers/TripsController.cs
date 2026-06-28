@@ -27,6 +27,7 @@ using Taxi.Application.Features.Trips.Commands.SubmitCompensationClaim;
 using Taxi.Application.Features.Trips.Commands.UpdatePassengerNote;
 using Taxi.Application.Features.Trips.Commands.UploadTripRecording;
 using Taxi.Application.Features.Trips.Dtos;
+using Taxi.Application.Features.Trips.Queries.GetAllRecordings;
 using Taxi.Application.Features.Trips.Queries.GetAllTrips;
 using Taxi.Application.Features.Trips.Queries.GetCompensationClaims;
 using Taxi.Application.Features.Trips.Queries.GetMyActiveTrip;
@@ -36,6 +37,7 @@ using Taxi.Application.Features.Trips.Queries.GetTripById;
 using Taxi.Application.Features.Trips.Queries.GetTripDetails;
 using Taxi.Application.Features.Trips.Queries.GetTripInvoice;
 using Taxi.Application.Features.Trips.Queries.GetTripInvoicePdf;
+using Taxi.Application.Features.Trips.Queries.GetTripRecordings;
 using Taxi.Application.Features.Trips.Queries.GetTripReceipt;
 using Taxi.Application.Features.Uploads.Commands.UploadCompensationEvidence;
 using Taxi.Contracts.Requests.Trips;
@@ -448,6 +450,30 @@ public class TripsController(ISender sender) : ApiController
     public async Task<IActionResult> GetDetails(Guid id, CancellationToken ct)
     {
         var result = await sender.Send(new GetTripDetailsQuery(id), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpGet("recordings")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(List<AdminRecordingDto>), StatusCodes.Status200OK)]
+    [EndpointSummary("Admin retrieves a paginated list of in-trip safety recordings across trips.")]
+    [EndpointName("GetAllRecordingsAdmin")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetAllRecordings([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] Guid? passengerId = null, [FromQuery] string? search = null, CancellationToken ct = default)
+    {
+        var result = await sender.Send(new GetAllRecordingsQuery(page, pageSize, passengerId, search), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpGet("{id:guid}/recordings")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(List<TripRecordingDto>), StatusCodes.Status200OK)]
+    [EndpointSummary("Admin retrieves the in-trip safety recordings captured for a single trip.")]
+    [EndpointName("GetTripRecordingsAdmin")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetTripRecordings(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new GetTripRecordingsQuery(id), ct);
         return result.Match(Ok, Problem);
     }
 
