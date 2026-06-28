@@ -165,7 +165,8 @@
   "Notification.TripScheduledConfirmed.Body": "Twój przejazd jest zarezerwowany na {0}.",
   "Notification.TripScheduledActivated.Title": "Twój zaplanowany kurs właśnie się rozpoczyna",
   "Notification.TripScheduledActivated.Body": "Wyszukujemy teraz kierowcę dla Twojego kursu.",
-  "Notification.WaitingFeeDue.Title": "Zaległa opłata za oczekiwanie",   "Notification.WaitingFeeDue.Body": "Nie udało się pobrać opłaty za oczekiwanie. Otwórz aplikację, aby ją uregulować.",
+  "Notification.WaitingFeeDue.Title": "Zaległa opłata za oczekiwanie",
+  "Notification.WaitingFeeDue.Body": "Nie udało się pobrać opłaty za oczekiwanie. Otwórz aplikację, aby ją uregulować.",
   "Notification.TripAccepted.Title": "Przejazd potwierdzony",
   "Notification.TripAccepted.Body": "Twój przejazd na {0} został przyjęty.",
   "Notification.AdminScheduledTrip.Title": "Nowy przejazd gotowy",
@@ -257,5 +258,12 @@
   "Trip.Stop.PendingStopsRemaining": "Nadal pozostają oczekujące przystanki do ukończenia przed zakończeniem tego przejazdu.",
   "Trip.Stops.TooMany": "Osiągnięto maksymalną liczbę przystanków dla tego przejazdu.",
   "Trip.FlightNumber.Required": "Numer lotu jest wymagany przy odbiorze z lotniska.",
-  "Trip.FlightNumber.Invalid": "Wpisz prawidłowy numer lotu składający się z 2–15 liter, cyfr, spacji lub łączników."
+  "Trip.FlightNumber.Invalid": "Wpisz prawidłowy numer lotu składający się z 2–15 liter, cyfr, spacji lub łączników.",
+  "CustomerIncident.NotFound": "Nie znaleziono zgłoszenia.",
+  "CustomerIncident.AlreadyClosed": "To zgłoszenie jest już zamknięte.",
+  "CustomerIncident.InvalidStatus": "Nieprawidłowy status zgłoszenia.",
+  "CustomerIncident.Contact.TitleRequired": "Tytuł jest wymagany.",
+  "CustomerIncident.Contact.BodyRequired": "Wiadomość jest wymagana.",
+  "CustomerIncident.NoRefundablePayment": "Brak płatności podlegającej zwrotowi dla tego zgłoszenia.",
+  "CustomerIncident.RefundFailed": "Nie udało się przetworzyć zwrotu. Spróbuj ponownie."
 }

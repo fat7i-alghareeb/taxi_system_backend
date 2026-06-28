@@ -165,7 +165,8 @@
   "Notification.TripScheduledConfirmed.Body": "Uw rit is geboekt voor {0}.",
   "Notification.TripScheduledActivated.Title": "Uw geplande rit begint",
   "Notification.TripScheduledActivated.Body": "We zoeken nu een chauffeur voor uw rit.",
-  "Notification.WaitingFeeDue.Title": "Openstaand wachttarief",   "Notification.WaitingFeeDue.Body": "We konden uw wachttarief niet afschrijven. Open de app om dit te betalen.",
+  "Notification.WaitingFeeDue.Title": "Openstaand wachttarief",
+  "Notification.WaitingFeeDue.Body": "We konden uw wachttarief niet afschrijven. Open de app om dit te betalen.",
   "Notification.TripAccepted.Title": "Rit bevestigd",
   "Notification.TripAccepted.Body": "Uw rit voor {0} is geaccepteerd.",
   "Notification.AdminScheduledTrip.Title": "Nieuwe rit klaar",
@@ -257,5 +258,12 @@
   "Trip.Stop.PendingStopsRemaining": "Er zijn nog openstaande tussenstops voordat deze rit kan worden afgesloten.",
   "Trip.Stops.TooMany": "Het maximumaantal tussenstops voor deze rit is bereikt.",
   "Trip.FlightNumber.Required": "Een vluchtnummer is verplicht bij ophalen op de luchthaven.",
-  "Trip.FlightNumber.Invalid": "Voer een geldig vluchtnummer van 2–15 letters, cijfers, spaties of koppeltekens in."
+  "Trip.FlightNumber.Invalid": "Voer een geldig vluchtnummer van 2–15 letters, cijfers, spaties of koppeltekens in.",
+  "CustomerIncident.NotFound": "Incident niet gevonden.",
+  "CustomerIncident.AlreadyClosed": "Dit incident is al gesloten.",
+  "CustomerIncident.InvalidStatus": "Ongeldige incidentstatus.",
+  "CustomerIncident.Contact.TitleRequired": "Een titel is verplicht.",
+  "CustomerIncident.Contact.BodyRequired": "Een bericht is verplicht.",
+  "CustomerIncident.NoRefundablePayment": "Er is geen terugbetaalbare betaling voor dit incident.",
+  "CustomerIncident.RefundFailed": "De terugbetaling kon niet worden verwerkt. Probeer het opnieuw."
 }

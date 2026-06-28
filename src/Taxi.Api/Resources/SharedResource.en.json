@@ -181,7 +181,8 @@
   "Notification.AdminAcceptedReminder30.Body": "Your accepted ride {0} starts at {1}.",
   "Notification.AdminAcceptedReminder15.Title": "Dispatch window open",
   "Notification.AdminAcceptedReminder15.Body": "Ride {0} starts at {1}. You can mark it on the way now.",
-  "Notification.WaitingFeeDue.Title": "Outstanding waiting fee",   "Notification.WaitingFeeDue.Body": "We couldn't charge your waiting fee. Please open the app to settle it.",
+  "Notification.WaitingFeeDue.Title": "Outstanding waiting fee",
+  "Notification.WaitingFeeDue.Body": "We couldn't charge your waiting fee. Please open the app to settle it.",
   "Notification.NewMessage.Title": "New message",
   "Notification.NewMessage.Body": "You have a new message about your trip.",
   "Notification.NewMessage.PhotoBody": "📷 Sent a photo",
@@ -257,5 +258,12 @@
   "Trip.Stop.PendingStopsRemaining": "There are still pending stops to complete before this trip can finish.",
   "Trip.Stops.TooMany": "The maximum number of stops for this trip has been reached.",
   "Trip.FlightNumber.Required": "A flight number is required for airport pickups.",
-  "Trip.FlightNumber.Invalid": "Enter a valid flight number using 2–15 letters, numbers, spaces, or hyphens."
+  "Trip.FlightNumber.Invalid": "Enter a valid flight number using 2–15 letters, numbers, spaces, or hyphens.",
+  "CustomerIncident.NotFound": "Incident not found.",
+  "CustomerIncident.AlreadyClosed": "This incident is already closed.",
+  "CustomerIncident.InvalidStatus": "Invalid incident status.",
+  "CustomerIncident.Contact.TitleRequired": "A title is required.",
+  "CustomerIncident.Contact.BodyRequired": "A message is required.",
+  "CustomerIncident.NoRefundablePayment": "There is no refundable payment for this incident.",
+  "CustomerIncident.RefundFailed": "The refund could not be processed. Please try again."
 }

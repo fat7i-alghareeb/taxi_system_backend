@@ -165,7 +165,8 @@
   "Notification.TripScheduledConfirmed.Body": "Votre course est réservée pour {0}.",
   "Notification.TripScheduledActivated.Title": "Votre course planifiée commence",
   "Notification.TripScheduledActivated.Body": "Nous recherchons un chauffeur pour votre course actuellement.",
-  "Notification.WaitingFeeDue.Title": "Frais d'attente impayés",   "Notification.WaitingFeeDue.Body": "Nous n'avons pas pu prélever vos frais d'attente. Veuillez ouvrir l'application pour les régler.",
+  "Notification.WaitingFeeDue.Title": "Frais d'attente impayés",
+  "Notification.WaitingFeeDue.Body": "Nous n'avons pas pu prélever vos frais d'attente. Veuillez ouvrir l'application pour les régler.",
   "Notification.TripAccepted.Title": "Course confirmée",
   "Notification.TripAccepted.Body": "Votre course prévue pour {0} a été acceptée.",
   "Notification.AdminScheduledTrip.Title": "Nouvelle course prête",
@@ -257,5 +258,12 @@
   "Trip.Stop.PendingStopsRemaining": "Il reste des arrêts en attente à compléter avant que ce trajet ne puisse se terminer.",
   "Trip.Stops.TooMany": "Le nombre maximum d'arrêts pour ce trajet a été atteint.",
   "Trip.FlightNumber.Required": "Le numéro de vol est requis pour une prise en charge à l'aéroport.",
-  "Trip.FlightNumber.Invalid": "Saisissez un numéro de vol valide de 2 à 15 lettres, chiffres, espaces ou tirets."
+  "Trip.FlightNumber.Invalid": "Saisissez un numéro de vol valide de 2 à 15 lettres, chiffres, espaces ou tirets.",
+  "CustomerIncident.NotFound": "Incident introuvable.",
+  "CustomerIncident.AlreadyClosed": "Cet incident est déjà clôturé.",
+  "CustomerIncident.InvalidStatus": "Statut d'incident invalide.",
+  "CustomerIncident.Contact.TitleRequired": "Un titre est requis.",
+  "CustomerIncident.Contact.BodyRequired": "Un message est requis.",
+  "CustomerIncident.NoRefundablePayment": "Aucun paiement remboursable n'est associé à cet incident.",
+  "CustomerIncident.RefundFailed": "Le remboursement n'a pas pu être traité. Veuillez réessayer."
 }

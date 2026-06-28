@@ -165,7 +165,8 @@
   "Notification.TripScheduledConfirmed.Body": "Cursa ta este rezervată pentru {0}.",
   "Notification.TripScheduledActivated.Title": "Cursa dumneavoastră programată începe",
   "Notification.TripScheduledActivated.Body": "Căutăm un șofer pentru cursa dumneavoastră acum.",
-  "Notification.WaitingFeeDue.Title": "Taxă de așteptare restantă",   "Notification.WaitingFeeDue.Body": "Nu am putut percepe taxa de așteptare. Te rugăm să deschizi aplicația pentru a o achita.",
+  "Notification.WaitingFeeDue.Title": "Taxă de așteptare restantă",
+  "Notification.WaitingFeeDue.Body": "Nu am putut percepe taxa de așteptare. Te rugăm să deschizi aplicația pentru a o achita.",
   "Notification.TripAccepted.Title": "Cursă confirmată",
   "Notification.TripAccepted.Body": "Cursa pentru {0} a fost acceptată.",
   "Notification.AdminScheduledTrip.Title": "Cursă nouă disponibilă",
@@ -257,5 +258,12 @@
   "Trip.Stop.PendingStopsRemaining": "Mai sunt opriri în așteptare de finalizat înainte ca această cursă să poată fi încheiată.",
   "Trip.Stops.TooMany": "S-a atins numărul maxim de opriri pentru această cursă.",
   "Trip.FlightNumber.Required": "Numărul zborului este obligatoriu pentru preluarea de la aeroport.",
-  "Trip.FlightNumber.Invalid": "Introduceți un număr de zbor valid din 2–15 litere, cifre, spații sau cratime."
+  "Trip.FlightNumber.Invalid": "Introduceți un număr de zbor valid din 2–15 litere, cifre, spații sau cratime.",
+  "CustomerIncident.NotFound": "Incidentul nu a fost găsit.",
+  "CustomerIncident.AlreadyClosed": "Acest incident este deja închis.",
+  "CustomerIncident.InvalidStatus": "Stare a incidentului nevalidă.",
+  "CustomerIncident.Contact.TitleRequired": "Este necesar un titlu.",
+  "CustomerIncident.Contact.BodyRequired": "Este necesar un mesaj.",
+  "CustomerIncident.NoRefundablePayment": "Nu există o plată rambursabilă pentru acest incident.",
+  "CustomerIncident.RefundFailed": "Rambursarea nu a putut fi procesată. Încercați din nou."
 }

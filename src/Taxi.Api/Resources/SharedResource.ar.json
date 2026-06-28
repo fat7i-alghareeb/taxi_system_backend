@@ -258,5 +258,12 @@
   "Trip.Stop.PendingStopsRemaining": "لا تزال هناك محطات معلقة يجب إكمالها قبل إنهاء الرحلة.",
   "Trip.Stops.TooMany": "تم الوصول إلى الحد الأقصى لعدد المحطات لهذه الرحلة.",
   "Trip.FlightNumber.Required": "رقم الرحلة مطلوب عند الاستلام من المطار.",
-  "Trip.FlightNumber.Invalid": "أدخل رقم رحلة صالحاً من 2 إلى 15 حرفاً أو رقماً أو مسافة أو شرطة."
+  "Trip.FlightNumber.Invalid": "أدخل رقم رحلة صالحاً من 2 إلى 15 حرفاً أو رقماً أو مسافة أو شرطة.",
+  "CustomerIncident.NotFound": "لم يتم العثور على الحادثة.",
+  "CustomerIncident.AlreadyClosed": "هذه الحادثة مغلقة بالفعل.",
+  "CustomerIncident.InvalidStatus": "حالة الحادثة غير صالحة.",
+  "CustomerIncident.Contact.TitleRequired": "العنوان مطلوب.",
+  "CustomerIncident.Contact.BodyRequired": "الرسالة مطلوبة.",
+  "CustomerIncident.NoRefundablePayment": "لا يوجد دفع قابل للاسترداد لهذه الحادثة.",
+  "CustomerIncident.RefundFailed": "تعذّر إجراء الاسترداد. يرجى المحاولة مرة أخرى."
 }

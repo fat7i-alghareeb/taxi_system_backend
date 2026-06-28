@@ -165,7 +165,8 @@
   "Notification.TripScheduledConfirmed.Body": "Ihre Fahrt ist für {0} gebucht.",
   "Notification.TripScheduledActivated.Title": "Ihre geplante Fahrt beginnt",
   "Notification.TripScheduledActivated.Body": "Wir suchen jetzt nach einem Fahrer für Ihre Fahrt.",
-  "Notification.WaitingFeeDue.Title": "Offene Wartegebühr",   "Notification.WaitingFeeDue.Body": "Wir konnten Ihre Wartegebühr nicht abbuchen. Bitte öffnen Sie die App, um sie zu begleichen.",
+  "Notification.WaitingFeeDue.Title": "Offene Wartegebühr",
+  "Notification.WaitingFeeDue.Body": "Wir konnten Ihre Wartegebühr nicht abbuchen. Bitte öffnen Sie die App, um sie zu begleichen.",
   "Notification.TripAccepted.Title": "Fahrt bestätigt",
   "Notification.TripAccepted.Body": "Ihre Fahrt für {0} wurde angenommen.",
   "Notification.AdminScheduledTrip.Title": "Neue Fahrt bereit",
@@ -257,5 +258,12 @@
   "Trip.Stop.PendingStopsRemaining": "Es sind noch ausstehende Stopps zu erledigen, bevor diese Fahrt beendet werden kann.",
   "Trip.Stops.TooMany": "Die maximale Anzahl von Stopps für diese Fahrt wurde erreicht.",
   "Trip.FlightNumber.Required": "Für Flughafenabholungen ist eine Flugnummer erforderlich.",
-  "Trip.FlightNumber.Invalid": "Geben Sie eine gültige Flugnummer mit 2–15 Buchstaben, Zahlen, Leerzeichen oder Bindestrichen ein."
+  "Trip.FlightNumber.Invalid": "Geben Sie eine gültige Flugnummer mit 2–15 Buchstaben, Zahlen, Leerzeichen oder Bindestrichen ein.",
+  "CustomerIncident.NotFound": "Vorfall nicht gefunden.",
+  "CustomerIncident.AlreadyClosed": "Dieser Vorfall ist bereits geschlossen.",
+  "CustomerIncident.InvalidStatus": "Ungültiger Vorfallstatus.",
+  "CustomerIncident.Contact.TitleRequired": "Ein Titel ist erforderlich.",
+  "CustomerIncident.Contact.BodyRequired": "Eine Nachricht ist erforderlich.",
+  "CustomerIncident.NoRefundablePayment": "Für diesen Vorfall gibt es keine erstattungsfähige Zahlung.",
+  "CustomerIncident.RefundFailed": "Die Erstattung konnte nicht verarbeitet werden. Bitte versuchen Sie es erneut."
 }

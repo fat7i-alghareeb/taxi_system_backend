@@ -84,9 +84,9 @@ public class TripListQueryPaymentVisibilityTests
         var result = await handler.Handle(new GetAllTripsQuery(), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.Single(result.Value);
-        Assert.Equal(visibleTrip.Id, result.Value[0].Id);
-        Assert.DoesNotContain(result.Value, t => t.Status == TripStatus.AwaitingPayment.ToString());
+        Assert.Single(result.Value.Items);
+        Assert.Equal(visibleTrip.Id, result.Value.Items[0].Id);
+        Assert.DoesNotContain(result.Value.Items, t => t.Status == TripStatus.AwaitingPayment.ToString());
     }
 
     [Fact]
@@ -105,7 +105,7 @@ public class TripListQueryPaymentVisibilityTests
             CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.Empty(result.Value);
+        Assert.Empty(result.Value.Items);
     }
 
     [Fact]
@@ -131,8 +131,37 @@ public class TripListQueryPaymentVisibilityTests
             CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.Single(result.Value);
-        Assert.Equal(TripStatus.AwaitingAdminAcceptance.ToString(), result.Value[0].Status);
+        Assert.Single(result.Value.Items);
+        Assert.Equal(TripStatus.AwaitingAdminAcceptance.ToString(), result.Value.Items[0].Status);
+    }
+
+    [Fact]
+    public async Task GetAllTrips_WhenPassengerIdProvided_ReturnsOnlyThatPassengersTrips()
+    {
+        var passengerA = Guid.NewGuid();
+        var passengerB = Guid.NewGuid();
+        var quoteA = Guid.NewGuid();
+        var quoteB = Guid.NewGuid();
+        var tripA = PaymentTestBuilders.CreateAwaitingPaymentTrip(passengerA, quoteA);
+        var tripB = PaymentTestBuilders.CreateAwaitingPaymentTrip(passengerB, quoteB);
+        tripA.ConfirmPayment();
+        tripB.ConfirmPayment();
+
+        var context = BuildContext(
+            [tripA, tripB],
+            [
+                CreateQuote(passengerA, tripA.VehicleTypeId, quoteA),
+                CreateQuote(passengerB, tripB.VehicleTypeId, quoteB),
+            ]);
+        var handler = new GetAllTripsQueryHandler(context, TimeProvider.System);
+
+        var result = await handler.Handle(
+            new GetAllTripsQuery(PassengerId: passengerA),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value.Items);
+        Assert.Equal(tripA.Id, result.Value.Items[0].Id);
     }
 
     private static IAppDbContext BuildContext(

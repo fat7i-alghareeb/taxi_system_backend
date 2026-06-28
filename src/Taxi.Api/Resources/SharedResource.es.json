@@ -165,7 +165,8 @@
   "Notification.TripScheduledConfirmed.Body": "Tu viaje está reservado para {0}.",
   "Notification.TripScheduledActivated.Title": "Su viaje programado está comenzando",
   "Notification.TripScheduledActivated.Body": "Estamos buscando un conductor para su viaje ahora.",
-  "Notification.WaitingFeeDue.Title": "Tarifa de espera pendiente",   "Notification.WaitingFeeDue.Body": "No pudimos cobrar tu tarifa de espera. Abre la app para pagarla.",
+  "Notification.WaitingFeeDue.Title": "Tarifa de espera pendiente",
+  "Notification.WaitingFeeDue.Body": "No pudimos cobrar tu tarifa de espera. Abre la app para pagarla.",
   "Notification.TripAccepted.Title": "Viaje confirmado",
   "Notification.TripAccepted.Body": "Tu viaje para {0} ha sido aceptado.",
   "Notification.AdminScheduledTrip.Title": "Nuevo viaje listo",
@@ -257,5 +258,12 @@
   "Trip.Stop.PendingStopsRemaining": "Aún hay paradas pendientes por completar antes de finalizar este viaje.",
   "Trip.Stops.TooMany": "Se ha alcanzado el número máximo de paradas para este viaje.",
   "Trip.FlightNumber.Required": "El número de vuelo es obligatorio para recogidas en aeropuerto.",
-  "Trip.FlightNumber.Invalid": "Introduce un número de vuelo válido de 2 a 15 letras, números, espacios o guiones."
+  "Trip.FlightNumber.Invalid": "Introduce un número de vuelo válido de 2 a 15 letras, números, espacios o guiones.",
+  "CustomerIncident.NotFound": "Incidencia no encontrada.",
+  "CustomerIncident.AlreadyClosed": "Esta incidencia ya está cerrada.",
+  "CustomerIncident.InvalidStatus": "Estado de incidencia no válido.",
+  "CustomerIncident.Contact.TitleRequired": "Se requiere un título.",
+  "CustomerIncident.Contact.BodyRequired": "Se requiere un mensaje.",
+  "CustomerIncident.NoRefundablePayment": "No hay ningún pago reembolsable para esta incidencia.",
+  "CustomerIncident.RefundFailed": "No se pudo procesar el reembolso. Inténtalo de nuevo."
 }
