@@ -432,9 +432,9 @@ public class TripsController(ISender sender) : ApiController
     [EndpointSummary("Admin retrieves a paginated and filtered list of all trips.")]
     [EndpointName("GetAllTripsAdmin")]
     [MapToApiVersion("1.0")]
-    public async Task<IActionResult> GetAllTripsAdmin([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null, [FromQuery] Guid? driverId = null, [FromQuery] string? search = null, CancellationToken ct = default)
+    public async Task<IActionResult> GetAllTripsAdmin([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null, [FromQuery] Guid? driverId = null, [FromQuery] string? search = null, [FromQuery] Guid? passengerId = null, CancellationToken ct = default)
     {
-        var result = await sender.Send(new GetAllTripsQuery(page, pageSize, status, driverId, search), ct);
+        var result = await sender.Send(new GetAllTripsQuery(page, pageSize, status, driverId, search, passengerId), ct);
         return result.Match(Ok, Problem);
     }
 

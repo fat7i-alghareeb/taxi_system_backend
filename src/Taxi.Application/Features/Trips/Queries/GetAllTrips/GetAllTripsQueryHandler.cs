@@ -35,6 +35,11 @@ public class GetAllTripsQueryHandler(IAppDbContext context, TimeProvider timePro
             query = query.Where(t => t.DriverId == request.DriverId.Value);
         }
 
+        if (request.PassengerId.HasValue)
+        {
+            query = query.Where(t => t.PassengerId == request.PassengerId.Value);
+        }
+
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
             var search = request.Search.Trim().ToLower();

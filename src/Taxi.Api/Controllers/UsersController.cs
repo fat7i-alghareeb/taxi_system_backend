@@ -135,9 +135,9 @@ public class UsersController(ISender sender) : ApiController
     [EndpointSummary("Admin retrieves a paginated list of all registered users.")]
     [EndpointName("GetAllUsersAdmin")]
     [MapToApiVersion("1.0")]
-    public async Task<IActionResult> GetAllUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 15, CancellationToken ct = default)
+    public async Task<IActionResult> GetAllUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 15, [FromQuery] string? search = null, [FromQuery] string? role = null, CancellationToken ct = default)
     {
-        var result = await sender.Send(new GetAllUsersQuery(page, pageSize), ct);
+        var result = await sender.Send(new GetAllUsersQuery(page, pageSize, search, role), ct);
         return result.Match(Ok, Problem);
     }
 
