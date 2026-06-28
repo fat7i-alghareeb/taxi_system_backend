@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Common.Storage;
 using Taxi.Application.Common.Uploads;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Contracts.Common;
@@ -83,7 +84,7 @@ public class SendTripMessageCommandHandler(
             var extension = Path.GetExtension(photo.FileName);
             photoUrl = await _fileStorage.SaveAsync(
                 photo.Stream,
-                $"chat/trips/{trip.Id:N}/{Guid.NewGuid():N}{extension}",
+                StoragePaths.ChatPhoto(trip.Id, extension),
                 ct);
         }
 

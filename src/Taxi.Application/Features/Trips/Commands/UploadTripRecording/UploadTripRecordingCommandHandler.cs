@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Common.Storage;
 using Taxi.Application.Common.Uploads;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
@@ -47,7 +48,7 @@ public class UploadTripRecordingCommandHandler(
         var extension = Path.GetExtension(request.File.FileName);
         var url = await _fileStorage.SaveAsync(
             request.File.Stream,
-            $"recordings/{trip.Id:N}/{Guid.NewGuid():N}{extension}",
+            StoragePaths.TripRecording(trip.Id, extension),
             ct);
 
         var sizeBytes = request.File.Stream.CanSeek ? request.File.Stream.Length : 0L;

@@ -186,6 +186,17 @@ public static class LocalizationKeys
         public const string NotFound = "Audit.NotFound";
     }
 
+    public static class CustomerIncident
+    {
+        public const string NotFound = "CustomerIncident.NotFound";
+        public const string AlreadyClosed = "CustomerIncident.AlreadyClosed";
+        public const string InvalidStatus = "CustomerIncident.InvalidStatus";
+        public const string ContactTitleRequired = "CustomerIncident.Contact.TitleRequired";
+        public const string ContactBodyRequired = "CustomerIncident.Contact.BodyRequired";
+        public const string NoRefundablePayment = "CustomerIncident.NoRefundablePayment";
+        public const string RefundFailed = "CustomerIncident.RefundFailed";
+    }
+
     public static class AppConfig
     {
         public const string KeyRequired = "AppConfig.Key.Required";
@@ -241,6 +252,8 @@ public static class LocalizationKeys
         public const string RideDate = "Invoice.RideDate";
         public const string WaitingFee = "Invoice.WaitingFee";
         public const string ColumnTotal = "Invoice.Column.Total";
+        public const string Subtotal = "Invoice.Subtotal";
+        public const string Vat = "Invoice.Vat";
         public const string Total = "Invoice.Total";
         public const string TotalPaid = "Invoice.TotalPaid";
         public const string PaidVia = "Invoice.PaidVia";
@@ -282,6 +295,9 @@ public static class LocalizationKeys
 
         public const string DriverArrivedTitle = "Notification.DriverArrived.Title";
         public const string DriverArrivedBody = "Notification.DriverArrived.Body";
+
+        public const string DriverArrivedEarlyTitle = "Notification.DriverArrivedEarly.Title";
+        public const string DriverArrivedEarlyBody = "Notification.DriverArrivedEarly.Body";
 
         public const string DriverEnRouteTitle = "Notification.DriverEnRoute.Title";
         public const string DriverEnRouteBody = "Notification.DriverEnRoute.Body";

@@ -52,9 +52,9 @@ public class TripsController(ISender sender) : ApiController
     [EndpointSummary("Returns the current passenger's trip history.")]
     [EndpointName("GetPassengerTrips")]
     [MapToApiVersion("1.0")]
-    public async Task<IActionResult> GetPassengerTrips([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
+    public async Task<IActionResult> GetPassengerTrips([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? search = null, CancellationToken ct = default)
     {
-        var result = await sender.Send(new GetPassengerTripsQuery(page, pageSize), ct);
+        var result = await sender.Send(new GetPassengerTripsQuery(page, pageSize, search), ct);
         return result.Match(Ok, Problem);
     }
 
@@ -428,13 +428,13 @@ public class TripsController(ISender sender) : ApiController
 
     [HttpGet("admin")]
     [Authorize(Roles = "Admin")]
-    [ProducesResponseType(typeof(List<TripDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<TripDto>), StatusCodes.Status200OK)]
     [EndpointSummary("Admin retrieves a paginated and filtered list of all trips.")]
     [EndpointName("GetAllTripsAdmin")]
     [MapToApiVersion("1.0")]
-    public async Task<IActionResult> GetAllTripsAdmin([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null, [FromQuery] Guid? driverId = null, CancellationToken ct = default)
+    public async Task<IActionResult> GetAllTripsAdmin([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null, [FromQuery] Guid? driverId = null, [FromQuery] string? search = null, CancellationToken ct = default)
     {
-        var result = await sender.Send(new GetAllTripsQuery(page, pageSize, status, driverId), ct);
+        var result = await sender.Send(new GetAllTripsQuery(page, pageSize, status, driverId, search), ct);
         return result.Match(Ok, Problem);
     }
 

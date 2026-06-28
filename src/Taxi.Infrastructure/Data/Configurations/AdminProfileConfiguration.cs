@@ -33,6 +33,11 @@ public class AdminProfileConfiguration : IEntityTypeConfiguration<AdminProfile>
             .HasMaxLength(4096)
             .IsRequired(false);
 
+        builder.Property(x => x.PreferredLanguage)
+            .IsRequired()
+            .HasMaxLength(10)
+            .HasDefaultValue("en");
+
         builder.Property(x => x.CreatedAtUtc)
             .IsRequired();
 

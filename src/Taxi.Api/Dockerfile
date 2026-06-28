@@ -5,8 +5,11 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
-# Create wwwroot/photos and ensure the app user has write access
-RUN mkdir -p /app/wwwroot/photos && chmod -R 777 /app/wwwroot
+# Make wwwroot writable for the non-root app user. Individual upload-area folders
+# (photos, chat, documents, ...) are created at runtime by StorageInitializer — no
+# folder needs baking in here. In production a named volume overlays wwwroot and its
+# ownership is fixed by the taxi.api-init compose service.
+RUN mkdir -p /app/wwwroot && chmod -R 777 /app/wwwroot
 USER $APP_UID
 
 
@@ -39,6 +42,9 @@ COPY --from=publish /app/publish .
 # The publish copy overlays a root-owned wwwroot (read-only for $APP_UID), so the
 # app can't create runtime upload sub-dirs (e.g. wwwroot/chat, wwwroot/compensation).
 # Restore write access after the copy, then drop back to the non-root app user.
+# NOTE: in production /app/wwwroot is a persisted named volume that overlays this
+# layer and keeps its OWN ownership, so this build-time chmod does not reach it —
+# runtime write access there is guaranteed by the `taxi.api-init` compose service.
 USER root
 RUN mkdir -p /app/wwwroot && chmod -R 777 /app/wwwroot
 USER $APP_UID

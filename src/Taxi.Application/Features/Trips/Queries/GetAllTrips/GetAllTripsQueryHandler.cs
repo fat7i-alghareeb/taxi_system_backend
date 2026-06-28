@@ -10,11 +10,11 @@ using Taxi.Domain.Trips;
 namespace Taxi.Application.Features.Trips.Queries.GetAllTrips;
 
 public class GetAllTripsQueryHandler(IAppDbContext context, TimeProvider timeProvider)
-    : IRequestHandler<GetAllTripsQuery, Result<List<TripDto>>>
+    : IRequestHandler<GetAllTripsQuery, Result<PagedResult<TripDto>>>
 {
     private readonly IAppDbContext _context = context;
 
-    public async Task<Result<List<TripDto>>> Handle(GetAllTripsQuery request, CancellationToken ct)
+    public async Task<Result<PagedResult<TripDto>>> Handle(GetAllTripsQuery request, CancellationToken ct)
     {
         var query = _context.Trips
             .AsNoTracking()
@@ -34,6 +34,14 @@ public class GetAllTripsQueryHandler(IAppDbContext context, TimeProvider timePro
         {
             query = query.Where(t => t.DriverId == request.DriverId.Value);
         }
+
+        if (!string.IsNullOrWhiteSpace(request.Search))
+        {
+            var search = request.Search.Trim();
+            query = query.Where(t => EF.Functions.ILike(t.ReferenceCode, $"%{search}%"));
+        }
+
+        var totalCount = await query.CountAsync(ct);
 
         var trips = await query
             .OrderByDescending(t => t.CreatedAtUtc)
@@ -141,6 +149,6 @@ public class GetAllTripsQueryHandler(IAppDbContext context, TimeProvider timePro
                 AttentionState: trip.GetAttentionState(now).ToString()));
         }
 
-        return tripDtos;
+        return new PagedResult<TripDto>(tripDtos, totalCount, request.PageNumber, request.PageSize);
     }
 }

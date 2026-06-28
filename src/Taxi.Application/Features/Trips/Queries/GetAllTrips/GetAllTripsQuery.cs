@@ -8,4 +8,5 @@ public record GetAllTripsQuery(
     int PageNumber = 1,
     int PageSize = 10,
     string? Status = null,
-    Guid? DriverId = null) : IRequest<Result<List<TripDto>>>;
+    Guid? DriverId = null,
+    string? Search = null) : IRequest<Result<PagedResult<TripDto>>>;

@@ -158,6 +158,35 @@ public sealed class SignalRTripNotifier(IHubContext<TripHub> hubContext, ILogger
     public Task NotifyChatClosedAsync(Guid tripId, Guid passengerId, Guid? driverUserId, CancellationToken ct = default) =>
         SendToChatParticipantsAsync("ChatClosed", tripId, passengerId, driverUserId, new ChatClosedNotification(tripId), ct);
 
+    public Task NotifyCustomerIncidentRaisedToAdminsAsync(
+        Guid incidentId,
+        Guid passengerId,
+        Guid? tripId,
+        string type,
+        string severity,
+        CancellationToken ct = default,
+        Guid? eventId = null)
+    {
+        var payload = new CustomerIncidentRaisedNotification(
+            incidentId,
+            passengerId,
+            tripId,
+            type,
+            severity,
+            ResolveEventId(eventId));
+
+        _logger.LogInformation(
+            "[SignalRTripNotifier] => CustomerIncidentRaised group={AdminsGroup} incidentId={IncidentId} type={Type} severity={Severity}",
+            TripHub.AdminsGroup,
+            incidentId,
+            type,
+            severity);
+
+        return _hubContext.Clients
+            .Group(TripHub.AdminsGroup)
+            .SendAsync("CustomerIncidentRaised", payload, ct);
+    }
+
     /// <summary>
     /// Fans a chat event out to the per-trip group, the passenger's and (if assigned)
     /// the driver's per-user groups, and all admins — so every open chat surface updates.

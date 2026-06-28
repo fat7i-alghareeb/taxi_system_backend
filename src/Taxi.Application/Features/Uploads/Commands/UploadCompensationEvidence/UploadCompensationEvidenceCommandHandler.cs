@@ -1,5 +1,6 @@
 using MediatR;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Common.Storage;
 using Taxi.Application.Common.Uploads;
 using Taxi.Domain.Common.Results;
 
@@ -26,7 +27,7 @@ public class UploadCompensationEvidenceCommandHandler(IFileStorage fileStorage)
             var extension = Path.GetExtension(item.FileName);
             var url = await _fileStorage.SaveAsync(
                 item.Stream,
-                $"compensation/{Guid.NewGuid():N}{extension}",
+                StoragePaths.CompensationEvidence(extension),
                 ct);
             urls.Add(url);
         }

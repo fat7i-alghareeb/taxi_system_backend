@@ -16,6 +16,7 @@ public class FcmNotificationService(
     private const string DefaultAndroidChannelId = "high_importance";
     private const string DefaultSound = "default";
     private const string DefaultTopicCulture = "en";
+    private const string AdminsTopic = "admins";
 
     private readonly IAppDbContext _context = context;
     private readonly ILogger<FcmNotificationService> _logger = logger;
@@ -171,18 +172,22 @@ public class FcmNotificationService(
         var admins = await _context.AdminProfiles
             .AsNoTracking()
             .Where(admin => admin.IsActive && admin.FcmToken != null)
-            .Select(admin => new { admin.Id, admin.FcmToken })
+            .Select(admin => new { admin.Id, admin.FcmToken, admin.PreferredLanguage })
             .ToListAsync(ct);
 
-        var (localizedTitle, localizedBody) = Localize(
-            title,
-            body,
-            DefaultTopicCulture,
-            titleArgs,
-            bodyArgs);
+        _logger.LogInformation(
+            "[FCM] SendPushNotificationToAdmins called. TitleKey={TitleKey} BodyKey={BodyKey} ActiveAdminsWithToken={Count} DataKeys=[{DataKeys}]",
+            title, body, admins.Count, data != null ? string.Join(",", data.Keys) : "none");
 
+        var deliveredCount = 0;
         foreach (var admin in admins)
         {
+            // Localize per-admin so each recipient gets their own preferred language.
+            var lang = string.IsNullOrWhiteSpace(admin.PreferredLanguage)
+                ? DefaultTopicCulture
+                : admin.PreferredLanguage;
+            var (localizedTitle, localizedBody) = Localize(title, body, lang, titleArgs, bodyArgs);
+
             try
             {
                 var message = new Message
@@ -199,6 +204,7 @@ public class FcmNotificationService(
                 };
 
                 await FirebaseMessaging.DefaultInstance.SendAsync(message, ct);
+                deliveredCount++;
             }
             catch (FirebaseMessagingException ex) when (IsInvalidUserToken(ex))
             {
@@ -214,6 +220,22 @@ public class FcmNotificationService(
                     await _context.SaveChangesAsync(ct);
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[FCM] Failed to send admin push to admin {AdminId}.", admin.Id);
+            }
+        }
+
+        // Backup channel: if no per-device token delivery succeeded (e.g. all tokens
+        // stale/unregistered), fall back to the 'admins' topic so the alert still
+        // reaches any admin device subscribed to it. Topic broadcasts can't be
+        // per-admin-language, so resolve in the default culture.
+        if (deliveredCount == 0)
+        {
+            _logger.LogWarning(
+                "[FCM] No admin device tokens delivered ({Count} candidates). Falling back to '{Topic}' topic.",
+                admins.Count, AdminsTopic);
+            await SendPushNotificationToTopicAsync(AdminsTopic, title, body, data, ct, titleArgs, bodyArgs);
         }
     }
 

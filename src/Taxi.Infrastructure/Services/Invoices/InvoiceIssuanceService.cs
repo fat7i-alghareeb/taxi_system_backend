@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -5,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Common.Options;
 using Taxi.Domain.Common.Results;
+using Taxi.Domain.Configuration;
 using Taxi.Domain.Invoices;
 using Taxi.Domain.Payments;
 using Taxi.Domain.Trips;
@@ -117,6 +119,15 @@ public sealed class InvoiceIssuanceService(
             .ToList();
         var stopsJson = JsonSerializer.Serialize(stopsSnapshot);
 
+        // VAT/BTW rate (stored as a fraction, e.g. "0.09"). Prices are VAT-inclusive,
+        // so this only decides how the gross is split into net + tax on the invoice.
+        var vatConfig = await db.AppConfigs
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Key == AppConfigKeys.VatRate, ct);
+        var taxRate = decimal.TryParse(vatConfig?.Value, NumberStyles.Number, CultureInfo.InvariantCulture, out var r)
+            ? r
+            : 0m;
+
         var issuedAtUtc = DateTimeOffset.UtcNow;
         var invoiceNumber = await invoiceNumberGenerator.NextAsync(issuedAtUtc, ct);
 
@@ -143,7 +154,9 @@ public sealed class InvoiceIssuanceService(
             stopsJson: stopsJson,
             passengerPhone: passenger?.Phone,
             passengerEmail: passenger?.Email,
+            passengerAddress: passenger?.HomeAddress?.Label,
             stripePaymentMethodType: stripePaymentMethodType,
+            taxRate: taxRate,
             waitingFeeAmount: waitingFeeTotal);
 
         if (result.IsFailure)

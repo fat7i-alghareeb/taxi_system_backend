@@ -13,7 +13,7 @@ public class LocalFileStorage(
 
     public async Task<string> SaveAsync(Stream stream, string relativePath, CancellationToken ct = default)
     {
-        var rootPath = environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot");
+        var rootPath = StorageRoot.Resolve(environment);
         var fullPath = Path.Combine(rootPath, relativePath);
         var directory = Path.GetDirectoryName(fullPath)!;
 
@@ -48,7 +48,7 @@ public class LocalFileStorage(
 
         relativePath = relativePath.TrimStart('/', '\\');
 
-        var rootPath = environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot");
+        var rootPath = StorageRoot.Resolve(environment);
         var fullPath = Path.Combine(rootPath, relativePath);
 
         if (File.Exists(fullPath))

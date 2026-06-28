@@ -128,6 +128,22 @@ public class ApplicationDbContextInitialiser(
             await context.SaveChangesAsync();
         }
 
+        if (!await context.AppConfigs.AnyAsync(c => c.Key == AppConfigKeys.VatRate))
+        {
+            var vatResult = AppConfig.Create(
+                AppConfigKeys.VatRate,
+                "0.09",
+                "VAT/BTW rate as a fraction (0.09 = 9%). Prices are VAT-inclusive; used to break the invoice into net + tax.");
+
+            if (vatResult.IsFailure)
+            {
+                throw new InvalidOperationException($"Failed to create app config: {vatResult.Error.Description}");
+            }
+
+            context.AppConfigs.Add(vatResult.Value);
+            await context.SaveChangesAsync();
+        }
+
         // Company contact details printed in the invoice footer (admin-editable).
         await SeedCompanyContactAsync(AppConfigKeys.CompanyEmail, "info@fat7i.dev", "Company email shown on invoices.");
         await SeedCompanyContactAsync(AppConfigKeys.CompanyPhone, "0639550352", "Company phone shown on invoices.");

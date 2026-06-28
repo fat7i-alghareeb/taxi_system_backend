@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Common.Storage;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
 
@@ -39,7 +40,8 @@ public class UploadProfilePhotoCommandHandler(
         }
 
         var extension = request.ContentType == "image/png" ? ".png" : ".jpg";
-        var storedUrl = await fileStorage.SaveAsync(request.FileStream, $"photos/{userId}{extension}", ct);
+        var storedUrl = await fileStorage.SaveAsync(
+            request.FileStream, StoragePaths.ProfilePhoto(userId, extension), ct);
 
         user.UpdateProfile(user.Name, storedUrl);
         await context.SaveChangesAsync(ct);

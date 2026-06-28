@@ -20,10 +20,17 @@ public sealed class DriverArrivedEventHandler(ITripNotifier notifier, INotificat
             ct,
             notification.EventId);
 
+        var titleKey = notification.IsEarlyArrival
+            ? LocalizationKeys.Notification.DriverArrivedEarlyTitle
+            : LocalizationKeys.Notification.DriverArrivedTitle;
+        var bodyKey = notification.IsEarlyArrival
+            ? LocalizationKeys.Notification.DriverArrivedEarlyBody
+            : LocalizationKeys.Notification.DriverArrivedBody;
+
         await _notificationService.SendPushNotificationAsync(
             notification.PassengerId,
-            LocalizationKeys.Notification.DriverArrivedTitle,
-            LocalizationKeys.Notification.DriverArrivedBody,
+            titleKey,
+            bodyKey,
             new Dictionary<string, string>
             {
                 { "tripId", notification.TripId.ToString() },

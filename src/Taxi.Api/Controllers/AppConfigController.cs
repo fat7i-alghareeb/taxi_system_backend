@@ -7,10 +7,12 @@ using Taxi.Application.Features.Config.GetCompanyContact;
 using Taxi.Application.Features.Config.GetCurrency;
 using Taxi.Application.Features.Config.GetSupportContact;
 using Taxi.Application.Features.Config.GetTripDiscount;
+using Taxi.Application.Features.Config.GetVatRate;
 using Taxi.Application.Features.Config.UpdateCompanyContact;
 using Taxi.Application.Features.Config.UpdateCurrency;
 using Taxi.Application.Features.Config.UpdateSupportContact;
 using Taxi.Application.Features.Config.UpdateTripDiscount;
+using Taxi.Application.Features.Config.UpdateVatRate;
 using Taxi.Contracts.Requests.Config;
 using Taxi.Contracts.Responses.Config;
 
@@ -84,6 +86,33 @@ public class AppConfigController(ISender sender) : ApiController
         CancellationToken ct)
     {
         var result = await sender.Send(new UpdateCurrencyCommand(request.CurrencyCode), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpGet("vat-rate")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(VatRateDto), StatusCodes.Status200OK)]
+    [EndpointSummary("Gets the VAT/BTW rate (as a fraction, e.g. 0.09 = 9%) applied to invoices.")]
+    [EndpointName("GetVatRate")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetVatRate(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetVatRateQuery(), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpPut("vat-rate")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(VatRateDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [EndpointSummary("Updates the VAT/BTW rate as a fraction (0 ≤ rate < 1, e.g. 0.09 = 9%). Prices stay VAT-inclusive; the rate is used to break invoices into net + tax.")]
+    [EndpointName("UpdateVatRate")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> UpdateVatRate(
+        [FromBody] UpdateVatRateRequest request,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(new UpdateVatRateCommand(request.Rate), ct);
         return result.Match(Ok, Problem);
     }
 

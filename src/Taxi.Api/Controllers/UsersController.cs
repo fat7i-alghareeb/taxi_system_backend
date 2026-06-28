@@ -8,6 +8,8 @@ using Taxi.Application.Features.Auth.Dtos;
 using Taxi.Application.Features.Identity.Dtos;
 using Taxi.Application.Features.Identity.Queries.GetUserInfo;
 using Taxi.Application.Features.Users.Commands.DeleteCurrentUser;
+using Taxi.Application.Features.Users.Commands.ReactivatePassenger;
+using Taxi.Application.Features.Users.Commands.SuspendPassenger;
 using Taxi.Application.Features.Users.Commands.UpdateFcmToken;
 using Taxi.Application.Features.Users.Commands.UpdatePreferredLanguage;
 using Taxi.Application.Features.Users.Commands.UpdateUserProfile;
@@ -138,8 +140,35 @@ public class UsersController(ISender sender) : ApiController
         var result = await sender.Send(new GetAllUsersQuery(page, pageSize), ct);
         return result.Match(Ok, Problem);
     }
+
+    [HttpPost("{userId:guid}/suspensions")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Admin suspends (bans) a passenger account, blocking sign-in.")]
+    [EndpointName("SuspendPassenger")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> SuspendPassenger(Guid userId, [FromBody] SuspendPassengerRequest request, CancellationToken ct)
+    {
+        var result = await sender.Send(new SuspendPassengerCommand(userId, request.Reason), ct);
+        return result.Match(_ => NoContent(), Problem);
+    }
+
+    [HttpDelete("{userId:guid}/suspensions")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Admin lifts a passenger suspension, restoring sign-in.")]
+    [EndpointName("ReactivatePassenger")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> ReactivatePassenger(Guid userId, CancellationToken ct)
+    {
+        var result = await sender.Send(new ReactivatePassengerCommand(userId), ct);
+        return result.Match(_ => NoContent(), Problem);
+    }
 }
 
 public record UpdateFcmTokenRequest(string FcmToken);
 public record UpdatePreferredLanguageRequest(string LanguageCode);
+public record SuspendPassengerRequest(string? Reason);
 

@@ -78,5 +78,18 @@ public interface ITripNotifier
     /// (trip completed or cancelled) so clients can lock the message input.
     /// </summary>
     Task NotifyChatClosedAsync(Guid tripId, Guid passengerId, Guid? driverUserId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Notifies all admins that a new customer incident was recorded, so the
+    /// dashboard incident feed updates live.
+    /// </summary>
+    Task NotifyCustomerIncidentRaisedToAdminsAsync(
+        Guid incidentId,
+        Guid passengerId,
+        Guid? tripId,
+        string type,
+        string severity,
+        CancellationToken ct = default,
+        Guid? eventId = null);
 }
 

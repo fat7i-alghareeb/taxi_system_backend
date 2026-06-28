@@ -8,6 +8,12 @@ namespace Taxi.Domain.Trips;
 public sealed class Trip : AuditableEntity
 {
     private static readonly TimeSpan ScheduledEnRouteLeadTime = TimeSpan.FromMinutes(15);
+
+    // Tolerance that absorbs small clock differences between the driver's device
+    // and the server when checking whether a scheduled trip's start time has
+    // arrived. Without it, a few seconds of skew rejects "Start" right at the
+    // boundary with a confusing "trip time not come yet" error.
+    private static readonly TimeSpan ScheduledStartSkew = TimeSpan.FromMinutes(1);
     private static readonly Regex FlightNumberPattern = new(
         @"^[A-Z0-9](?:[A-Z0-9 -]{0,13}[A-Z0-9])?$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -214,10 +220,11 @@ public sealed class Trip : AuditableEntity
             return TripErrors.InvalidStatus(Status);
         }
 
-        if (ScheduledAtUtc.HasValue && ScheduledAtUtc.Value > now)
-        {
-            return TripErrors.ScheduledArrivalNotReady;
-        }
+        // Scheduled trips may be marked arrived early: the driver can signal they
+        // are waiting at the pickup before the booked time. The free waiting
+        // window still starts at the scheduled time (see ArriveTripCommandHandler),
+        // and the trip cannot be started until then (see Start below).
+        var isEarlyArrival = ScheduledAtUtc.HasValue && ScheduledAtUtc.Value > now;
 
         Status = TripStatus.Arrived;
         ArrivedAtUtc = now;
@@ -227,6 +234,7 @@ public sealed class Trip : AuditableEntity
             TripId = Id,
             DriverId = DriverId ?? AcceptedByAdminId ?? Guid.Empty,
             PassengerId = PassengerId,
+            IsEarlyArrival = isEarlyArrival,
         });
 
         return Result.Success;
@@ -239,7 +247,7 @@ public sealed class Trip : AuditableEntity
             return TripErrors.InvalidStatus(Status);
         }
 
-        if (ScheduledAtUtc.HasValue && ScheduledAtUtc.Value > now)
+        if (ScheduledAtUtc.HasValue && ScheduledAtUtc.Value > now.Add(ScheduledStartSkew))
         {
             return TripErrors.ScheduledStartNotReady;
         }

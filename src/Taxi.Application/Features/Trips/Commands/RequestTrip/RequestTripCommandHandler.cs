@@ -50,7 +50,57 @@ public class RequestTripCommandHandler(
 
         if (quote.Used)
         {
-            return TripErrors.QuoteAlreadyUsed;
+            // The quote was already consumed by a previous trip request. If that
+            // trip is still awaiting payment (e.g. the passenger closed the Stripe
+            // sheet by mistake), resume it instead of failing: re-issue the
+            // PaymentIntent idempotently (Stripe keys on quoteId, so the same
+            // intent/clientSecret comes back) so the sheet can be reopened. Only a
+            // genuinely paid/accepted quote returns the 409 conflict.
+            var existingTrip = await _context.Trips
+                .Include(t => t.Stops)
+                .FirstOrDefaultAsync(t => t.QuoteId == quote.Id && t.PassengerId == passengerId, ct);
+
+            if (existingTrip is null
+                || existingTrip.Status != TripStatus.AwaitingPayment
+                || !clientConfig.GetClientConfig().StripeEnabled)
+            {
+                return TripErrors.QuoteAlreadyUsed;
+            }
+
+            var resumeIntentResult = await stripe.CreatePaymentIntentAsync(
+                quoteId: quote.Id,
+                amount: quote.FinalFare,
+                currency: quote.CurrencyCode,
+                tripId: existingTrip.Id,
+                passengerId: passengerId,
+                existingStripeCustomerId: passenger.StripeCustomerId,
+                passengerEmail: passenger.Email,
+                passengerPhone: passenger.Phone,
+                passengerName: passenger.Name,
+                passengerPreferredLanguage: passenger.PreferredLanguage,
+                ct: ct);
+
+            if (resumeIntentResult.IsFailure)
+            {
+                return resumeIntentResult.Error;
+            }
+
+            var resumeIntent = resumeIntentResult.Value;
+
+            if (string.IsNullOrWhiteSpace(passenger.StripeCustomerId))
+            {
+                passenger.SetStripeCustomerId(resumeIntent.CustomerId);
+                await _context.SaveChangesAsync(ct);
+            }
+
+            var resumeStripeDto = new StripePaymentDto(
+                resumeIntent.PaymentIntentId,
+                resumeIntent.ClientSecret,
+                resumeIntent.PublishableKey,
+                resumeIntent.CustomerId,
+                resumeIntent.EphemeralKeySecret);
+
+            return await BuildTripResultAsync(existingTrip, quote, resumeStripeDto, ct);
         }
 
         var stopResults = request.Stops.Select((s, index) => TripStop.Create(
@@ -158,6 +208,15 @@ public class RequestTripCommandHandler(
                 intent.EphemeralKeySecret);
         }
 
+        return await BuildTripResultAsync(trip, quote, stripePaymentDto, ct);
+    }
+
+    private async Task<Result<TripDto>> BuildTripResultAsync(
+        Trip trip,
+        PricingQuote quote,
+        StripePaymentDto? stripePaymentDto,
+        CancellationToken ct)
+    {
         var vehicleType = await _context.VehicleTypes.FirstOrDefaultAsync(v => v.Id == trip.VehicleTypeId, ct);
         var vehicleTypeName = vehicleType?.Name.En ?? "Unknown";
 

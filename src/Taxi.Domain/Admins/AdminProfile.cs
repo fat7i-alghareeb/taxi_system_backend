@@ -38,6 +38,8 @@ public sealed class AdminProfile : AuditableEntity
 
     public string? FcmToken { get; private set; }
 
+    public string PreferredLanguage { get; private set; } = "en";
+
     public static Result<AdminProfile> Create(
         Guid id,
         string name,
@@ -87,6 +89,23 @@ public sealed class AdminProfile : AuditableEntity
         }
 
         FcmToken = string.IsNullOrWhiteSpace(fcmToken) ? null : fcmToken.Trim();
+        return Result.Success;
+    }
+
+    public Result<Success> UpdatePreferredLanguage(string languageCode)
+    {
+        if (string.IsNullOrWhiteSpace(languageCode))
+        {
+            return UserErrors.PreferredLanguageRequired;
+        }
+
+        var normalized = languageCode.Trim().ToLower();
+        if (normalized != "en" && normalized != "ar" && normalized != "nl" && normalized != "de" && normalized != "pl" && normalized != "uk" && normalized != "fr" && normalized != "es" && normalized != "ro")
+        {
+            return UserErrors.PreferredLanguageInvalid;
+        }
+
+        PreferredLanguage = normalized;
         return Result.Success;
     }
 

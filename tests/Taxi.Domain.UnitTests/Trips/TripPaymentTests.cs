@@ -1,4 +1,5 @@
 using Taxi.Domain.Trips;
+using Taxi.Domain.Trips.Events;
 using Xunit;
 
 namespace Taxi.Domain.UnitTests.Trips;
@@ -91,7 +92,7 @@ public class TripPaymentTests
     }
 
     [Fact]
-    public void DriverArrived_BeforePickupTimeIsRejected()
+    public void DriverArrived_BeforePickupTime_IsAllowedAndFlaggedEarly()
     {
         var scheduledAt = Now.AddMinutes(10);
         var trip = CreateAcceptedTrip(scheduledAt);
@@ -99,9 +100,40 @@ public class TripPaymentTests
 
         var result = trip.DriverArrived(Now);
 
+        Assert.True(result.IsSuccess);
+        Assert.Equal(TripStatus.Arrived, trip.Status);
+        var arrivedEvent = trip.DomainEvents.OfType<DriverArrived>().Single();
+        Assert.True(arrivedEvent.IsEarlyArrival);
+    }
+
+    [Fact]
+    public void Start_BeforePickupTimeIsRejected()
+    {
+        var scheduledAt = Now.AddMinutes(10);
+        var trip = CreateAcceptedTrip(scheduledAt);
+        trip.DriverEnRoute(Now);
+        trip.DriverArrived(Now);
+
+        var result = trip.Start(Now);
+
         Assert.True(result.IsFailure);
-        Assert.Equal(TripErrors.ScheduledArrivalNotReady.Code, result.Error.Code);
-        Assert.Equal(TripStatus.EnRoute, trip.Status);
+        Assert.Equal(TripErrors.ScheduledStartNotReady.Code, result.Error.Code);
+        Assert.Equal(TripStatus.Arrived, trip.Status);
+    }
+
+    [Fact]
+    public void Start_WithinSkewToleranceOfPickupTimeIsAllowed()
+    {
+        var scheduledAt = Now.AddMinutes(10);
+        var trip = CreateAcceptedTrip(scheduledAt);
+        trip.DriverEnRoute(Now);
+        trip.DriverArrived(Now);
+
+        // 30s before the scheduled time falls inside the 1-minute skew tolerance.
+        var result = trip.Start(scheduledAt.AddSeconds(-30));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(TripStatus.InProgress, trip.Status);
     }
 
     [Fact]

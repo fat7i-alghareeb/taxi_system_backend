@@ -21,6 +21,7 @@ using Taxi.Infrastructure.Common;
 using Taxi.Infrastructure.Data;
 using Taxi.Infrastructure.Data.Interceptors;
 using Taxi.Infrastructure.Identity;
+using Taxi.Infrastructure.Incidents;
 using Taxi.Infrastructure.Maps;
 using Taxi.Infrastructure.Notifications;
 using Taxi.Infrastructure.Outbox;
@@ -162,6 +163,7 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(10);
         });
         services.AddScoped<ITripNotifier, SignalRTripNotifier>();
+        services.AddScoped<ICustomerIncidentRecorder, CustomerIncidentRecorder>();
         services.AddScoped<IDriverLocationNotifier, SignalRDriverLocationNotifier>();
         services.AddSingleton<PickupRouteCache>();
         services.AddScoped<INotificationService, FcmNotificationService>();
@@ -181,6 +183,10 @@ public static class DependencyInjection
             LocalCacheExpiration = TimeSpan.FromSeconds(30),
         });
 
+        // Registered first so upload-area folders exist (and writability is verified)
+        // before any other hosted service or request runs — IHostedService.StartAsync
+        // executes in registration order.
+        services.AddHostedService<StorageInitializer>();
         services.AddHostedService<ScheduledTripActivationService>();
         services.AddHostedService<OutboxDispatcherService>();
         services.AddHostedService<TripChatCleanupService>();

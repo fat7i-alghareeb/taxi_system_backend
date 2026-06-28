@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Common.Storage;
 using Taxi.Application.Features.Auth.Dtos;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
@@ -51,7 +52,8 @@ public class UpdateUserProfileCommandHandler(
                 "image/webp" => ".webp",
                 _ => ".jpg",
             };
-            photoUrl = await fileStorage.SaveAsync(request.PhotoStream, $"photos/{userId}{extension}", ct);
+            photoUrl = await fileStorage.SaveAsync(
+                request.PhotoStream, StoragePaths.ProfilePhoto(userId, extension), ct);
         }
 
         // 2. Update Profile

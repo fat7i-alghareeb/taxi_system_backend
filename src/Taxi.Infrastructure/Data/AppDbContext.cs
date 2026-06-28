@@ -5,6 +5,7 @@ using Taxi.Domain.Admins;
 using Taxi.Domain.Audit;
 using Taxi.Domain.Common;
 using Taxi.Domain.Configuration;
+using Taxi.Domain.CustomerIncidents;
 using Taxi.Domain.Drivers;
 using Taxi.Domain.Identity;
 using Taxi.Domain.Invoices;
@@ -42,6 +43,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<TripWaitingSession> TripWaitingSessions => this.Set<TripWaitingSession>();
     public DbSet<Invoice> Invoices => this.Set<Invoice>();
     public DbSet<InvoiceCounter> InvoiceCounters => this.Set<InvoiceCounter>();
+    public DbSet<CustomerIncident> CustomerIncidents => this.Set<CustomerIncident>();
 
     // Transactional outbox table. Rows are written automatically by
     // ConvertDomainEventsToOutboxInterceptor on save, and drained by OutboxDispatcherService.

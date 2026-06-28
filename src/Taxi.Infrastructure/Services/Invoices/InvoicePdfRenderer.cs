@@ -213,6 +213,11 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
                             {
                                 col.Item().PaddingTop(3).Text(invoice.PassengerEmail).FontColor(Muted);
                             }
+
+                            if (!string.IsNullOrWhiteSpace(invoice.PassengerAddress))
+                            {
+                                col.Item().PaddingTop(3).Text(invoice.PassengerAddress).FontColor(Muted);
+                            }
                         }));
 
                         row.ConstantItem(14);
@@ -297,6 +302,28 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
                         row.RelativeItem();
                         row.ConstantItem(250).Border(1).BorderColor(Brand).Padding(12).Column(totals =>
                         {
+                            // VAT breakdown (only when a rate applies). Prices are
+                            // VAT-inclusive, so net + VAT = gross.
+                            if (invoice.TaxRate > 0m)
+                            {
+                                totals.Item().Row(r =>
+                                {
+                                    r.RelativeItem().Text(T(LocalizationKeys.Invoice.Subtotal, "Subtotal (excl. VAT)")).FontSize(10).FontColor(Muted);
+                                    r.RelativeItem().AlignRight()
+                                        .Text(FormatMoney(invoice.NetAmount)).FontSize(10).FontColor(Ink);
+                                });
+
+                                var vatPercent = (invoice.TaxRate * 100m).ToString("0.##", CultureInfo.InvariantCulture);
+                                totals.Item().PaddingTop(2).Row(r =>
+                                {
+                                    r.RelativeItem().Text($"{T(LocalizationKeys.Invoice.Vat, "VAT")} ({vatPercent}%)").FontSize(10).FontColor(Muted);
+                                    r.RelativeItem().AlignRight()
+                                        .Text(FormatMoney(invoice.TaxAmount)).FontSize(10).FontColor(Ink);
+                                });
+
+                                totals.Item().PaddingVertical(4).LineHorizontal(0.5f).LineColor(Surface);
+                            }
+
                             totals.Item().Row(r =>
                             {
                                 r.RelativeItem().Text(T(LocalizationKeys.Invoice.Total, "Total")).FontSize(15).Bold();

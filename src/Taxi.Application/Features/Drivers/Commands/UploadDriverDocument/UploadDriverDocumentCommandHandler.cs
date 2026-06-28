@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Common.Storage;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Drivers;
 
@@ -35,7 +36,7 @@ public class UploadDriverDocumentCommandHandler(IAppDbContext context, IFileStor
         var extension = Path.GetExtension(request.FileName);
         var fileUrl = await _fileStorage.SaveAsync(
             request.FileStream,
-            $"documents/{driver.Id}_{request.Type}{extension}",
+            StoragePaths.DriverDocument(driver.Id, request.Type, extension),
             ct);
 
         var documentResult = DriverDocument.Create(Guid.NewGuid(), driver.Id, request.Type, fileUrl);

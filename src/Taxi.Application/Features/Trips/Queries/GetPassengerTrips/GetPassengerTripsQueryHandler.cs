@@ -29,6 +29,12 @@ public class GetPassengerTripsQueryHandler(
             .AsNoTracking()
             .Where(t => t.PassengerId == passengerId && t.Status != TripStatus.AwaitingPayment);
 
+        if (!string.IsNullOrWhiteSpace(request.Search))
+        {
+            var search = request.Search.Trim();
+            query = query.Where(t => EF.Functions.ILike(t.ReferenceCode, $"%{search}%"));
+        }
+
         var totalCount = await query.CountAsync(ct);
 
         var items = await query
