@@ -70,14 +70,15 @@ public sealed class DriverCancelTripCommandHandler(
         var quote = await context.PricingQuotes.FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
         var fare = quote?.FinalFare ?? 0;
         var currency = quote?.CurrencyCode ?? "EUR";
-        var refundAmount = Math.Round(fare * 0.20m, 2, MidpointRounding.AwayFromZero);
+        var refundAmount = Math.Round(
+            fare * CancellationPolicy.DriverCancelRefundPercent / 100m, 2, MidpointRounding.AwayFromZero);
 
         var cancellationResult = TripCancellation.Create(
             Guid.NewGuid(),
             trip.Id,
             CancellationActor.Admin,
             reason,
-            20,
+            CancellationPolicy.DriverCancelRefundPercent,
             refundAmount,
             currency,
             request.Note);

@@ -174,7 +174,7 @@ public class TripsController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Cancels a trip.")]
-    [EndpointDescription("Cancellable until the ride is InProgress. Free (100% refund) within 1 hour of booking; after that 20% is refunded. Not allowed once InProgress, Completed, Cancelled, Refunded, or PaymentFailed.")]
+    [EndpointDescription("Cancellable until the ride is InProgress. Free (100% refund) within 1 hour of booking, or — for scheduled trips — until 1 hour before pickup; after that 20% is refunded. Not allowed once InProgress, Completed, Cancelled, Refunded, or PaymentFailed.")]
     [EndpointName("CancelTrip")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> CancelTrip(Guid id, [FromBody] CancelTripRequest? request, CancellationToken ct)
@@ -299,9 +299,9 @@ public class TripsController(ISender sender) : ApiController
     [EndpointSummary("Owning admin marks the ride as on the way to pickup.")]
     [EndpointName("EnRouteTrip")]
     [MapToApiVersion("1.0")]
-    public async Task<IActionResult> EnRoute(Guid id, CancellationToken ct)
+    public async Task<IActionResult> EnRoute(Guid id, [FromQuery] bool forceScheduledOverride = false, CancellationToken ct = default)
     {
-        var result = await sender.Send(new EnRouteTripCommand(id), ct);
+        var result = await sender.Send(new EnRouteTripCommand(id, forceScheduledOverride), ct);
         return result.Match(_ => NoContent(), Problem);
     }
 
@@ -339,9 +339,9 @@ public class TripsController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Owning admin starts the trip after pickup.")]
     [MapToApiVersion("1.0")]
-    public async Task<IActionResult> StartTrip(Guid id, CancellationToken ct)
+    public async Task<IActionResult> StartTrip(Guid id, [FromQuery] bool forceScheduledOverride = false, CancellationToken ct = default)
     {
-        var result = await sender.Send(new StartTripCommand(id), ct);
+        var result = await sender.Send(new StartTripCommand(id, forceScheduledOverride), ct);
         return result.Match(_ => NoContent(), Problem);
     }
 

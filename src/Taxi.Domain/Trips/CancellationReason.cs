@@ -20,4 +20,11 @@ public enum CancellationReason
     /// The trip is cancelled and the passenger is refunded 20%.
     /// </summary>
     AirportWaitDeclined = 7,
+
+    /// <summary>
+    /// Passenger cancelled after the driver had already arrived at the pickup point.
+    /// A flat fee (see <see cref="CancellationPolicy.ArrivedCancellationFee"/>) is charged;
+    /// the remainder of the fare is refunded.
+    /// </summary>
+    PassengerCancelledAfterArrival = 8,
 }

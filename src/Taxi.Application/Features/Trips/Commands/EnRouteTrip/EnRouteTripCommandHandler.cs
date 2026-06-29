@@ -39,7 +39,7 @@ public class EnRouteTripCommandHandler(
             return await TripOwnershipHelper.NotOwnedByCurrentAdminAsync(_context, trip.AcceptedByAdminId, ct);
         }
 
-        var transitionResult = trip.DriverEnRoute(timeProvider.GetUtcNow());
+        var transitionResult = trip.DriverEnRoute(timeProvider.GetUtcNow(), request.ForceScheduledOverride);
         if (transitionResult.IsFailure)
         {
             return transitionResult.Error;

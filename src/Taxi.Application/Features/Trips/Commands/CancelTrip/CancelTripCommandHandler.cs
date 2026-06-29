@@ -52,22 +52,41 @@ public class CancelTripCommandHandler(
         }
 
         var preCancelStatus = trip.Status;
-        var isWithinPassengerWindow = timeProvider.GetUtcNow() <= trip.CreatedAtUtc.AddHours(1);
+
+        // Fare must be known before the policy block because the arrived-fee case computes
+        // a flat deduction (fare − €6.50) rather than a fixed percentage.
+        var quote = await context.PricingQuotes.FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
+        var fare = quote?.FinalFare ?? 0;
+        var currency = quote?.CurrencyCode ?? "EUR";
+
+        // Free window is measured from booking for immediate trips, but for scheduled
+        // trips it also stays open until shortly before the agreed pickup — otherwise an
+        // advance booking would lose the free window an hour after booking, long before
+        // the ride. See CancellationPolicy.IsWithinFreeWindow.
+        var isWithinPassengerWindow = CancellationPolicy.IsWithinFreeWindow(
+            trip.CreatedAtUtc,
+            trip.ScheduledAtUtc,
+            timeProvider.GetUtcNow());
 
         // Cancellation policy:
         //   - Admin override: full refund (nothing charged yet => 0).
-        //   - Passenger, never charged (AwaitingPayment): cancel the intent, no refund.
-        //   - Passenger within 1 hour of booking: free cancellation (100% refund).
-        //   - Passenger after 1 hour: still cancellable, but only 20% refunded.
+        //   - Passenger, never charged (AwaitingPayment): no refund.
+        //   - Passenger, driver already Arrived: flat €6.50 fee; remainder refunded.
+        //   - Passenger inside the free window: free cancellation (100% refund).
+        //   - Passenger after the free window: still cancellable, but only 20% refunded.
         CancellationActor actor;
         CancellationReason reason;
-        int refundPercent;
+        decimal refundPercent;
+        decimal refundAmount;
 
         if (isAdmin)
         {
             actor = CancellationActor.Admin;
             reason = CancellationReason.AdminOverride;
-            refundPercent = preCancelStatus == TripStatus.AwaitingPayment ? 0 : 100;
+            refundPercent = preCancelStatus == TripStatus.AwaitingPayment
+                ? 0
+                : CancellationPolicy.WithinWindowRefundPercent;
+            refundAmount = Math.Round(fare * refundPercent / 100m, 2, MidpointRounding.AwayFromZero);
         }
         else
         {
@@ -76,16 +95,27 @@ public class CancelTripCommandHandler(
             {
                 reason = CancellationReason.PassengerWithinOneHour;
                 refundPercent = 0;
+                refundAmount = 0;
+            }
+            else if (preCancelStatus == TripStatus.Arrived)
+            {
+                // Driver is at the pickup point: charge a flat arrived-cancellation fee.
+                reason = CancellationReason.PassengerCancelledAfterArrival;
+                var charged = Math.Min(fare, CancellationPolicy.ArrivedCancellationFee);
+                refundAmount = Math.Round(fare - charged, 2, MidpointRounding.AwayFromZero);
+                refundPercent = fare > 0 ? Math.Round(refundAmount / fare * 100m, 2) : 0;
             }
             else if (isWithinPassengerWindow)
             {
                 reason = CancellationReason.PassengerWithinOneHour;
-                refundPercent = 100;
+                refundPercent = CancellationPolicy.WithinWindowRefundPercent;
+                refundAmount = Math.Round(fare * refundPercent / 100m, 2, MidpointRounding.AwayFromZero);
             }
             else
             {
                 reason = CancellationReason.PassengerAfterOneHour;
-                refundPercent = 20;
+                refundPercent = CancellationPolicy.AfterWindowRefundPercent;
+                refundAmount = Math.Round(fare * refundPercent / 100m, 2, MidpointRounding.AwayFromZero);
             }
         }
 
@@ -98,11 +128,6 @@ public class CancelTripCommandHandler(
         {
             return cancelResult.Errors;
         }
-
-        var quote = await context.PricingQuotes.FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
-        var fare = quote?.FinalFare ?? 0;
-        var currency = quote?.CurrencyCode ?? "EUR";
-        var refundAmount = Math.Round(fare * refundPercent / 100m, 2, MidpointRounding.AwayFromZero);
 
         var cancellationResult = TripCancellation.Create(
             Guid.NewGuid(),

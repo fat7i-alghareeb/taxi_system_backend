@@ -60,10 +60,11 @@ public sealed class LocationTrackingHub(
 
         var (etaSeconds, distanceMeters) = ResolveArrivalEstimate(activeTrip, lat, lng);
 
-        // Road-following driver→pickup route (encoded), ready for the client to draw
+        // Road-following driver→target route (encoded), ready for the client to draw
         // immediately — computed via Directions but cached/throttled to avoid a call
-        // per tick. Only meaningful while heading to pickup (EnRoute/Arrived).
-        var routePolyline = await ResolvePickupRouteAsync(activeTrip, lat, lng);
+        // per tick. Targets the pickup while heading there (EnRoute/Arrived) and the
+        // destination once the passenger is on board (InProgress).
+        var routePolyline = await ResolveTargetRouteAsync(activeTrip, lat, lng);
 
         await _locationNotifier.NotifyLocationUpdatedAsync(
             broadcastDriverId,
@@ -78,25 +79,22 @@ public sealed class LocationTrackingHub(
     }
 
     /// <summary>
-    /// Returns the encoded driver→pickup route while the driver is heading to pickup,
-    /// reusing a throttled per-trip cache. Clears the cache once the trip is InProgress.
+    /// Returns the encoded driver→target route, reusing a throttled per-trip cache.
+    /// The target is the pickup (first stop) while heading there (EnRoute/Arrived) and
+    /// the destination (last stop) once the passenger is on board (InProgress).
+    /// Clears the cache for any other status.
     /// </summary>
-    private async Task<string?> ResolvePickupRouteAsync(Trip? trip, double lat, double lng)
+    private async Task<string?> ResolveTargetRouteAsync(Trip? trip, double lat, double lng)
     {
         if (trip is null)
         {
             return null;
         }
 
-        if (trip.Status != TripStatus.EnRoute && trip.Status != TripStatus.Arrived)
+        var target = ResolveTargetStop(trip);
+        if (target is null)
         {
             _pickupRouteCache.Remove(trip.Id);
-            return null;
-        }
-
-        var pickup = trip.Stops.OrderBy(s => s.Sequence).FirstOrDefault();
-        if (pickup is null)
-        {
             return null;
         }
 
@@ -104,28 +102,28 @@ public sealed class LocationTrackingHub(
             trip.Id,
             lat,
             lng,
-            (double)pickup.Coordinate.Latitude,
-            (double)pickup.Coordinate.Longitude,
+            (double)target.Coordinate.Latitude,
+            (double)target.Coordinate.Longitude,
             _directionsService);
     }
 
     /// <summary>
-    /// Computes the live driver-arrival estimate from the driver's current position to the
-    /// trip pickup (first stop). Only meaningful while heading to pickup (EnRoute/Arrived);
-    /// returns nulls once the trip is InProgress (passenger already on board).
+    /// Computes the live arrival estimate from the driver's current position to the
+    /// current target stop: the pickup (first stop) while heading there (EnRoute/Arrived)
+    /// and the destination (last stop) once the passenger is on board (InProgress).
     /// </summary>
     private static (int? EtaSeconds, int? DistanceMeters) ResolveArrivalEstimate(
         Trip? trip,
         double lat,
         double lng)
     {
-        if (trip is null || trip.Status == TripStatus.InProgress)
+        if (trip is null)
         {
             return (null, null);
         }
 
-        var pickup = trip.Stops.OrderBy(s => s.Sequence).FirstOrDefault();
-        if (pickup is null)
+        var target = ResolveTargetStop(trip);
+        if (target is null)
         {
             return (null, null);
         }
@@ -133,11 +131,27 @@ public sealed class LocationTrackingHub(
         var distanceMeters = HaversineMeters(
             lat,
             lng,
-            (double)pickup.Coordinate.Latitude,
-            (double)pickup.Coordinate.Longitude);
+            (double)target.Coordinate.Latitude,
+            (double)target.Coordinate.Longitude);
 
         var etaSeconds = (int)Math.Round(distanceMeters / AverageSpeedMetersPerSecond);
         return (etaSeconds, (int)Math.Round(distanceMeters));
+    }
+
+    /// <summary>
+    /// Resolves the stop the live estimate/route should target for the trip's status:
+    /// the pickup (first stop) while EnRoute/Arrived, the destination (last stop) while
+    /// InProgress, and null for any other status (no live tracking).
+    /// </summary>
+    private static TripStop? ResolveTargetStop(Trip trip)
+    {
+        var ordered = trip.Stops.OrderBy(s => s.Sequence);
+        return trip.Status switch
+        {
+            TripStatus.EnRoute or TripStatus.Arrived => ordered.FirstOrDefault(),
+            TripStatus.InProgress => ordered.LastOrDefault(),
+            _ => null,
+        };
     }
 
     private static double HaversineMeters(double lat1, double lon1, double lat2, double lon2)

@@ -39,7 +39,7 @@ public class StartTripCommandHandler(
             return await TripOwnershipHelper.NotOwnedByCurrentAdminAsync(_context, trip.AcceptedByAdminId, ct);
         }
 
-        var transitionResult = trip.Start(timeProvider.GetUtcNow());
+        var transitionResult = trip.Start(timeProvider.GetUtcNow(), request.ForceScheduledOverride);
         if (transitionResult.IsFailure)
         {
             return transitionResult.Error;

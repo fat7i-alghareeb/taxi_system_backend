@@ -188,14 +188,15 @@ public sealed class Trip : AuditableEntity
         return Result.Success;
     }
 
-    public Result<Success> DriverEnRoute(DateTimeOffset now)
+    public Result<Success> DriverEnRoute(DateTimeOffset now, bool forceOverride = false)
     {
         if (Status != TripStatus.Accepted)
         {
             return TripErrors.InvalidStatus(Status);
         }
 
-        if (ScheduledAtUtc.HasValue &&
+        if (!forceOverride &&
+            ScheduledAtUtc.HasValue &&
             ScheduledAtUtc.Value > now.Add(ScheduledEnRouteLeadTime))
         {
             return TripErrors.ScheduledEnRouteNotReady;
@@ -240,14 +241,16 @@ public sealed class Trip : AuditableEntity
         return Result.Success;
     }
 
-    public Result<Success> Start(DateTimeOffset now)
+    public Result<Success> Start(DateTimeOffset now, bool forceOverride = false)
     {
         if (Status != TripStatus.Arrived)
         {
             return TripErrors.InvalidStatus(Status);
         }
 
-        if (ScheduledAtUtc.HasValue && ScheduledAtUtc.Value > now.Add(ScheduledStartSkew))
+        if (!forceOverride &&
+            ScheduledAtUtc.HasValue &&
+            ScheduledAtUtc.Value > now.Add(ScheduledStartSkew))
         {
             return TripErrors.ScheduledStartNotReady;
         }
