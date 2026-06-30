@@ -14,8 +14,7 @@ namespace Taxi.Application.Features.Trips.Commands.DriverCancelTrip;
 public sealed class DriverCancelTripCommandHandler(
     IAppDbContext context,
     IUser currentUser,
-    IClientConfigProvider clientConfig,
-    IStripePaymentService stripe,
+    IRefundLifecycleService refundLifecycle,
     TimeProvider timeProvider,
     ILogger<DriverCancelTripCommandHandler> logger) : IRequestHandler<DriverCancelTripCommand, Result<TripDto>>
 {
@@ -97,16 +96,39 @@ public sealed class DriverCancelTripCommandHandler(
 
         var payment = await context.Payments.FirstOrDefaultAsync(
             p => p.TripId == trip.Id && p.Kind == PaymentKind.Fare, ct);
-        if (clientConfig.GetClientConfig().StripeEnabled &&
-            payment?.Status == PaymentStatus.Completed &&
+        if (payment?.Status == PaymentStatus.Completed &&
             !string.IsNullOrWhiteSpace(payment.StripePaymentIntentId) &&
             refundAmount > 0)
         {
-            var refundResult = await stripe.CreateRefundAsync(payment.StripePaymentIntentId, refundAmount, ct);
+            var sourceType = reason == CancellationReason.AirportWaitDeclined
+                ? PaymentRefundSourceType.AirportWaitCancellation
+                : PaymentRefundSourceType.DriverCancellation;
+            var refundResult = await refundLifecycle.RequestRefundAsync(
+                new RefundRequest(
+                    payment.Id,
+                    refundAmount,
+                    sourceType,
+                    CancellationPolicy.DriverCancelRefundPercent,
+                    refundAmount >= payment.Amount,
+                    trip.Id,
+                    cancellationResult.Value.Id,
+                    RequestedByAdminId: adminId,
+                    PassengerId: trip.PassengerId),
+                ct);
+
             if (refundResult.IsFailure)
             {
                 logger.LogWarning(
-                    "Failed to issue driver cancellation partial refund for PaymentIntent {PaymentIntentId} on trip {TripId}",
+                    "Failed to request tracked driver cancellation refund for PaymentIntent {PaymentIntentId} on trip {TripId}: {ErrorCode}",
+                    payment.StripePaymentIntentId,
+                    trip.Id,
+                    refundResult.Error.Code);
+            }
+            else if (refundResult.Value.Status == PaymentRefundStatus.Failed)
+            {
+                logger.LogWarning(
+                    "Tracked driver cancellation refund {RefundId} failed immediately for PaymentIntent {PaymentIntentId} on trip {TripId}",
+                    refundResult.Value.Id,
                     payment.StripePaymentIntentId,
                     trip.Id);
             }

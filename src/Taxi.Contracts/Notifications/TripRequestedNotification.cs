@@ -74,6 +74,28 @@ public sealed record TripRefundedNotification(
     decimal Amount,
     Guid EventId = default);
 
+public sealed record RefundLifecycleChangedNotification(
+    Guid RefundId,
+    Guid PaymentId,
+    Guid? TripId,
+    Guid? PassengerId,
+    string Status,
+    decimal Amount,
+    string Currency,
+    bool RequiresAdminAction,
+    bool CanRetry,
+    string SourceType,
+    Guid EventId = default);
+
+public sealed record RefundIssueCreatedNotification(
+    Guid RefundIssueId,
+    Guid TripId,
+    Guid PassengerId,
+    Guid PaymentId,
+    string RequestType,
+    string ReviewStatus,
+    Guid EventId = default);
+
 public sealed record TripStopCompletedNotification(
     Guid TripId,
     Guid PassengerId,

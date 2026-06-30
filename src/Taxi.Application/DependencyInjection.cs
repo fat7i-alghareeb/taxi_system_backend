@@ -3,12 +3,15 @@ namespace Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using FluentValidation;
 using Taxi.Application.Common.Behaviours;
+using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Features.Payments.Services;
 
 public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+        services.AddScoped<IRefundLifecycleService, RefundLifecycleService>();
 
         services.AddMediatR(cfg =>
         {

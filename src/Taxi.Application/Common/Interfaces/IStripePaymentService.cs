@@ -24,7 +24,11 @@ public interface IStripePaymentService
     // Used to print the precise method on the invoice. Never throws.
     Task<string?> GetChargePaymentMethodTypeAsync(string chargeId, CancellationToken ct = default);
 
-    Task<Result<StripeRefundResult>> CreateRefundAsync(string paymentIntentId, decimal? amount = null, CancellationToken ct = default);
+    Task<Result<StripeRefundResult>> CreateRefundAsync(
+        string paymentIntentId,
+        decimal? amount = null,
+        CancellationToken ct = default,
+        string? idempotencyKey = null);
 
     // Charges an off-session waiting-fee surcharge against the card saved during the
     // original (on-session) upfront payment. Returns the resulting intent status; a
@@ -59,7 +63,13 @@ public sealed record StripePaymentIntentResult(
     string CustomerId,
     string EphemeralKeySecret);
 
-public sealed record StripeRefundResult(string RefundId, decimal Amount, string Currency);
+public sealed record StripeRefundResult(
+    string RefundId,
+    decimal Amount,
+    string Currency,
+    string? Status = null,
+    string? PaymentIntentId = null,
+    string? ChargeId = null);
 
 public sealed record StripeSurchargeResult(
     string PaymentIntentId,

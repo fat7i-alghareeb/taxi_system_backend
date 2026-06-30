@@ -126,6 +126,16 @@ public static class LocalizationKeys
         public const string StripeSignatureInvalid = "Payment.Stripe.SignatureInvalid";
         public const string StripeIntentNotFound = "Payment.Stripe.IntentNotFound";
         public const string WebhookHandlingFailed = "Payment.Stripe.WebhookHandlingFailed";
+        public const string RefundUnavailable = "Payment.Refund.Unavailable";
+        public const string RefundStripeDisabled = "Payment.Refund.StripeDisabled";
+        public const string RefundFullyRefunded = "Payment.Refund.FullyRefunded";
+        public const string RefundExceedsAvailable = "Payment.Refund.ExceedsAvailable";
+        public const string RefundDuplicate = "Payment.Refund.Duplicate";
+        public const string RefundForcedFailure = "Payment.Refund.ForcedFailure";
+        public const string RefundRetryBlocked = "Payment.Refund.RetryBlocked";
+        public const string RefundCustomerFailureMessage = "Payment.Refund.CustomerFailureMessage";
+        public const string RefundFailedAdminTitle = "Payment.Refund.Failed.AdminTitle";
+        public const string RefundFailedAdminBody = "Payment.Refund.Failed.AdminBody";
     }
 
     public static class Trip
@@ -195,6 +205,20 @@ public static class LocalizationKeys
         public const string ContactBodyRequired = "CustomerIncident.Contact.BodyRequired";
         public const string NoRefundablePayment = "CustomerIncident.NoRefundablePayment";
         public const string RefundFailed = "CustomerIncident.RefundFailed";
+    }
+
+    public static class RefundIssue
+    {
+        public const string NotFound = "RefundIssue.NotFound";
+        public const string InvalidRequestType = "RefundIssue.InvalidRequestType";
+        public const string InvalidReviewStatus = "RefundIssue.InvalidReviewStatus";
+        public const string AlreadyClosed = "RefundIssue.AlreadyClosed";
+        public const string CreatedAdminTitle = "RefundIssue.Created.AdminTitle";
+        public const string CreatedAdminBody = "RefundIssue.Created.AdminBody";
+        public const string RetrySucceededAdminTitle = "Refund.Retry.Succeeded.AdminTitle";
+        public const string RetrySucceededAdminBody = "Refund.Retry.Succeeded.AdminBody";
+        public const string RetryFailedAdminTitle = "Refund.Retry.Failed.AdminTitle";
+        public const string RetryFailedAdminBody = "Refund.Retry.Failed.AdminBody";
     }
 
     public static class AppConfig

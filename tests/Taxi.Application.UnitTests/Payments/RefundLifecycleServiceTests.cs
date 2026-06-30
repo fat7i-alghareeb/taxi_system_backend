@@ -1,0 +1,379 @@
+using Microsoft.Extensions.Logging;
+using NSubstitute;
+
+using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Features.Payments.Services;
+using Taxi.Application.UnitTests.Infrastructure;
+using Taxi.Contracts.Common;
+using Taxi.Domain.Payments;
+
+using Xunit;
+
+namespace Taxi.Application.UnitTests.Payments;
+
+public class RefundLifecycleServiceTests
+{
+    private readonly IClientConfigProvider clientConfig = Substitute.For<IClientConfigProvider>();
+    private readonly IRefundProcessingOptionsProvider options = Substitute.For<IRefundProcessingOptionsProvider>();
+    private readonly IStripePaymentService stripe = Substitute.For<IStripePaymentService>();
+    private readonly INotificationService notifications = Substitute.For<INotificationService>();
+    private readonly ILogger<RefundLifecycleService> logger = Substitute.For<ILogger<RefundLifecycleService>>();
+
+    public RefundLifecycleServiceTests()
+    {
+        clientConfig.GetClientConfig().Returns(new ClientConfig(true, "pk_test", true));
+        options.GetOptions().Returns(new RefundProcessingOptions(false));
+    }
+
+    [Fact]
+    public async Task RequestRefundAsync_StripeAccepts_CreatesTrackedPendingRefund()
+    {
+        var tripCancellationId = Guid.NewGuid();
+        var passengerId = Guid.NewGuid();
+        var payment = CreateCompletedPayment();
+        var context = BuildContext(payment);
+        stripe.CreateRefundAsync(
+                payment.StripePaymentIntentId!,
+                20m,
+                Arg.Any<CancellationToken>(),
+                Arg.Is<string>(key =>
+                    key.Contains(nameof(PaymentRefundSourceType.PassengerCancellation), StringComparison.Ordinal) &&
+                    key.Contains(tripCancellationId.ToString("N"), StringComparison.Ordinal)))
+            .Returns(new StripeRefundResult(
+                "re_test_123",
+                20m,
+                "EUR",
+                "pending",
+                payment.StripePaymentIntentId,
+                payment.StripeChargeId));
+        var service = CreateService(context);
+
+        var result = await service.RequestRefundAsync(
+            new RefundRequest(
+                payment.Id,
+                20m,
+                PaymentRefundSourceType.PassengerCancellation,
+                20m,
+                false,
+                payment.TripId,
+                tripCancellationId,
+                PassengerId: passengerId),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Pending, result.Value.Status);
+        Assert.Equal("re_test_123", result.Value.StripeRefundId);
+        Assert.Equal(payment.StripePaymentIntentId, result.Value.StripePaymentIntentId);
+        Assert.Equal(payment.StripeChargeId, result.Value.StripeChargeId);
+        Assert.Equal(1, result.Value.AttemptCount);
+        context.PaymentRefunds.Received(1).Add(Arg.Is<PaymentRefund>(refund =>
+            refund.PaymentId == payment.Id &&
+            refund.TripCancellationId == tripCancellationId &&
+            refund.PassengerId == passengerId));
+    }
+
+    [Fact]
+    public async Task RequestRefundAsync_StripeRejects_PersistsFailedRefundAndNotifiesAdmins()
+    {
+        var payment = CreateCompletedPayment();
+        var context = BuildContext(payment);
+        stripe.CreateRefundAsync(
+                payment.StripePaymentIntentId!,
+                25m,
+                Arg.Any<CancellationToken>(),
+                Arg.Any<string?>())
+            .Returns(PaymentErrors.StripeInitiationFailed);
+        var service = CreateService(context);
+
+        var result = await service.RequestRefundAsync(
+            new RefundRequest(
+                payment.Id,
+                25m,
+                PaymentRefundSourceType.DriverCancellation,
+                25m,
+                false,
+                payment.TripId),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Failed, result.Value.Status);
+        Assert.True(result.Value.RequiresAdminAction);
+        Assert.True(result.Value.CanRetry);
+        Assert.Equal(PaymentErrors.StripeInitiationFailed.Code, result.Value.FailureCode);
+        Assert.Equal(LocalizationKeys.Payment.RefundCustomerFailureMessage, result.Value.SafeCustomerFailureMessage);
+        await notifications.Received(1).SendPushNotificationToAdminsAsync(
+            LocalizationKeys.Payment.RefundFailedAdminTitle,
+            LocalizationKeys.Payment.RefundFailedAdminBody,
+            Arg.Is<Dictionary<string, string>>(data =>
+                data["type"] == "refund_failed" &&
+                data["refundId"] == result.Value.Id.ToString() &&
+                data["paymentId"] == payment.Id.ToString()),
+            Arg.Any<CancellationToken>(),
+            Arg.Is<object[]?>(args => args == null),
+            Arg.Is<object[]?>(args => args != null && args.Length == 3));
+    }
+
+    [Fact]
+    public async Task RequestRefundAsync_ManualIncidentAfterFullRefund_IsBlocked()
+    {
+        var payment = CreateCompletedPayment();
+        var existingRefund = CreateSucceededRefund(payment, 100m, PaymentRefundSourceType.PassengerCancellation);
+        var context = BuildContext(payment, [existingRefund]);
+        var service = CreateService(context);
+
+        var result = await service.RequestRefundAsync(
+            new RefundRequest(
+                payment.Id,
+                10m,
+                PaymentRefundSourceType.ManualIncidentRefund,
+                10m,
+                false,
+                payment.TripId,
+                CustomerIncidentId: Guid.NewGuid()),
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(PaymentErrors.RefundFullyRefunded.Code, result.Error.Code);
+        await stripe.DidNotReceive().CreateRefundAsync(
+            Arg.Any<string>(),
+            Arg.Any<decimal?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>());
+    }
+
+    [Fact]
+    public async Task RequestRefundAsync_DuplicateActiveRefundForSameSource_IsBlocked()
+    {
+        var payment = CreateCompletedPayment();
+        var cancellationId = Guid.NewGuid();
+        var existingRefund = CreatePendingRefund(
+            payment,
+            20m,
+            PaymentRefundSourceType.PassengerCancellation,
+            tripCancellationId: cancellationId);
+        var context = BuildContext(payment, [existingRefund]);
+        var service = CreateService(context);
+
+        var result = await service.RequestRefundAsync(
+            new RefundRequest(
+                payment.Id,
+                20m,
+                PaymentRefundSourceType.PassengerCancellation,
+                20m,
+                false,
+                payment.TripId,
+                cancellationId),
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(PaymentErrors.RefundDuplicate.Code, result.Error.Code);
+        await stripe.DidNotReceive().CreateRefundAsync(
+            Arg.Any<string>(),
+            Arg.Any<decimal?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>());
+    }
+
+    [Fact]
+    public async Task RequestRefundAsync_PendingRefundReservesRefundableBalance()
+    {
+        var payment = CreateCompletedPayment();
+        var existingRefund = CreatePendingRefund(payment, 80m, PaymentRefundSourceType.PassengerCancellation);
+        var context = BuildContext(payment, [existingRefund]);
+        var service = CreateService(context);
+
+        var result = await service.RequestRefundAsync(
+            new RefundRequest(
+                payment.Id,
+                30m,
+                PaymentRefundSourceType.ManualIncidentRefund,
+                30m,
+                false,
+                payment.TripId,
+                CustomerIncidentId: Guid.NewGuid()),
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(PaymentErrors.RefundExceedsAvailable(30m, 20m).Code, result.Error.Code);
+        await stripe.DidNotReceive().CreateRefundAsync(
+            Arg.Any<string>(),
+            Arg.Any<decimal?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>());
+    }
+
+    [Fact]
+    public async Task RequestRefundAsync_ForcedFailure_DoesNotCallStripeAndNotifiesAdmins()
+    {
+        var payment = CreateCompletedPayment();
+        var context = BuildContext(payment);
+        options.GetOptions().Returns(new RefundProcessingOptions(true));
+        var service = CreateService(context);
+
+        var result = await service.RequestRefundAsync(
+            new RefundRequest(
+                payment.Id,
+                15m,
+                PaymentRefundSourceType.AdminCancellation,
+                15m,
+                false,
+                payment.TripId,
+                RequestedByAdminId: Guid.NewGuid()),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Failed, result.Value.Status);
+        Assert.Equal(PaymentErrors.RefundForcedFailure.Code, result.Value.FailureCode);
+        Assert.Equal(LocalizationKeys.Payment.RefundCustomerFailureMessage, result.Value.SafeCustomerFailureMessage);
+        await stripe.DidNotReceive().CreateRefundAsync(
+            Arg.Any<string>(),
+            Arg.Any<decimal?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>());
+        await notifications.Received(1).SendPushNotificationToAdminsAsync(
+            LocalizationKeys.Payment.RefundFailedAdminTitle,
+            LocalizationKeys.Payment.RefundFailedAdminBody,
+            Arg.Any<Dictionary<string, string>>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Is<object[]?>(args => args == null),
+            Arg.Is<object[]?>(args => args != null && args.Length == 3));
+    }
+
+    [Fact]
+    public async Task RetryRefundAsync_WhenBalanceNoLongerCoversRefund_BlocksRetry()
+    {
+        var payment = CreateCompletedPayment();
+        var failedRefund = CreateFailedRefund(payment, 20m, PaymentRefundSourceType.ManualIncidentRefund);
+        var successfulRefund = CreateSucceededRefund(payment, 90m, PaymentRefundSourceType.DriverCancellation);
+        var context = BuildContext(payment, [failedRefund, successfulRefund]);
+        var service = CreateService(context);
+
+        var result = await service.RetryRefundAsync(
+            failedRefund.Id,
+            Guid.NewGuid(),
+            "retry from admin",
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(PaymentErrors.RefundFullyRefunded.Code, result.Error.Code);
+        Assert.False(failedRefund.CanRetry);
+        Assert.Equal(PaymentErrors.RefundFullyRefunded.Code, failedRefund.RetryBlockedReason);
+        await stripe.DidNotReceive().CreateRefundAsync(
+            Arg.Any<string>(),
+            Arg.Any<decimal?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>());
+    }
+
+    [Fact]
+    public async Task RetryRefundAsync_WhenRefundCannotRetry_BlocksRetry()
+    {
+        var payment = CreateCompletedPayment();
+        var failedRefund = CreateFailedRefund(
+            payment,
+            20m,
+            PaymentRefundSourceType.ManualIncidentRefund,
+            canRetry: false);
+        var context = BuildContext(payment, [failedRefund]);
+        var service = CreateService(context);
+
+        var result = await service.RetryRefundAsync(
+            failedRefund.Id,
+            Guid.NewGuid(),
+            "retry from admin",
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(PaymentErrors.RefundRetryBlocked.Code, result.Error.Code);
+        Assert.False(failedRefund.CanRetry);
+        Assert.Equal(PaymentErrors.RefundRetryBlocked.Code, failedRefund.RetryBlockedReason);
+        await stripe.DidNotReceive().CreateRefundAsync(
+            Arg.Any<string>(),
+            Arg.Any<decimal?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>());
+    }
+
+    private static Payment CreateCompletedPayment(decimal amount = 100m)
+    {
+        var payment = Payment.CreateForStripe(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            amount,
+            "eur",
+            "pi_test_123",
+            "cs_test_secret").Value;
+        payment.MarkAsCompleted("ch_test_123", "card");
+        return payment;
+    }
+
+    private static PaymentRefund CreatePendingRefund(
+        Payment payment,
+        decimal amount,
+        PaymentRefundSourceType sourceType,
+        Guid? tripCancellationId = null)
+    {
+        var refund = PaymentRefund.Create(
+            Guid.NewGuid(),
+            payment.Id,
+            sourceType,
+            amount,
+            payment.Currency,
+            payment.Amount,
+            tripId: payment.TripId,
+            tripCancellationId: tripCancellationId,
+            stripePaymentIntentId: payment.StripePaymentIntentId,
+            stripeChargeId: payment.StripeChargeId,
+            idempotencyKey: Guid.NewGuid().ToString("N")).Value;
+        refund.MarkAttemptStarted(refund.IdempotencyKey!);
+        refund.MarkPending($"re_{Guid.NewGuid():N}", payment.StripePaymentIntentId, payment.StripeChargeId);
+        return refund;
+    }
+
+    private static PaymentRefund CreateSucceededRefund(
+        Payment payment,
+        decimal amount,
+        PaymentRefundSourceType sourceType)
+    {
+        var refund = CreatePendingRefund(payment, amount, sourceType);
+        refund.MarkSucceeded();
+        return refund;
+    }
+
+    private static PaymentRefund CreateFailedRefund(
+        Payment payment,
+        decimal amount,
+        PaymentRefundSourceType sourceType,
+        bool canRetry = true)
+    {
+        var refund = PaymentRefund.Create(
+            Guid.NewGuid(),
+            payment.Id,
+            sourceType,
+            amount,
+            payment.Currency,
+            payment.Amount,
+            tripId: payment.TripId,
+            customerIncidentId: Guid.NewGuid(),
+            stripePaymentIntentId: payment.StripePaymentIntentId,
+            stripeChargeId: payment.StripeChargeId,
+            idempotencyKey: Guid.NewGuid().ToString("N")).Value;
+        refund.MarkAttemptStarted(refund.IdempotencyKey!);
+        refund.MarkFailed("stripe_failed", "Stripe failed", canRetry: canRetry);
+        return refund;
+    }
+
+    private IAppDbContext BuildContext(Payment payment, List<PaymentRefund>? refunds = null)
+    {
+        var paymentsSet = DbSetMockFactory.Create([payment]);
+        var refundsSet = DbSetMockFactory.Create(refunds ?? []);
+        var context = Substitute.For<IAppDbContext>();
+        context.Payments.Returns(paymentsSet);
+        context.PaymentRefunds.Returns(refundsSet);
+        context.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
+        return context;
+    }
+
+    private RefundLifecycleService CreateService(IAppDbContext context)
+        => new(context, clientConfig, options, stripe, notifications, Substitute.For<ITripNotifier>(), logger);
+}

@@ -12,6 +12,7 @@ using Taxi.Domain.Invoices;
 using Taxi.Domain.Notifications;
 using Taxi.Domain.PaymentMethods;
 using Taxi.Domain.Payments;
+using Taxi.Domain.RefundIssues;
 using Taxi.Domain.Trips;
 using Taxi.Domain.Users;
 using Taxi.Domain.Vehicles;
@@ -32,6 +33,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<TripMessage> TripMessages => this.Set<TripMessage>();
     public DbSet<TripRecording> TripRecordings => this.Set<TripRecording>();
     public DbSet<Payment> Payments => this.Set<Payment>();
+    public DbSet<PaymentRefund> PaymentRefunds => this.Set<PaymentRefund>();
     public DbSet<AuditLog> AuditLogs => this.Set<AuditLog>();
     public DbSet<Notification> Notifications => this.Set<Notification>();
     public DbSet<PassengerPaymentMethod> PaymentMethods => this.Set<PassengerPaymentMethod>();
@@ -44,6 +46,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<Invoice> Invoices => this.Set<Invoice>();
     public DbSet<InvoiceCounter> InvoiceCounters => this.Set<InvoiceCounter>();
     public DbSet<CustomerIncident> CustomerIncidents => this.Set<CustomerIncident>();
+    public DbSet<RefundIssue> RefundIssues => this.Set<RefundIssue>();
 
     // Transactional outbox table. Rows are written automatically by
     // ConvertDomainEventsToOutboxInterceptor on save, and drained by OutboxDispatcherService.

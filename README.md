@@ -103,6 +103,8 @@ Bilingual fields (name, description, etc.) use the `LocalizedText` value object 
 | Maps          | `GET /api/maps/search`, `GET /api/maps/reverse-geocode`, `GET /api/maps/route`, `GET /api/maps/pricing-quotes` |
 | Config        | `GET /api/config` — returns `ClientConfigResponse` (includes `stripeEnabled` flag)                             |
 | Webhooks      | `POST /api/webhooks/stripe` — Stripe signature-validated event handler                                         |
+| Refunds       | `GET /api/v1/refunds`, `GET /api/v1/refunds/{id}`, `POST /api/v1/refunds/{id}/retry`                          |
+| Refund issues | `POST /api/v1/trips/{tripId}/refund-issues`, admin review under `/api/v1/refund-issues`                       |
 
 ---
 
@@ -112,18 +114,33 @@ Fare charging happens at booking confirmation, not at trip completion.
 
 1. **RequestTripCommandHandler** reads `ClientConfig.StripeEnabled`. If enabled, it creates a `Payment` aggregate and calls `IStripePaymentService.CreatePaymentIntentAsync`. The response includes `clientSecret` + `publishableKey` — returned to the Flutter app, which presents the Payment Sheet.
 
-2. **Webhook handler** (`POST /api/webhooks/stripe`) is `[AllowAnonymous]`; authentication is the `Stripe-Signature` header validated by `IStripeWebhookValidator`. Four event kinds are handled:
+2. **Webhook handler** (`POST /api/webhooks/stripe`) is `[AllowAnonymous]`; authentication is the `Stripe-Signature` header validated by `IStripeWebhookValidator`. Payment and refund events are handled:
 
    | Event                           | Effect                                                        |
    | ------------------------------- | ------------------------------------------------------------- |
    | `payment_intent.succeeded`      | Payment → Completed; Trip → confirms payment + assigns driver |
    | `payment_intent.payment_failed` | Payment → Failed; Trip → PaymentFailed                        |
    | `payment_intent.canceled`       | Payment → Failed; Trip → PaymentFailed                        |
-   | `charge.refunded`               | Payment → Refunded; Trip → Refunded                           |
+   | `refund.created`                | PaymentRefund → Pending                                       |
+   | `refund.updated`                | PaymentRefund → Pending/Succeeded/Failed                      |
+   | `refund.failed`                 | PaymentRefund → Failed; admins are notified                   |
+   | `charge.refunded`               | Compatibility only; full-payment state is recalculated        |
 
    All handlers are idempotent — re-delivered webhooks short-circuit when state already matches. Unknown event types return HTTP 200 so Stripe does not retry.
 
 For the full Stripe architecture see [ARCHITECTURE.md — Stripe Payment Architecture](ARCHITECTURE.md#stripe-payment-architecture).
+
+---
+
+## Refund lifecycle
+
+Refund execution is centralized in `IRefundLifecycleService`. Cancellation handlers, compensation approval, manual incident refunds, and admin retry submit refund requests to this service; customer refund issue requests create support/review records only and never call Stripe.
+
+The durable source of truth is `PaymentRefunds`. Each record stores the payment/trip links, amount, currency, percent/full-refund flags, Stripe refund identifiers, idempotency key, attempt count, status, retry eligibility, and safe customer failure text. `Payment.Status` is set to `Refunded` only when successful refunds equal the captured payment amount; partial refunds and compensation refunds do not mark the full payment as refunded.
+
+Stripe refund status is tracked by `refund.created`, `refund.updated`, and `refund.failed` webhooks. Immediate Stripe rejection is stored as a failed `PaymentRefund`; later Stripe failure is detected from webhook events and also stored. Admins receive localized push notifications for refund failures, refund issue submissions, and retry results. SignalR broadcasts `RefundLifecycleChanged` to admins and related passenger/trip groups, and `RefundIssueCreated` to admins so dashboards can refresh live.
+
+Local development can force a realistic failed refund with `Stripe:ForceRefundFailure`; production ignores/rejects this mode through the refund processing options provider.
 
 ---
 

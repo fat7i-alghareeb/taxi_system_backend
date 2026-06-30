@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
+using Taxi.Application.Features.RefundIssues.Commands.SubmitRefundIssue;
+using Taxi.Application.Features.RefundIssues.Dtos;
 using Taxi.Application.Features.Trips.Commands.AdminTakeTrip;
 using Taxi.Application.Features.Trips.Commands.ArriveTrip;
 using Taxi.Application.Features.Trips.Commands.AssignDriverToTrip;
@@ -37,9 +39,10 @@ using Taxi.Application.Features.Trips.Queries.GetTripById;
 using Taxi.Application.Features.Trips.Queries.GetTripDetails;
 using Taxi.Application.Features.Trips.Queries.GetTripInvoice;
 using Taxi.Application.Features.Trips.Queries.GetTripInvoicePdf;
-using Taxi.Application.Features.Trips.Queries.GetTripRecordings;
 using Taxi.Application.Features.Trips.Queries.GetTripReceipt;
+using Taxi.Application.Features.Trips.Queries.GetTripRecordings;
 using Taxi.Application.Features.Uploads.Commands.UploadCompensationEvidence;
+using Taxi.Contracts.Requests.RefundIssues;
 using Taxi.Contracts.Requests.Trips;
 
 namespace Taxi.Api.Controllers;
@@ -193,6 +196,27 @@ public class TripsController(ISender sender) : ApiController
     public async Task<IActionResult> DriverCancelTrip(Guid id, [FromBody] DriverCancelTripRequest request, CancellationToken ct)
     {
         var result = await sender.Send(new DriverCancelTripCommand(id, request.Reason, request.Note), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpPost("{id:guid}/refund-issues")]
+    [Authorize(Roles = "Passenger,Admin")]
+    [ProducesResponseType(typeof(RefundIssueDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Creates a customer refund review/support request. This never triggers a Stripe refund.")]
+    [EndpointName("SubmitRefundIssue")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> SubmitRefundIssue(Guid id, [FromBody] CreateRefundIssueRequest request, CancellationToken ct)
+    {
+        var result = await sender.Send(
+            new SubmitRefundIssueCommand(
+                id,
+                request.RequestType,
+                request.CustomerReason,
+                request.Note,
+                request.WhatsAppOpened),
+            ct);
         return result.Match(Ok, Problem);
     }
 

@@ -17,6 +17,7 @@ public class CancelTripCommandHandler(
     IUser currentUser,
     IClientConfigProvider clientConfig,
     IStripePaymentService stripe,
+    IRefundLifecycleService refundLifecycle,
     TimeProvider timeProvider,
     ILogger<CancelTripCommandHandler> logger) : IRequestHandler<CancelTripCommand, Result<TripDto>>
 {
@@ -165,13 +166,35 @@ public class CancelTripCommandHandler(
             }
             else if (payment.Status == PaymentStatus.Completed && refundAmount > 0)
             {
-                // Passenger/admin policy cancellation refunds the online payment while preserving cancellation audit data.
-                // The charge.refunded webhook will then transition Payment→Refunded and Trip→Refunded.
-                var refundResult = await stripe.CreateRefundAsync(payment.StripePaymentIntentId, refundAmount, ct);
+                var sourceType = actor == CancellationActor.Admin
+                    ? PaymentRefundSourceType.AdminCancellation
+                    : PaymentRefundSourceType.PassengerCancellation;
+                var refundResult = await refundLifecycle.RequestRefundAsync(
+                    new RefundRequest(
+                        payment.Id,
+                        refundAmount,
+                        sourceType,
+                        refundPercent,
+                        refundAmount >= payment.Amount,
+                        trip.Id,
+                        cancellationResult.Value.Id,
+                        RequestedByAdminId: actor == CancellationActor.Admin ? passengerId : null,
+                        PassengerId: trip.PassengerId),
+                    ct);
+
                 if (refundResult.IsFailure)
                 {
                     logger.LogWarning(
-                        "Failed to issue Stripe refund for PaymentIntent {PaymentIntentId} on trip {TripId}",
+                        "Failed to request tracked refund for PaymentIntent {PaymentIntentId} on trip {TripId}: {ErrorCode}",
+                        payment.StripePaymentIntentId,
+                        trip.Id,
+                        refundResult.Error.Code);
+                }
+                else if (refundResult.Value.Status == PaymentRefundStatus.Failed)
+                {
+                    logger.LogWarning(
+                        "Tracked cancellation refund {RefundId} failed immediately for PaymentIntent {PaymentIntentId} on trip {TripId}",
+                        refundResult.Value.Id,
                         payment.StripePaymentIntentId,
                         trip.Id);
                 }

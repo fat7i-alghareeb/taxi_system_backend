@@ -11,8 +11,7 @@ namespace Taxi.Application.Features.Trips.Commands.ReviewCompensationClaim;
 
 public sealed class ReviewCompensationClaimCommandHandler(
     IAppDbContext context,
-    IClientConfigProvider clientConfig,
-    IStripePaymentService stripe,
+    IRefundLifecycleService refundLifecycle,
     ILogger<ReviewCompensationClaimCommandHandler> logger)
     : IRequestHandler<ReviewCompensationClaimCommand, Result<CompensationClaimDto>>
 {
@@ -34,16 +33,38 @@ public sealed class ReviewCompensationClaimCommandHandler(
         {
             var payment = await context.Payments.FirstOrDefaultAsync(
                 p => p.TripId == claim.TripId && p.Kind == PaymentKind.Fare, ct);
-            if (clientConfig.GetClientConfig().StripeEnabled &&
-                payment?.Status == PaymentStatus.Completed &&
+            if (payment?.Status == PaymentStatus.Completed &&
                 !string.IsNullOrWhiteSpace(payment.StripePaymentIntentId) &&
                 claim.RequestedAmount > 0)
             {
-                var refundResult = await stripe.CreateRefundAsync(payment.StripePaymentIntentId, claim.RequestedAmount, ct);
+                var refundPercent = payment.Amount > 0
+                    ? Math.Round(claim.RequestedAmount / payment.Amount * 100m, 2, MidpointRounding.AwayFromZero)
+                    : (decimal?)null;
+                var refundResult = await refundLifecycle.RequestRefundAsync(
+                    new RefundRequest(
+                        payment.Id,
+                        claim.RequestedAmount,
+                        PaymentRefundSourceType.CompensationClaim,
+                        refundPercent,
+                        claim.RequestedAmount >= payment.Amount,
+                        claim.TripId,
+                        TripCompensationClaimId: claim.Id,
+                        PassengerId: claim.PassengerId),
+                    ct);
+
                 if (refundResult.IsFailure)
                 {
                     logger.LogWarning(
-                        "Failed to issue compensation refund for PaymentIntent {PaymentIntentId} on claim {ClaimId}",
+                        "Failed to request tracked compensation refund for PaymentIntent {PaymentIntentId} on claim {ClaimId}: {ErrorCode}",
+                        payment.StripePaymentIntentId,
+                        claim.Id,
+                        refundResult.Error.Code);
+                }
+                else if (refundResult.Value.Status == PaymentRefundStatus.Failed)
+                {
+                    logger.LogWarning(
+                        "Tracked compensation refund {RefundId} failed immediately for PaymentIntent {PaymentIntentId} on claim {ClaimId}",
+                        refundResult.Value.Id,
                         payment.StripePaymentIntentId,
                         claim.Id);
                 }

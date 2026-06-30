@@ -149,6 +149,86 @@ public sealed class SignalRTripNotifier(IHubContext<TripHub> hubContext, ILogger
     public Task NotifyTripRefundedAsync(Guid tripId, Guid passengerId, decimal amount, CancellationToken ct = default, Guid? eventId = null) =>
         SendToPassengerAsync("TripRefunded", tripId, passengerId, new TripRefundedNotification(tripId, passengerId, amount, ResolveEventId(eventId)), ct);
 
+    public Task NotifyRefundLifecycleChangedAsync(
+        Guid refundId,
+        Guid paymentId,
+        Guid? tripId,
+        Guid? passengerId,
+        string status,
+        decimal amount,
+        string currency,
+        bool requiresAdminAction,
+        bool canRetry,
+        string sourceType,
+        CancellationToken ct = default,
+        Guid? eventId = null)
+    {
+        var payload = new RefundLifecycleChangedNotification(
+            refundId,
+            paymentId,
+            tripId,
+            passengerId,
+            status,
+            amount,
+            currency,
+            requiresAdminAction,
+            canRetry,
+            sourceType,
+            ResolveEventId(eventId));
+
+        _logger.LogInformation(
+            "[SignalRTripNotifier] => RefundLifecycleChanged groups=Admins,Trip_{TripId},User_{PassengerId} refundId={RefundId} status={Status}",
+            tripId?.ToString() ?? "(none)",
+            passengerId?.ToString() ?? "(none)",
+            refundId,
+            status);
+
+        var sends = new List<Task>
+        {
+            _hubContext.Clients.Group(TripHub.AdminsGroup).SendAsync("RefundLifecycleChanged", payload, ct),
+        };
+        if (tripId is { } relatedTripId)
+        {
+            sends.Add(_hubContext.Clients.Group($"Trip_{relatedTripId}").SendAsync("RefundLifecycleChanged", payload, ct));
+        }
+        if (passengerId is { } relatedPassengerId)
+        {
+            sends.Add(_hubContext.Clients.Group($"User_{relatedPassengerId}").SendAsync("RefundLifecycleChanged", payload, ct));
+        }
+
+        return Task.WhenAll(sends);
+    }
+
+    public Task NotifyRefundIssueCreatedToAdminsAsync(
+        Guid refundIssueId,
+        Guid tripId,
+        Guid passengerId,
+        Guid paymentId,
+        string requestType,
+        string reviewStatus,
+        CancellationToken ct = default,
+        Guid? eventId = null)
+    {
+        var payload = new RefundIssueCreatedNotification(
+            refundIssueId,
+            tripId,
+            passengerId,
+            paymentId,
+            requestType,
+            reviewStatus,
+            ResolveEventId(eventId));
+
+        _logger.LogInformation(
+            "[SignalRTripNotifier] => RefundIssueCreated group={AdminsGroup} refundIssueId={RefundIssueId} tripId={TripId}",
+            TripHub.AdminsGroup,
+            refundIssueId,
+            tripId);
+
+        return _hubContext.Clients
+            .Group(TripHub.AdminsGroup)
+            .SendAsync("RefundIssueCreated", payload, ct);
+    }
+
     public Task NotifyTripStopCompletedAsync(Guid tripId, Guid passengerId, Guid? driverId, int sequence, CancellationToken ct = default, Guid? eventId = null) =>
         SendLifecycleAsync("TripStopCompleted", tripId, passengerId, new TripStopCompletedNotification(tripId, passengerId, driverId, sequence, ResolveEventId(eventId)), ct);
 

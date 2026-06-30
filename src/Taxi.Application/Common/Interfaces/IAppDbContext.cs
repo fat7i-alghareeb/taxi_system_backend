@@ -9,6 +9,7 @@ using Taxi.Domain.Invoices;
 using Taxi.Domain.Notifications;
 using Taxi.Domain.PaymentMethods;
 using Taxi.Domain.Payments;
+using Taxi.Domain.RefundIssues;
 using Taxi.Domain.Trips;
 using Taxi.Domain.Users;
 using Taxi.Domain.Vehicles;
@@ -27,6 +28,7 @@ public interface IAppDbContext
     public DbSet<TripMessage> TripMessages { get; }
     public DbSet<TripRecording> TripRecordings { get; }
     public DbSet<Payment> Payments { get; }
+    public DbSet<PaymentRefund> PaymentRefunds { get; }
     public DbSet<AuditLog> AuditLogs { get; }
     public DbSet<Notification> Notifications { get; }
     public DbSet<PassengerPaymentMethod> PaymentMethods { get; }
@@ -39,6 +41,7 @@ public interface IAppDbContext
     public DbSet<Invoice> Invoices { get; }
     public DbSet<InvoiceCounter> InvoiceCounters { get; }
     public DbSet<CustomerIncident> CustomerIncidents { get; }
+    public DbSet<RefundIssue> RefundIssues { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

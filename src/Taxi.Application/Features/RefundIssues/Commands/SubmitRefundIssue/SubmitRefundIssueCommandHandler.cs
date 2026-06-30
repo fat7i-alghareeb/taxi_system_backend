@@ -1,0 +1,143 @@
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Features.RefundIssues.Dtos;
+using Taxi.Contracts.Common;
+using Taxi.Domain.Common.Results;
+using Taxi.Domain.Payments;
+using Taxi.Domain.RefundIssues;
+using Taxi.Domain.Trips;
+
+namespace Taxi.Application.Features.RefundIssues.Commands.SubmitRefundIssue;
+
+public sealed class SubmitRefundIssueCommandHandler(
+    IAppDbContext context,
+    IUser currentUser,
+    INotificationService notificationService,
+    ITripNotifier tripNotifier,
+    ILogger<SubmitRefundIssueCommandHandler> logger)
+    : IRequestHandler<SubmitRefundIssueCommand, Result<RefundIssueDto>>
+{
+    public async Task<Result<RefundIssueDto>> Handle(SubmitRefundIssueCommand request, CancellationToken ct)
+    {
+        if (!Guid.TryParse(currentUser.Id, out var callerId))
+        {
+            return Error.Unauthorized(LocalizationKeys.Auth.UserIdClaimInvalid, "Invalid user ID claim.");
+        }
+
+        if (!Enum.TryParse<RefundIssueRequestType>(request.RequestType, ignoreCase: true, out var requestType))
+        {
+            return RefundIssueErrors.InvalidRequestType;
+        }
+
+        var trip = await context.Trips
+            .AsNoTracking()
+            .FirstOrDefaultAsync(trip => trip.Id == request.TripId, ct);
+        if (trip is null)
+        {
+            return TripErrors.NotFound;
+        }
+
+        if (!currentUser.IsAdmin && trip.PassengerId != callerId)
+        {
+            return TripErrors.NotOwnedByPassenger;
+        }
+
+        var payment = await context.Payments
+            .AsNoTracking()
+            .Where(payment => payment.TripId == trip.Id)
+            .OrderByDescending(payment => payment.ProcessedAtUtc)
+            .ThenByDescending(payment => payment.CreatedAtUtc)
+            .FirstOrDefaultAsync(ct);
+        if (payment is null)
+        {
+            return PaymentErrors.NotFound;
+        }
+
+        var latestRefund = await context.PaymentRefunds
+            .AsNoTracking()
+            .Where(refund => refund.PaymentId == payment.Id)
+            .OrderByDescending(refund => refund.RequestedAtUtc)
+            .ThenByDescending(refund => refund.Id)
+            .FirstOrDefaultAsync(ct);
+
+        var latestCancellation = await context.TripCancellations
+            .AsNoTracking()
+            .Where(cancellation => cancellation.TripId == trip.Id)
+            .OrderByDescending(cancellation => cancellation.CreatedAtUtc)
+            .FirstOrDefaultAsync(ct);
+
+        var issueResult = RefundIssue.Create(
+            Guid.NewGuid(),
+            trip.PassengerId,
+            trip.Id,
+            payment.Id,
+            requestType,
+            request.CustomerReason,
+            request.Note,
+            latestRefund?.Id,
+            latestCancellation?.Id,
+            latestRefund?.Status,
+            latestRefund?.Amount,
+            latestRefund?.Currency,
+            request.WhatsAppOpened);
+        if (issueResult.IsFailure)
+        {
+            return issueResult.Errors;
+        }
+
+        var issue = issueResult.Value;
+        context.RefundIssues.Add(issue);
+        await context.SaveChangesAsync(ct);
+        await NotifyAdminsAsync(issue, trip.ReferenceCode, ct);
+        await NotifyAdminsRealtimeAsync(issue, ct);
+
+        return issue.ToDto(tripReferenceCode: trip.ReferenceCode);
+    }
+
+    private async Task NotifyAdminsAsync(RefundIssue issue, string tripReferenceCode, CancellationToken ct)
+    {
+        try
+        {
+            var data = new Dictionary<string, string>
+            {
+                ["type"] = "refund_issue_created",
+                ["refundIssueId"] = issue.Id.ToString(),
+                ["tripId"] = issue.TripId.ToString(),
+                ["paymentId"] = issue.PaymentId.ToString(),
+                ["reviewStatus"] = issue.ReviewStatus.ToString(),
+            };
+
+            await notificationService.SendPushNotificationToAdminsAsync(
+                LocalizationKeys.RefundIssue.CreatedAdminTitle,
+                LocalizationKeys.RefundIssue.CreatedAdminBody,
+                data,
+                ct,
+                bodyArgs: [tripReferenceCode]);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to notify admins about refund issue {RefundIssueId}", issue.Id);
+        }
+    }
+
+    private async Task NotifyAdminsRealtimeAsync(RefundIssue issue, CancellationToken ct)
+    {
+        try
+        {
+            await tripNotifier.NotifyRefundIssueCreatedToAdminsAsync(
+                issue.Id,
+                issue.TripId,
+                issue.PassengerId,
+                issue.PaymentId,
+                issue.RequestType.ToString(),
+                issue.ReviewStatus.ToString(),
+                ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to broadcast refund issue {RefundIssueId}", issue.Id);
+        }
+    }
+}

@@ -306,20 +306,35 @@ public sealed class StripePaymentService : IStripePaymentService
         }
     }
 
-    public async Task<Result<StripeRefundResult>> CreateRefundAsync(string paymentIntentId, decimal? refundAmount = null, CancellationToken ct = default)
+    public async Task<Result<StripeRefundResult>> CreateRefundAsync(
+        string paymentIntentId,
+        decimal? refundAmount = null,
+        CancellationToken ct = default,
+        string? idempotencyKey = null)
     {
         try
         {
             var service = new RefundService();
+            var requestOptions = string.IsNullOrWhiteSpace(idempotencyKey)
+                ? null
+                : new RequestOptions { IdempotencyKey = idempotencyKey };
+
             var refund = await service.CreateAsync(
                 new RefundCreateOptions
                 {
                     PaymentIntent = paymentIntentId,
                     Amount = refundAmount.HasValue ? ToMinorUnits(refundAmount.Value) : null,
                 },
+                requestOptions,
                 cancellationToken: ct);
             var refundedAmount = FromMinorUnits(refund.Amount);
-            return new StripeRefundResult(refund.Id, refundedAmount, (refund.Currency ?? string.Empty).ToUpperInvariant());
+            return new StripeRefundResult(
+                refund.Id,
+                refundedAmount,
+                (refund.Currency ?? string.Empty).ToUpperInvariant(),
+                refund.Status,
+                refund.PaymentIntentId,
+                refund.ChargeId);
         }
         catch (StripeException ex)
         {

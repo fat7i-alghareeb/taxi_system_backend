@@ -14,8 +14,7 @@ namespace Taxi.Application.Features.CustomerIncidents.Commands.RefundIncident;
 public sealed class RefundIncidentCommandHandler(
     IAppDbContext context,
     IUser currentUser,
-    IClientConfigProvider clientConfig,
-    IStripePaymentService stripe,
+    IRefundLifecycleService refundLifecycle,
     ILogger<RefundIncidentCommandHandler> logger)
     : IRequestHandler<RefundIncidentCommand, Result<CustomerIncidentDto>>
 {
@@ -40,25 +39,50 @@ public sealed class RefundIncidentCommandHandler(
         var payment = await context.Payments.FirstOrDefaultAsync(
             p => p.TripId == tripId && p.Kind == PaymentKind.Fare, ct);
 
-        if (!clientConfig.GetClientConfig().StripeEnabled ||
-            payment?.Status != PaymentStatus.Completed ||
+        if (payment?.Status != PaymentStatus.Completed ||
             string.IsNullOrWhiteSpace(payment.StripePaymentIntentId))
         {
             return CustomerIncidentErrors.NoRefundablePayment;
         }
 
-        var refundResult = await stripe.CreateRefundAsync(payment.StripePaymentIntentId, request.Amount, ct);
+        var refundPercent = request.Amount.HasValue && payment.Amount > 0
+            ? Math.Round(request.Amount.Value / payment.Amount * 100m, 2, MidpointRounding.AwayFromZero)
+            : (decimal?)null;
+        var refundResult = await refundLifecycle.RequestRefundAsync(
+            new RefundRequest(
+                payment.Id,
+                request.Amount,
+                PaymentRefundSourceType.ManualIncidentRefund,
+                refundPercent,
+                !request.Amount.HasValue || request.Amount.Value >= payment.Amount,
+                tripId,
+                CustomerIncidentId: incident.Id,
+                RequestedByAdminId: adminId,
+                PassengerId: incident.PassengerId),
+            ct);
+
         if (refundResult.IsFailure)
         {
             logger.LogWarning(
-                "Failed to issue incident refund for PaymentIntent {PaymentIntentId} on incident {IncidentId}",
+                "Failed to request tracked incident refund for PaymentIntent {PaymentIntentId} on incident {IncidentId}: {ErrorCode}",
+                payment.StripePaymentIntentId,
+                incident.Id,
+                refundResult.Error.Code);
+            return refundResult.Errors;
+        }
+
+        if (refundResult.Value.Status == PaymentRefundStatus.Failed)
+        {
+            logger.LogWarning(
+                "Tracked incident refund {RefundId} failed immediately for PaymentIntent {PaymentIntentId} on incident {IncidentId}",
+                refundResult.Value.Id,
                 payment.StripePaymentIntentId,
                 incident.Id);
             return CustomerIncidentErrors.RefundFailed;
         }
 
         var refund = refundResult.Value;
-        incident.AddNote(adminId, $"Refund issued: {refund.Amount} {refund.Currency} (refundId={refund.RefundId}).");
+        incident.AddNote(adminId, $"Refund requested: {refund.Amount} {refund.Currency} (refundId={refund.Id}, stripeRefundId={refund.StripeRefundId}).");
         await context.SaveChangesAsync(ct);
 
         var passengerName = await context.DomainUsers

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Trips.Common;
+using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Payments;
 using Taxi.Domain.Trips;
@@ -14,9 +15,14 @@ public class HandleStripeWebhookCommandHandler(
     IAppDbContext context,
     IStripeWebhookValidator validator,
     IStripePaymentService stripe,
+    INotificationService notificationService,
+    ITripNotifier tripNotifier,
     ILogger<HandleStripeWebhookCommandHandler> logger)
     : IRequestHandler<HandleStripeWebhookCommand, Result<Success>>
 {
+    private const string GenericCustomerFailureMessage =
+        LocalizationKeys.Payment.RefundCustomerFailureMessage;
+
     public async Task<Result<Success>> Handle(HandleStripeWebhookCommand request, CancellationToken ct)
     {
         var parseResult = validator.Parse(request.Json, request.Signature);
@@ -45,7 +51,12 @@ public class HandleStripeWebhookCommandHandler(
                 return await HandleFailedAsync(evt, reason: evt.FailureCode ?? "canceled", ct);
 
             case StripeWebhookEventKind.ChargeRefunded:
-                return await HandleRefundedAsync(evt, ct);
+                return await HandleChargeRefundedCompatibilityAsync(evt, ct);
+
+            case StripeWebhookEventKind.RefundCreated:
+            case StripeWebhookEventKind.RefundUpdated:
+            case StripeWebhookEventKind.RefundFailed:
+                return await HandleRefundLifecycleAsync(evt, ct);
 
             case StripeWebhookEventKind.Unhandled:
             default:
@@ -172,7 +183,84 @@ public class HandleStripeWebhookCommandHandler(
         return Result.Success;
     }
 
-    private async Task<Result<Success>> HandleRefundedAsync(StripeWebhookEvent evt, CancellationToken ct)
+    private async Task<Result<Success>> HandleRefundLifecycleAsync(StripeWebhookEvent evt, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(evt.RefundId))
+        {
+            return PaymentErrors.NotFound;
+        }
+
+        var refund = await context.PaymentRefunds
+            .FirstOrDefaultAsync(refund => refund.StripeRefundId == evt.RefundId, ct);
+
+        if (refund is null)
+        {
+            logger.LogWarning("Stripe refund webhook for unknown Refund {RefundId}", evt.RefundId);
+            return PaymentErrors.NotFound;
+        }
+
+        if (refund.LastStripeEventId == evt.EventId)
+        {
+            return Result.Success;
+        }
+
+        var payment = await context.Payments.FirstOrDefaultAsync(payment => payment.Id == refund.PaymentId, ct);
+        if (payment is null)
+        {
+            return PaymentErrors.NotFound;
+        }
+
+        switch (evt.Kind)
+        {
+            case StripeWebhookEventKind.RefundCreated:
+                refund.MarkPending(evt.RefundId, evt.PaymentIntentId, evt.ChargeId, evt.EventId);
+                break;
+
+            case StripeWebhookEventKind.RefundUpdated:
+                if (IsRefundSucceeded(evt.RefundStatus))
+                {
+                    refund.MarkSucceeded(evt.EventId);
+                }
+                else if (IsRefundFailed(evt.RefundStatus))
+                {
+                    refund.MarkFailed(
+                        evt.FailureCode ?? evt.RefundStatus,
+                        evt.FailureMessage ?? evt.RefundStatus,
+                        GenericCustomerFailureMessage,
+                        canRetry: true,
+                        lastStripeEventId: evt.EventId);
+                    await NotifyAdminsRefundFailedAsync(refund, payment, ct);
+                }
+                else
+                {
+                    refund.MarkPending(evt.RefundId, evt.PaymentIntentId, evt.ChargeId, evt.EventId);
+                }
+
+                break;
+
+            case StripeWebhookEventKind.RefundFailed:
+                refund.MarkFailed(
+                    evt.FailureCode ?? "refund_failed",
+                    evt.FailureMessage ?? "refund_failed",
+                    GenericCustomerFailureMessage,
+                    canRetry: true,
+                    lastStripeEventId: evt.EventId);
+                await NotifyAdminsRefundFailedAsync(refund, payment, ct);
+                break;
+        }
+
+        var stateResult = await RecalculateRefundedPaymentStateAsync(payment, ct);
+        if (stateResult.IsFailure)
+        {
+            return stateResult.Error;
+        }
+
+        await context.SaveChangesAsync(ct);
+        await NotifyRefundRealtimeAsync(refund, payment, ct);
+        return Result.Success;
+    }
+
+    private async Task<Result<Success>> HandleChargeRefundedCompatibilityAsync(StripeWebhookEvent evt, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(evt.PaymentIntentId))
         {
@@ -193,32 +281,141 @@ public class HandleStripeWebhookCommandHandler(
             return Result.Success;
         }
 
-        var trip = await context.Trips.FirstOrDefaultAsync(t => t.Id == payment.TripId, ct);
-        if (trip is null)
+        var trackedRefunds = await context.PaymentRefunds
+            .Where(refund => refund.PaymentId == payment.Id)
+            .ToListAsync(ct);
+        var totals = PaymentRefundAccounting.Calculate(payment.Amount, trackedRefunds);
+        var stripeReportsFullRefund = evt.RefundedAmount.HasValue && evt.RefundedAmount.Value >= payment.Amount;
+        if (!stripeReportsFullRefund && !totals.IsFullyRefunded)
         {
-            return TripErrors.NotFound;
+            return Result.Success;
         }
 
+        var stateResult = await MarkPaymentAndTripFullyRefundedAsync(
+            payment,
+            totals.IsFullyRefunded ? totals.SuccessfulAmount : evt.RefundedAmount ?? payment.Amount,
+            ct);
+        if (stateResult.IsFailure)
+        {
+            return stateResult.Error;
+        }
+
+        await context.SaveChangesAsync(ct);
+        return Result.Success;
+    }
+
+    private async Task<Result<Success>> RecalculateRefundedPaymentStateAsync(Payment payment, CancellationToken ct)
+    {
+        var refunds = await context.PaymentRefunds
+            .Where(refund => refund.PaymentId == payment.Id)
+            .ToListAsync(ct);
+        var totals = PaymentRefundAccounting.Calculate(payment.Amount, refunds);
+        if (!totals.IsFullyRefunded || payment.Status == PaymentStatus.Refunded)
+        {
+            return Result.Success;
+        }
+
+        return await MarkPaymentAndTripFullyRefundedAsync(payment, totals.SuccessfulAmount, ct);
+    }
+
+    private async Task<Result<Success>> MarkPaymentAndTripFullyRefundedAsync(
+        Payment payment,
+        decimal amount,
+        CancellationToken ct)
+    {
         var refundedResult = payment.MarkAsRefunded();
         if (refundedResult.IsFailure)
         {
             return refundedResult.Error;
         }
 
-        // Only the fare payment drives the trip's Refunded state. Refunding a
-        // waiting-fee surcharge must not flip the whole trip to Refunded.
-        // Only Cancelled/Completed trips can transition to Refunded per Trip.MarkRefunded.
-        if (payment.Kind == PaymentKind.Fare &&
-            (trip.Status == TripStatus.Cancelled || trip.Status == TripStatus.Completed))
+        if (payment.Kind != PaymentKind.Fare)
         {
-            var refundResult = trip.MarkRefunded(evt.RefundedAmount ?? payment.Amount);
-            if (refundResult.IsFailure)
-            {
-                return refundResult.Error;
-            }
+            return Result.Success;
         }
 
-        await context.SaveChangesAsync(ct);
-        return Result.Success;
+        var trip = await context.Trips.FirstOrDefaultAsync(trip => trip.Id == payment.TripId, ct);
+        if (trip is null)
+        {
+            return TripErrors.NotFound;
+        }
+
+        if (trip.Status is not (TripStatus.Cancelled or TripStatus.Completed))
+        {
+            return Result.Success;
+        }
+
+        var tripRefundedResult = trip.MarkRefunded(amount);
+        return tripRefundedResult.IsFailure ? tripRefundedResult.Error : Result.Success;
     }
+
+    private async Task NotifyAdminsRefundFailedAsync(PaymentRefund refund, Payment payment, CancellationToken ct)
+    {
+        try
+        {
+            var data = new Dictionary<string, string>
+            {
+                ["type"] = "refund_failed",
+                ["refundId"] = refund.Id.ToString(),
+                ["paymentId"] = payment.Id.ToString(),
+                ["tripId"] = payment.TripId.ToString(),
+                ["status"] = refund.Status.ToString(),
+            };
+
+            object[] bodyArgs =
+            [
+                refund.Amount.ToString("0.00"),
+                refund.Currency.ToUpperInvariant(),
+                payment.TripId,
+            ];
+
+            await notificationService.SendPushNotificationToAdminsAsync(
+                LocalizationKeys.Payment.RefundFailedAdminTitle,
+                LocalizationKeys.Payment.RefundFailedAdminBody,
+                data,
+                ct,
+                bodyArgs: bodyArgs);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Failed to notify admins about refund failure webhook {RefundId} for payment {PaymentId}",
+                refund.Id,
+                payment.Id);
+        }
+    }
+
+    private async Task NotifyRefundRealtimeAsync(PaymentRefund refund, Payment payment, CancellationToken ct)
+    {
+        try
+        {
+            await tripNotifier.NotifyRefundLifecycleChangedAsync(
+                refund.Id,
+                payment.Id,
+                refund.TripId ?? payment.TripId,
+                refund.PassengerId,
+                refund.Status.ToString(),
+                refund.Amount,
+                refund.Currency,
+                refund.RequiresAdminAction,
+                refund.CanRetry,
+                refund.SourceType.ToString(),
+                ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Failed to broadcast refund webhook lifecycle change {RefundId} for payment {PaymentId}",
+                refund.Id,
+                payment.Id);
+        }
+    }
+
+    private static bool IsRefundSucceeded(string? status)
+        => string.Equals(status, "succeeded", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsRefundFailed(string? status)
+        => string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase);
 }

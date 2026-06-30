@@ -873,6 +873,259 @@ namespace Taxi.Infrastructure.Data.Migrations
                     b.ToTable("Payments");
                 });
 
+            modelBuilder.Entity("Taxi.Domain.Payments.PaymentRefund", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AdminNote")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("CanRetry")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<Guid?>("CustomerIncidentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("FailedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FailureCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("IdempotencyKey")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<bool>("IsFullRefund")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("LastAttemptAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastModifiedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastStripeEventId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<decimal>("OriginalPaymentAmountSnapshot")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid?>("PassengerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PaymentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("RefundPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<DateTimeOffset>("RequestedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RequestedByAdminId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("RequiresAdminAction")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("RetryBlockedReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("SafeCustomerFailureMessage")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("SourceType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("StripeChargeId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("StripePaymentIntentId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("StripeRefundId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<Guid?>("TripCancellationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TripCompensationClaimId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TripId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerIncidentId");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique();
+
+                    b.HasIndex("PassengerId");
+
+                    b.HasIndex("PaymentId");
+
+                    b.HasIndex("RequestedByAdminId");
+
+                    b.HasIndex("RequiresAdminAction");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("StripeRefundId")
+                        .IsUnique()
+                        .HasFilter("\"StripeRefundId\" IS NOT NULL");
+
+                    b.HasIndex("TripCancellationId");
+
+                    b.HasIndex("TripCompensationClaimId");
+
+                    b.HasIndex("TripId");
+
+                    b.ToTable("PaymentRefunds");
+                });
+
+            modelBuilder.Entity("Taxi.Domain.RefundIssues.RefundIssue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AdminNotes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CustomerReason")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastModifiedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("PassengerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PaymentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("PaymentRefundId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("RefundAmountSnapshot")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("RefundCurrencySnapshot")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<string>("RefundStatusSnapshot")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("RequestType")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("ReviewStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTimeOffset?>("ReviewedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ReviewedByAdminId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TripCancellationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TripId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("WhatsAppOpened")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PassengerId");
+
+                    b.HasIndex("PaymentId");
+
+                    b.HasIndex("PaymentRefundId");
+
+                    b.HasIndex("TripCancellationId");
+
+                    b.HasIndex("TripId");
+
+                    b.HasIndex("ReviewStatus", "CreatedAtUtc");
+
+                    b.ToTable("RefundIssues");
+                });
+
             modelBuilder.Entity("Taxi.Domain.Trips.PricingQuote", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1707,6 +1960,76 @@ namespace Taxi.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Taxi.Domain.Payments.Payment", b =>
                 {
+                    b.HasOne("Taxi.Domain.Trips.Trip", null)
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Taxi.Domain.Payments.PaymentRefund", b =>
+                {
+                    b.HasOne("Taxi.Domain.CustomerIncidents.CustomerIncident", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerIncidentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Taxi.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("PassengerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Taxi.Domain.Payments.Payment", null)
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Taxi.Domain.Admins.AdminProfile", null)
+                        .WithMany()
+                        .HasForeignKey("RequestedByAdminId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Taxi.Domain.Trips.TripCancellation", null)
+                        .WithMany()
+                        .HasForeignKey("TripCancellationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Taxi.Domain.Trips.TripCompensationClaim", null)
+                        .WithMany()
+                        .HasForeignKey("TripCompensationClaimId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Taxi.Domain.Trips.Trip", null)
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Taxi.Domain.RefundIssues.RefundIssue", b =>
+                {
+                    b.HasOne("Taxi.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("PassengerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Taxi.Domain.Payments.Payment", null)
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Taxi.Domain.Payments.PaymentRefund", null)
+                        .WithMany()
+                        .HasForeignKey("PaymentRefundId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Taxi.Domain.Trips.TripCancellation", null)
+                        .WithMany()
+                        .HasForeignKey("TripCancellationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Taxi.Domain.Trips.Trip", null)
                         .WithMany()
                         .HasForeignKey("TripId")

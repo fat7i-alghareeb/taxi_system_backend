@@ -13,6 +13,9 @@ public enum StripeWebhookEventKind
     PaymentIntentFailed,
     PaymentIntentCanceled,
     ChargeRefunded,
+    RefundCreated,
+    RefundUpdated,
+    RefundFailed,
     Unhandled,
 }
 
@@ -25,4 +28,6 @@ public sealed record StripeWebhookEvent(
     string? Currency,
     string? FailureCode,
     string? FailureMessage,
-    decimal? RefundedAmount);
+    decimal? RefundedAmount,
+    string? RefundId = null,
+    string? RefundStatus = null);

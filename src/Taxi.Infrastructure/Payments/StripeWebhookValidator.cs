@@ -112,6 +112,24 @@ public sealed class StripeWebhookValidator : IStripeWebhookValidator
                     RefundedAmount: amount);
             }
 
+            case "refund.created":
+            {
+                var refund = (Refund)evt.Data.Object;
+                return MapRefundEvent(evt.Id, StripeWebhookEventKind.RefundCreated, refund);
+            }
+
+            case "refund.updated":
+            {
+                var refund = (Refund)evt.Data.Object;
+                return MapRefundEvent(evt.Id, StripeWebhookEventKind.RefundUpdated, refund);
+            }
+
+            case "refund.failed":
+            {
+                var refund = (Refund)evt.Data.Object;
+                return MapRefundEvent(evt.Id, StripeWebhookEventKind.RefundFailed, refund);
+            }
+
             default:
                 return new StripeWebhookEvent(
                     EventId: evt.Id,
@@ -125,4 +143,21 @@ public sealed class StripeWebhookValidator : IStripeWebhookValidator
                     RefundedAmount: null);
         }
     }
+
+    private static StripeWebhookEvent MapRefundEvent(
+        string eventId,
+        StripeWebhookEventKind kind,
+        Refund refund)
+        => new(
+            EventId: eventId,
+            Kind: kind,
+            PaymentIntentId: refund.PaymentIntentId,
+            ChargeId: refund.ChargeId,
+            AmountReceived: null,
+            Currency: refund.Currency?.ToUpperInvariant(),
+            FailureCode: refund.FailureReason,
+            FailureMessage: refund.FailureReason,
+            RefundedAmount: refund.Amount / 100m,
+            RefundId: refund.Id,
+            RefundStatus: refund.Status);
 }

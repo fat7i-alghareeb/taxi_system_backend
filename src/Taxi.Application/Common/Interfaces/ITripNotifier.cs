@@ -60,6 +60,32 @@ public interface ITripNotifier
     /// <summary>Sends to the trip group that the trip has been refunded.</summary>
     Task NotifyTripRefundedAsync(Guid tripId, Guid passengerId, decimal amount, CancellationToken ct = default, Guid? eventId = null);
 
+    /// <summary>Broadcasts the durable refund lifecycle state to admins and the related passenger/trip groups.</summary>
+    Task NotifyRefundLifecycleChangedAsync(
+        Guid refundId,
+        Guid paymentId,
+        Guid? tripId,
+        Guid? passengerId,
+        string status,
+        decimal amount,
+        string currency,
+        bool requiresAdminAction,
+        bool canRetry,
+        string sourceType,
+        CancellationToken ct = default,
+        Guid? eventId = null);
+
+    /// <summary>Notifies admins that a customer refund issue has been submitted for review.</summary>
+    Task NotifyRefundIssueCreatedToAdminsAsync(
+        Guid refundIssueId,
+        Guid tripId,
+        Guid passengerId,
+        Guid paymentId,
+        string requestType,
+        string reviewStatus,
+        CancellationToken ct = default,
+        Guid? eventId = null);
+
     /// <summary>
     /// Sends to the trip group that an intermediate stop has just been completed
     /// during a multi-stop trip. The passenger UI uses this to advance the

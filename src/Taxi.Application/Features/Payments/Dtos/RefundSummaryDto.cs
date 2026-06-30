@@ -1,0 +1,42 @@
+namespace Taxi.Application.Features.Payments.Dtos;
+
+public record RefundSummaryDto(
+    string Status,
+    decimal Amount,
+    string Currency,
+    decimal? RefundPercent,
+    bool IsFullRefund,
+    string PaymentMethod,
+    DateTimeOffset? RequestedAtUtc,
+    DateTimeOffset? CompletedAtUtc,
+    DateTimeOffset? FailedAtUtc,
+    string? CustomerMessage,
+    string? ExpectedTimingMessage,
+    bool RequiresSupport,
+    bool CanSubmitRefundIssue);
+
+public record AdminRefundSummaryDto(
+    string Status,
+    decimal Amount,
+    string Currency,
+    decimal? RefundPercent,
+    bool IsFullRefund,
+    string PaymentMethod,
+    DateTimeOffset? RequestedAtUtc,
+    DateTimeOffset? CompletedAtUtc,
+    DateTimeOffset? FailedAtUtc,
+    string? CustomerMessage,
+    string? ExpectedTimingMessage,
+    bool RequiresSupport,
+    bool CanSubmitRefundIssue,
+    Guid RefundId,
+    string SourceType,
+    string? StripeRefundId,
+    string? StripePaymentIntentId,
+    string? StripeChargeId,
+    string? FailureCode,
+    string? FailureReason,
+    int AttemptCount,
+    bool CanRetry,
+    string? RetryBlockedReason,
+    bool RequiresAdminAction);

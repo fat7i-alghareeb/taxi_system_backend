@@ -3,6 +3,7 @@ using NSubstitute;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Payments.Commands.HandleStripeWebhook;
 using Taxi.Application.UnitTests.Infrastructure;
+using Taxi.Contracts.Common;
 using Taxi.Domain.Payments;
 using Taxi.Domain.Trips;
 using Xunit;
@@ -13,6 +14,7 @@ public class HandleStripeWebhookCommandHandlerTests
 {
     private readonly IStripeWebhookValidator _validator = Substitute.For<IStripeWebhookValidator>();
     private readonly IStripePaymentService _stripe = Substitute.For<IStripePaymentService>();
+    private readonly INotificationService _notifications = Substitute.For<INotificationService>();
     private readonly ILogger<HandleStripeWebhookCommandHandler> _logger =
         Substitute.For<ILogger<HandleStripeWebhookCommandHandler>>();
 
@@ -231,9 +233,11 @@ public class HandleStripeWebhookCommandHandlerTests
 
         var paymentsSet = DbSetMockFactory.Create([payment]);
         var tripsSet = DbSetMockFactory.Create([trip]);
+        var refundsSet = DbSetMockFactory.Create<PaymentRefund>([]);
         var context = Substitute.For<IAppDbContext>();
         context.Payments.Returns(paymentsSet);
         context.Trips.Returns(tripsSet);
+        context.PaymentRefunds.Returns(refundsSet);
         context.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
         var handler = CreateHandler(context);
 
@@ -242,6 +246,181 @@ public class HandleStripeWebhookCommandHandlerTests
         Assert.True(result.IsSuccess);
         Assert.Equal(PaymentStatus.Refunded, payment.Status);
         Assert.Equal(TripStatus.Refunded, trip.Status);
+    }
+
+    // ── Refund lifecycle events ─────────────────────────────────────────────
+
+    [Fact]
+    public async Task Handle_RefundCreated_MarksTrackedRefundPending()
+    {
+        var payment = CreateCompletedPayment(100m);
+        var refund = CreateFailedRefund(payment, 20m, "re_pending");
+
+        _validator.Parse(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(new StripeWebhookEvent(
+                "evt_refund_created",
+                StripeWebhookEventKind.RefundCreated,
+                payment.StripePaymentIntentId,
+                payment.StripeChargeId,
+                null,
+                "eur",
+                null,
+                null,
+                20m,
+                "re_pending",
+                "pending"));
+
+        var context = BuildRefundWebhookContext(payment, null, [refund]);
+        var handler = CreateHandler(context);
+
+        var result = await handler.Handle(new HandleStripeWebhookCommand("json", "sig"), default);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Pending, refund.Status);
+        Assert.Equal("evt_refund_created", refund.LastStripeEventId);
+    }
+
+    [Fact]
+    public async Task Handle_RefundUpdatedSucceeded_PartialRefundDoesNotMarkPaymentRefunded()
+    {
+        var payment = CreateCompletedPayment(100m);
+        var trip = PaymentTestBuilders.CreateAwaitingPaymentTrip(Guid.NewGuid(), Guid.NewGuid());
+        var refund = CreatePendingRefund(payment, 20m, "re_partial");
+
+        _validator.Parse(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(new StripeWebhookEvent(
+                "evt_refund_succeeded",
+                StripeWebhookEventKind.RefundUpdated,
+                payment.StripePaymentIntentId,
+                payment.StripeChargeId,
+                null,
+                "eur",
+                null,
+                null,
+                20m,
+                "re_partial",
+                "succeeded"));
+
+        var context = BuildRefundWebhookContext(payment, trip, [refund]);
+        var handler = CreateHandler(context);
+
+        var result = await handler.Handle(new HandleStripeWebhookCommand("json", "sig"), default);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Succeeded, refund.Status);
+        Assert.Equal(PaymentStatus.Completed, payment.Status);
+        Assert.NotEqual(TripStatus.Refunded, trip.Status);
+    }
+
+    [Fact]
+    public async Task Handle_RefundUpdatedSucceeded_FullRefundMarksPaymentRefunded()
+    {
+        var trip = CreateCompletedTrip();
+        var payment = CreateCompletedPayment(100m, trip.Id);
+        var refund = CreatePendingRefund(payment, 100m, "re_full");
+
+        _validator.Parse(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(new StripeWebhookEvent(
+                "evt_refund_full",
+                StripeWebhookEventKind.RefundUpdated,
+                payment.StripePaymentIntentId,
+                payment.StripeChargeId,
+                null,
+                "eur",
+                null,
+                null,
+                100m,
+                "re_full",
+                "succeeded"));
+
+        var context = BuildRefundWebhookContext(payment, trip, [refund]);
+        var handler = CreateHandler(context);
+
+        var result = await handler.Handle(new HandleStripeWebhookCommand("json", "sig"), default);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Succeeded, refund.Status);
+        Assert.Equal(PaymentStatus.Refunded, payment.Status);
+        Assert.Equal(TripStatus.Refunded, trip.Status);
+    }
+
+    [Fact]
+    public async Task Handle_RefundFailed_MarksRefundFailedAndNotifiesAdmins()
+    {
+        var payment = CreateCompletedPayment(100m);
+        var refund = CreatePendingRefund(payment, 20m, "re_failed");
+
+        _validator.Parse(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(new StripeWebhookEvent(
+                "evt_refund_failed",
+                StripeWebhookEventKind.RefundFailed,
+                payment.StripePaymentIntentId,
+                payment.StripeChargeId,
+                null,
+                "eur",
+                "lost_or_stolen_card",
+                "lost_or_stolen_card",
+                20m,
+                "re_failed",
+                "failed"));
+
+        var context = BuildRefundWebhookContext(payment, null, [refund]);
+        var handler = CreateHandler(context);
+
+        var result = await handler.Handle(new HandleStripeWebhookCommand("json", "sig"), default);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Failed, refund.Status);
+        Assert.True(refund.RequiresAdminAction);
+        Assert.True(refund.CanRetry);
+        Assert.Equal("lost_or_stolen_card", refund.FailureCode);
+        Assert.Equal(LocalizationKeys.Payment.RefundCustomerFailureMessage, refund.SafeCustomerFailureMessage);
+        await _notifications.Received(1).SendPushNotificationToAdminsAsync(
+            LocalizationKeys.Payment.RefundFailedAdminTitle,
+            LocalizationKeys.Payment.RefundFailedAdminBody,
+            Arg.Is<Dictionary<string, string>>(data =>
+                data["type"] == "refund_failed" &&
+                data["refundId"] == refund.Id.ToString()),
+            Arg.Any<CancellationToken>(),
+            Arg.Is<object[]?>(args => args == null),
+            Arg.Is<object[]?>(args => args != null && args.Length == 3));
+    }
+
+    [Fact]
+    public async Task Handle_RefundWebhookDuplicateEvent_IsIgnored()
+    {
+        var payment = CreateCompletedPayment(100m);
+        var refund = CreatePendingRefund(payment, 20m, "re_duplicate");
+        refund.MarkSucceeded("evt_duplicate");
+
+        _validator.Parse(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(new StripeWebhookEvent(
+                "evt_duplicate",
+                StripeWebhookEventKind.RefundFailed,
+                payment.StripePaymentIntentId,
+                payment.StripeChargeId,
+                null,
+                "eur",
+                "failed",
+                "failed",
+                20m,
+                "re_duplicate",
+                "failed"));
+
+        var context = BuildRefundWebhookContext(payment, null, [refund]);
+        var handler = CreateHandler(context);
+
+        var result = await handler.Handle(new HandleStripeWebhookCommand("json", "sig"), default);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Succeeded, refund.Status);
+        await _notifications.DidNotReceive().SendPushNotificationToAdminsAsync(
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<Dictionary<string, string>?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<object[]?>(),
+            Arg.Any<object[]?>());
     }
 
     [Fact]
@@ -283,5 +462,72 @@ public class HandleStripeWebhookCommandHandlerTests
     }
 
     private HandleStripeWebhookCommandHandler CreateHandler(IAppDbContext context)
-        => new(context, _validator, _stripe, _logger);
+        => new(context, _validator, _stripe, _notifications, Substitute.For<ITripNotifier>(), _logger);
+
+    private static Trip CreateCompletedTrip()
+    {
+        var trip = PaymentTestBuilders.CreateAwaitingPaymentTrip(Guid.NewGuid(), Guid.NewGuid());
+        trip.ConfirmPayment();
+        trip.AcceptByAdmin(Guid.NewGuid(), DateTimeOffset.UtcNow);
+        trip.DriverEnRoute(DateTimeOffset.UtcNow);
+        trip.DriverArrived(DateTimeOffset.UtcNow);
+        trip.Start(DateTimeOffset.UtcNow);
+        trip.Complete(DateTimeOffset.UtcNow);
+        return trip;
+    }
+
+    private static Payment CreateCompletedPayment(decimal amount, Guid? tripId = null)
+    {
+        var payment = Payment.CreateForStripe(
+            Guid.NewGuid(),
+            tripId ?? Guid.NewGuid(),
+            amount,
+            "eur",
+            "pi_test_refund",
+            "cs_test_secret").Value;
+        payment.MarkAsCompleted("ch_test_refund", "card");
+        return payment;
+    }
+
+    private static PaymentRefund CreatePendingRefund(Payment payment, decimal amount, string stripeRefundId)
+    {
+        var refund = PaymentRefund.Create(
+            Guid.NewGuid(),
+            payment.Id,
+            PaymentRefundSourceType.PassengerCancellation,
+            amount,
+            payment.Currency,
+            payment.Amount,
+            tripId: payment.TripId,
+            stripePaymentIntentId: payment.StripePaymentIntentId,
+            stripeChargeId: payment.StripeChargeId,
+            idempotencyKey: Guid.NewGuid().ToString("N")).Value;
+        refund.MarkAttemptStarted(refund.IdempotencyKey!);
+        refund.MarkPending(stripeRefundId, payment.StripePaymentIntentId, payment.StripeChargeId);
+        return refund;
+    }
+
+    private static PaymentRefund CreateFailedRefund(Payment payment, decimal amount, string stripeRefundId)
+    {
+        var refund = CreatePendingRefund(payment, amount, stripeRefundId);
+        refund.MarkFailed("temporary_failure", "temporary_failure", canRetry: true);
+        return refund;
+    }
+
+    private static IAppDbContext BuildRefundWebhookContext(
+        Payment payment,
+        Trip? trip,
+        List<PaymentRefund> refunds)
+    {
+        var paymentsSet = DbSetMockFactory.Create([payment]);
+        var trips = trip is null ? new List<Trip>() : [trip];
+        var tripsSet = DbSetMockFactory.Create(trips);
+        var refundsSet = DbSetMockFactory.Create(refunds);
+        var context = Substitute.For<IAppDbContext>();
+        context.Payments.Returns(paymentsSet);
+        context.Trips.Returns(tripsSet);
+        context.PaymentRefunds.Returns(refundsSet);
+        context.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
+        return context;
+    }
 }

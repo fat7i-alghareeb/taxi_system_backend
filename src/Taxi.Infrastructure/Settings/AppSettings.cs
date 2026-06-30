@@ -38,6 +38,8 @@ public class StripeSettings
     public string WebhookSecret { get; set; } = string.Empty;
 
     public bool TestMode { get; set; } = true;
+
+    public bool ForceRefundFailure { get; set; }
 }
 
 public class FeatureFlags

@@ -172,6 +172,7 @@ public static class DependencyInjection
         services.AddScoped<IStripePaymentService, StripePaymentService>();
         services.AddScoped<IStripeWebhookValidator, StripeWebhookValidator>();
         services.AddSingleton<IClientConfigProvider, ClientConfigProvider>();
+        services.AddSingleton<IRefundProcessingOptionsProvider, RefundProcessingOptionsProvider>();
 
         services.AddScoped<IInvoiceNumberGenerator, SequentialInvoiceNumberGenerator>();
         services.AddScoped<IInvoiceIssuanceService, InvoiceIssuanceService>();
