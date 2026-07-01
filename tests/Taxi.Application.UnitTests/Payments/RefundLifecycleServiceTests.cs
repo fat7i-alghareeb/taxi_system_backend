@@ -282,6 +282,39 @@ public class RefundLifecycleServiceTests
     }
 
     [Fact]
+    public async Task RequestRefundAsync_StripeDisabled_AllowsCompletedPaymentWithoutStripeIntent()
+    {
+        var payment = CreateCompletedOfflinePayment();
+        var context = BuildContext(payment);
+        clientConfig.GetClientConfig().Returns(new ClientConfig(false, "pk_test", true));
+        var service = CreateService(context);
+
+        var result = await service.RequestRefundAsync(
+            new RefundRequest(
+                payment.Id,
+                15m,
+                PaymentRefundSourceType.PassengerCancellation,
+                15m,
+                false,
+                payment.TripId,
+                TripCancellationId: Guid.NewGuid(),
+                PassengerId: Guid.NewGuid()),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Failed, result.Value.Status);
+        Assert.True(result.Value.RequiresAdminAction);
+        Assert.True(result.Value.CanRetry);
+        Assert.Null(result.Value.StripePaymentIntentId);
+        context.PaymentRefunds.Received(1).Add(Arg.Any<PaymentRefund>());
+        await stripe.DidNotReceive().CreateRefundAsync(
+            Arg.Any<string>(),
+            Arg.Any<decimal?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>());
+    }
+
+    [Fact]
     public async Task RetryRefundAsync_StripeDisabled_CompletesRetryWithoutCallingStripe()
     {
         var payment = CreateCompletedPayment();
@@ -302,6 +335,60 @@ public class RefundLifecycleServiceTests
         Assert.False(result.Value.CanRetry);
         Assert.Null(result.Value.FailureCode);
         Assert.Equal(2, result.Value.AttemptCount);
+        Assert.Equal(PaymentStatus.Completed, payment.Status);
+        await stripe.DidNotReceive().CreateRefundAsync(
+            Arg.Any<string>(),
+            Arg.Any<decimal?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>());
+    }
+
+    [Fact]
+    public async Task RetryRefundAsync_StripeDisabled_FullRefundMarksPaymentRefunded()
+    {
+        var payment = CreateCompletedWaitingFeePayment();
+        var failedRefund = CreateFailedRefund(payment, payment.Amount, PaymentRefundSourceType.AdminCancellation);
+        var context = BuildContext(payment, [failedRefund]);
+        clientConfig.GetClientConfig().Returns(new ClientConfig(false, "pk_test", true));
+        var service = CreateService(context);
+
+        var result = await service.RetryRefundAsync(
+            failedRefund.Id,
+            Guid.NewGuid(),
+            "retry full refund",
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Succeeded, result.Value.Status);
+        Assert.Equal(PaymentStatus.Refunded, payment.Status);
+        await stripe.DidNotReceive().CreateRefundAsync(
+            Arg.Any<string>(),
+            Arg.Any<decimal?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>());
+    }
+
+    [Fact]
+    public async Task RetryRefundAsync_StripeDisabled_IgnoresStoredCanRetryFalseForFailedRefund()
+    {
+        var payment = CreateCompletedPayment();
+        var failedRefund = CreateFailedRefund(
+            payment,
+            20m,
+            PaymentRefundSourceType.PassengerCancellation,
+            canRetry: false);
+        var context = BuildContext(payment, [failedRefund]);
+        clientConfig.GetClientConfig().Returns(new ClientConfig(false, "pk_test", true));
+        var service = CreateService(context);
+
+        var result = await service.RetryRefundAsync(
+            failedRefund.Id,
+            Guid.NewGuid(),
+            "retry from admin",
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Succeeded, result.Value.Status);
         await stripe.DidNotReceive().CreateRefundAsync(
             Arg.Any<string>(),
             Arg.Any<decimal?>(),
@@ -374,6 +461,30 @@ public class RefundLifecycleServiceTests
             "pi_test_123",
             "cs_test_secret").Value;
         payment.MarkAsCompleted("ch_test_123", "card");
+        return payment;
+    }
+
+    private static Payment CreateCompletedOfflinePayment(decimal amount = 100m)
+    {
+        var payment = Payment.Create(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            amount,
+            "eur",
+            PaymentMethod.CreditCard).Value;
+        payment.MarkAsCompleted();
+        return payment;
+    }
+
+    private static Payment CreateCompletedWaitingFeePayment(decimal amount = 100m)
+    {
+        var payment = Payment.CreateWaitingFeeSurcharge(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            amount,
+            "eur",
+            "pi_waiting_fee").Value;
+        payment.MarkAsCompleted("ch_waiting_fee", "card");
         return payment;
     }
 

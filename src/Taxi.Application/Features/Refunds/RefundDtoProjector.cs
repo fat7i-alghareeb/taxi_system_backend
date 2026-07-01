@@ -12,7 +12,8 @@ public static class RefundDtoProjector
     public static async Task<List<AdminRefundDetailDto>> ToAdminRefundDetailsAsync(
         IAppDbContext context,
         IReadOnlyCollection<PaymentRefund> refunds,
-        CancellationToken ct)
+        CancellationToken ct,
+        bool forceRetryForFailedRefunds = false)
     {
         if (refunds.Count == 0)
         {
@@ -37,6 +38,10 @@ public static class RefundDtoProjector
             var totals = PaymentRefundAccounting.Calculate(
                 capturedAmount,
                 allPaymentRefunds.Where(item => item.PaymentId == refund.PaymentId));
+
+            var canRetry = refund.CanRetry ||
+                (forceRetryForFailedRefunds &&
+                    refund.Status is PaymentRefundStatus.Failed or PaymentRefundStatus.RequiresAdminAction);
 
             return new AdminRefundDetailDto(
                 refund.Id,
@@ -63,7 +68,7 @@ public static class RefundDtoProjector
                 refund.FailureCode,
                 refund.FailureReason,
                 refund.AttemptCount,
-                refund.CanRetry,
+                canRetry,
                 refund.RetryBlockedReason,
                 refund.RequiresAdminAction,
                 refund.TripCancellationId,

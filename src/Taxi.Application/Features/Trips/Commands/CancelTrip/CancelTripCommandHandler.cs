@@ -136,10 +136,13 @@ public class CancelTripCommandHandler(
 
         context.TripCancellations.Add(cancellationResult.Value);
 
-        if (payment is not null && !string.IsNullOrWhiteSpace(payment.StripePaymentIntentId))
+        if (payment is not null)
         {
             var stripeEnabled = clientConfig.GetClientConfig().StripeEnabled;
-            if (stripeEnabled && preCancelStatus == TripStatus.AwaitingPayment && payment.Status == PaymentStatus.Pending)
+            if (stripeEnabled &&
+                !string.IsNullOrWhiteSpace(payment.StripePaymentIntentId) &&
+                preCancelStatus == TripStatus.AwaitingPayment &&
+                payment.Status == PaymentStatus.Pending)
             {
                 // PaymentSheet was never completed: cancel the intent so the user is never charged.
                 var cancelIntentResult = await stripe.CancelPaymentIntentAsync(payment.StripePaymentIntentId, ct);

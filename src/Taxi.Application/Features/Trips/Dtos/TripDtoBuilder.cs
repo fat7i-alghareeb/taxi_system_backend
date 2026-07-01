@@ -59,6 +59,11 @@ public static class TripDtoBuilder
         var tripRoute = await context.TripRoutes
             .FirstOrDefaultAsync(r => r.TripId == trip.Id, ct);
 
+        var latestRefund = await context.PaymentRefunds
+            .Where(r => r.TripId == trip.Id)
+            .OrderByDescending(r => r.CreatedAtUtc)
+            .FirstOrDefaultAsync(ct);
+
         if (trip.DriverId.HasValue)
         {
             var driver = await context.Drivers.FirstOrDefaultAsync(d => d.Id == trip.DriverId.Value, ct);
@@ -118,6 +123,7 @@ public static class TripDtoBuilder
             IsScheduled: trip.ScheduledAtUtc.HasValue,
             DispatchWindowOpensAtUtc: trip.DispatchWindowOpensAtUtc,
             CanMarkEnRoute: trip.CanMarkEnRoute(now),
-            AttentionState: trip.GetAttentionState(now).ToString());
+            AttentionState: trip.GetAttentionState(now).ToString(),
+            Refund: latestRefund?.ToRefundDto());
     }
 }

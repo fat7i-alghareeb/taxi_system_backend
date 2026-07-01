@@ -147,6 +147,39 @@ public class CancelTripCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_StripeDisabledCompletedPaymentWithoutIntent_RequestsTrackedRefund()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var (trip, quote, payment) = BuildAcceptedTripWithOfflinePayment(now.AddMinutes(-3), Fare);
+        var clientConfig = Substitute.For<IClientConfigProvider>();
+        clientConfig.GetClientConfig().Returns(new ClientConfig(false, "pk_test", false));
+        var refundLifecycle = Substitute.For<IRefundLifecycleService>();
+        refundLifecycle
+            .RequestRefundAsync(Arg.Any<RefundRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(Result.Failure<PaymentRefund>(PaymentErrors.RefundUnavailable)));
+
+        var handler = new CancelTripCommandHandler(
+            BuildContext(trip, quote, payment),
+            BuildPassengerUser(),
+            clientConfig,
+            Substitute.For<IStripePaymentService>(),
+            refundLifecycle,
+            new FakeTimeProvider(now),
+            Substitute.For<ILogger<CancelTripCommandHandler>>());
+
+        var result = await handler.Handle(new CancelTripCommand(trip.Id), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        await refundLifecycle.Received(1).RequestRefundAsync(
+            Arg.Is<RefundRequest>(request =>
+                request.PaymentId == payment.Id &&
+                request.TripId == trip.Id &&
+                request.Amount == Fare &&
+                request.SourceType == PaymentRefundSourceType.PassengerCancellation),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Handle_ArrivedStatus_Returns45PercentRefund_NoFlatFee()
     {
         var now = DateTimeOffset.UtcNow;
@@ -175,6 +208,20 @@ public class CancelTripCommandHandlerTests
 
         var payment = Payment.CreateForStripe(Guid.NewGuid(), trip.Id, fare, Currency, "pi_test_accepted", "cs_secret").Value;
         payment.MarkAsCompleted("ch_test_001");
+
+        return (trip, quote, payment);
+    }
+
+    private static (Trip trip, PricingQuote quote, Payment payment) BuildAcceptedTripWithOfflinePayment(
+        DateTimeOffset bookedAt,
+        decimal fare)
+    {
+        var (trip, quote) = BuildTripWithQuote(bookedAt, fare);
+        trip.ConfirmPayment();
+        trip.AcceptByAdmin(Guid.NewGuid(), DateTimeOffset.UtcNow);
+
+        var payment = Payment.Create(Guid.NewGuid(), trip.Id, fare, Currency, PaymentMethod.CreditCard).Value;
+        payment.MarkAsCompleted();
 
         return (trip, quote, payment);
     }
@@ -250,13 +297,19 @@ public class CancelTripCommandHandlerTests
 
     private static IAppDbContext BuildContext(Trip trip, PricingQuote quote, Payment payment)
     {
+        var tripsSet = DbSetMockFactory.Create([trip]);
+        var quotesSet = DbSetMockFactory.Create([quote]);
+        var paymentsSet = DbSetMockFactory.Create([payment]);
+        var cancellationsSet = DbSetMockFactory.Create(new List<TripCancellation>());
+        var vehicleTypesSet = DbSetMockFactory.Create(new List<VehicleType>());
+        var driversSet = DbSetMockFactory.Create(new List<Domain.Drivers.Driver>());
         var context = Substitute.For<IAppDbContext>();
-        context.Trips.Returns(DbSetMockFactory.Create([trip]));
-        context.PricingQuotes.Returns(DbSetMockFactory.Create([quote]));
-        context.Payments.Returns(DbSetMockFactory.Create([payment]));
-        context.TripCancellations.Returns(DbSetMockFactory.Create(new List<TripCancellation>()));
-        context.VehicleTypes.Returns(DbSetMockFactory.Create(new List<VehicleType>()));
-        context.Drivers.Returns(DbSetMockFactory.Create(new List<Domain.Drivers.Driver>()));
+        context.Trips.Returns(tripsSet);
+        context.PricingQuotes.Returns(quotesSet);
+        context.Payments.Returns(paymentsSet);
+        context.TripCancellations.Returns(cancellationsSet);
+        context.VehicleTypes.Returns(vehicleTypesSet);
+        context.Drivers.Returns(driversSet);
         context.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
         return context;
     }

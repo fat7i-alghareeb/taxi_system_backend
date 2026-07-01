@@ -41,7 +41,8 @@ public record TripDto(
     DateTimeOffset? DispatchWindowOpensAtUtc = null,
     bool CanMarkEnRoute = false,
     string AttentionState = "Normal",
-    int RecordingCount = 0);
+    int RecordingCount = 0,
+    TripRefundDto? Refund = null);
 
 public record TripRouteSegmentDto(
     int DistanceMeters,

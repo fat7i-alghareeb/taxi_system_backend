@@ -12,7 +12,7 @@ using Taxi.Domain.Trips;
 
 namespace Taxi.Application.Features.Refunds.Queries.GetRefunds;
 
-public sealed class GetRefundsQueryHandler(IAppDbContext context)
+public sealed class GetRefundsQueryHandler(IAppDbContext context, IClientConfigProvider? clientConfigProvider = null)
     : IRequestHandler<GetRefundsQuery, Result<PagedResult<AdminRefundDetailDto>>>
 {
     public async Task<Result<PagedResult<AdminRefundDetailDto>>> Handle(GetRefundsQuery request, CancellationToken ct)
@@ -166,7 +166,11 @@ public sealed class GetRefundsQueryHandler(IAppDbContext context)
         }
 
         var manualRows = await cancellationQuery.ToListAsync(ct);
-        var refundItems = await RefundDtoProjector.ToAdminRefundDetailsAsync(context, refundRows, ct);
+        var refundItems = await RefundDtoProjector.ToAdminRefundDetailsAsync(
+            context,
+            refundRows,
+            ct,
+            ForceRetryForFailedRefunds());
         var manualItems = await RefundDtoProjector.ToManualCancellationRefundDetailsAsync(context, manualRows, ct);
         var ordered = refundItems
             .Concat(manualItems)
@@ -182,4 +186,7 @@ public sealed class GetRefundsQueryHandler(IAppDbContext context)
 
         return new PagedResult<AdminRefundDetailDto>(items, ordered.Count, page, pageSize);
     }
+
+    private bool ForceRetryForFailedRefunds()
+        => clientConfigProvider?.GetClientConfig().StripeEnabled == false;
 }

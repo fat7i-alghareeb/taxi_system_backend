@@ -8,7 +8,7 @@ using Taxi.Domain.Payments;
 
 namespace Taxi.Application.Features.Refunds.Queries.GetRefundById;
 
-public sealed class GetRefundByIdQueryHandler(IAppDbContext context)
+public sealed class GetRefundByIdQueryHandler(IAppDbContext context, IClientConfigProvider? clientConfigProvider = null)
     : IRequestHandler<GetRefundByIdQuery, Result<AdminRefundDetailDto>>
 {
     public async Task<Result<AdminRefundDetailDto>> Handle(GetRefundByIdQuery request, CancellationToken ct)
@@ -22,7 +22,11 @@ public sealed class GetRefundByIdQueryHandler(IAppDbContext context)
             return PaymentErrors.NotFound;
         }
 
-        var details = await RefundDtoProjector.ToAdminRefundDetailsAsync(context, [refund], ct);
+        var details = await RefundDtoProjector.ToAdminRefundDetailsAsync(
+            context,
+            [refund],
+            ct,
+            clientConfigProvider?.GetClientConfig().StripeEnabled == false);
         return details[0];
     }
 }

@@ -84,9 +84,10 @@ public sealed class RefundLifecycleService(
             return PaymentErrors.NotFound;
         }
 
+        var stripeEnabled = clientConfigProvider.GetClientConfig().StripeEnabled;
         if (refund.Status is not (PaymentRefundStatus.Failed
                 or PaymentRefundStatus.RequiresAdminAction) ||
-            !refund.CanRetry)
+            (stripeEnabled && !refund.CanRetry))
         {
             refund.SetRetryEligibility(false, refund.RetryBlockedReason ?? PaymentErrors.RefundRetryBlocked.Code);
             await context.SaveChangesAsync(ct);
@@ -189,7 +190,12 @@ public sealed class RefundLifecycleService(
         RefundRequest request,
         CancellationToken ct)
     {
-        if (payment.Status != PaymentStatus.Completed ||
+        if (payment.Status != PaymentStatus.Completed)
+        {
+            return PaymentErrors.RefundUnavailable;
+        }
+
+        if (clientConfigProvider.GetClientConfig().StripeEnabled &&
             string.IsNullOrWhiteSpace(payment.StripePaymentIntentId))
         {
             return PaymentErrors.RefundUnavailable;

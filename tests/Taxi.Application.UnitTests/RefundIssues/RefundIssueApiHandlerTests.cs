@@ -152,6 +152,24 @@ public class RefundIssueApiHandlerTests
     }
 
     [Fact]
+    public async Task GetRefundById_StripeDisabled_ForcesRetryAvailableForFailedRefund()
+    {
+        var passengerId = Guid.NewGuid();
+        var trip = CreateTrip(passengerId);
+        var payment = CreateCompletedPayment(trip.Id);
+        var refund = CreateFailedRefund(payment, 35m, canRetry: false);
+        var context = BuildContext(trips: [trip], payments: [payment], refunds: [refund]);
+        var clientConfig = Substitute.For<IClientConfigProvider>();
+        clientConfig.GetClientConfig().Returns(new ClientConfig(false, "pk_test", true));
+        var handler = new GetRefundByIdQueryHandler(context, clientConfig);
+
+        var result = await handler.Handle(new GetRefundByIdQuery(refund.Id), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(result.Value.CanRetry);
+    }
+
+    [Fact]
     public async Task GetRefunds_ReturnsFailedCancellationWorkItemWhenNoPaymentRefundExists()
     {
         var passengerId = Guid.NewGuid();
@@ -293,7 +311,7 @@ public class RefundIssueApiHandlerTests
             "EUR",
             "customer cancelled").Value;
 
-    private static PaymentRefund CreateFailedRefund(Payment payment, decimal amount)
+    private static PaymentRefund CreateFailedRefund(Payment payment, decimal amount, bool canRetry = true)
     {
         var refund = PaymentRefund.Create(
             Guid.NewGuid(),
@@ -309,7 +327,7 @@ public class RefundIssueApiHandlerTests
             idempotencyKey: Guid.NewGuid().ToString("N")).Value;
         refund.MarkAttemptStarted(refund.IdempotencyKey!);
         refund.MarkPending("re_test_failed", payment.StripePaymentIntentId, payment.StripeChargeId);
-        refund.MarkFailed("stripe_failed", "Stripe declined the refund.", canRetry: true);
+        refund.MarkFailed("stripe_failed", "Stripe declined the refund.", canRetry: canRetry);
         return refund;
     }
 
