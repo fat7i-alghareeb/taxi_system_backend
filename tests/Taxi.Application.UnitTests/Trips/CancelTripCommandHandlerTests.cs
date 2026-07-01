@@ -180,6 +180,37 @@ public class CancelTripCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_StripeDisabledTrackedRefundFailure_ReturnsRefundState()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var (trip, quote, payment) = BuildAcceptedTripWithOfflinePayment(now.AddMinutes(-3), Fare);
+        var trackedRefund = CreateFailedRefund(payment, trip.Id, Fare);
+        var clientConfig = Substitute.For<IClientConfigProvider>();
+        clientConfig.GetClientConfig().Returns(new ClientConfig(false, "pk_test", false));
+        var refundLifecycle = Substitute.For<IRefundLifecycleService>();
+        refundLifecycle
+            .RequestRefundAsync(Arg.Any<RefundRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<PaymentRefund>>(trackedRefund));
+
+        var handler = new CancelTripCommandHandler(
+            BuildContext(trip, quote, payment),
+            BuildPassengerUser(),
+            clientConfig,
+            Substitute.For<IStripePaymentService>(),
+            refundLifecycle,
+            new FakeTimeProvider(now),
+            Substitute.For<ILogger<CancelTripCommandHandler>>());
+
+        var result = await handler.Handle(new CancelTripCommand(trip.Id), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value.Refund);
+        Assert.Equal("Failed", result.Value.Refund.Status);
+        Assert.Equal(Fare, result.Value.Refund.Amount);
+        Assert.Equal(Currency, result.Value.Refund.CurrencyCode);
+    }
+
+    [Fact]
     public async Task Handle_ArrivedStatus_Returns45PercentRefund_NoFlatFee()
     {
         var now = DateTimeOffset.UtcNow;
@@ -224,6 +255,25 @@ public class CancelTripCommandHandlerTests
         payment.MarkAsCompleted();
 
         return (trip, quote, payment);
+    }
+
+    private static PaymentRefund CreateFailedRefund(Payment payment, Guid tripId, decimal amount)
+    {
+        var refund = PaymentRefund.Create(
+            Guid.NewGuid(),
+            payment.Id,
+            PaymentRefundSourceType.PassengerCancellation,
+            amount,
+            payment.Currency,
+            payment.Amount,
+            100m,
+            true,
+            tripId,
+            passengerId: _passengerId).Value;
+
+        refund.MarkAttemptStarted("test_refund_attempt", DateTimeOffset.UtcNow);
+        refund.MarkFailed("refund_failed", "Refund could not be processed.", canRetry: true);
+        return refund;
     }
 
     private static (Trip trip, PricingQuote quote, Payment payment) BuildArrivedTripWithPayment(

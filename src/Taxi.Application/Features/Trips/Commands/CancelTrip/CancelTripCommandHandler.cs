@@ -136,6 +136,8 @@ public class CancelTripCommandHandler(
 
         context.TripCancellations.Add(cancellationResult.Value);
 
+        PaymentRefund? trackedRefund = null;
+
         if (payment is not null)
         {
             var stripeEnabled = clientConfig.GetClientConfig().StripeEnabled;
@@ -181,13 +183,18 @@ public class CancelTripCommandHandler(
                         trip.Id,
                         refundResult.Error.Code);
                 }
-                else if (refundResult.Value.Status == PaymentRefundStatus.Failed)
+                else
                 {
-                    logger.LogWarning(
-                        "Tracked cancellation refund {RefundId} failed immediately for PaymentIntent {PaymentIntentId} on trip {TripId}",
-                        refundResult.Value.Id,
-                        payment.StripePaymentIntentId,
-                        trip.Id);
+                    trackedRefund = refundResult.Value;
+
+                    if (refundResult.Value.Status == PaymentRefundStatus.Failed)
+                    {
+                        logger.LogWarning(
+                            "Tracked cancellation refund {RefundId} failed immediately for PaymentIntent {PaymentIntentId} on trip {TripId}",
+                            refundResult.Value.Id,
+                            payment.StripePaymentIntentId,
+                            trip.Id);
+                    }
                 }
             }
         }
@@ -246,6 +253,7 @@ public class CancelTripCommandHandler(
             IsScheduled: trip.ScheduledAtUtc.HasValue,
             DispatchWindowOpensAtUtc: trip.DispatchWindowOpensAtUtc,
             CanMarkEnRoute: trip.CanMarkEnRoute(timeProvider.GetUtcNow()),
-            AttentionState: trip.GetAttentionState(timeProvider.GetUtcNow()).ToString());
+            AttentionState: trip.GetAttentionState(timeProvider.GetUtcNow()).ToString(),
+            Refund: trackedRefund?.ToRefundDto());
     }
 }
