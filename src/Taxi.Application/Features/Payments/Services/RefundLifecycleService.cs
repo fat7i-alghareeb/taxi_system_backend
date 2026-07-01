@@ -6,6 +6,7 @@ using Taxi.Application.Features.Payments.Dtos;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Payments;
+using Taxi.Domain.Trips;
 
 namespace Taxi.Application.Features.Payments.Services;
 
@@ -188,11 +189,6 @@ public sealed class RefundLifecycleService(
         RefundRequest request,
         CancellationToken ct)
     {
-        if (!clientConfigProvider.GetClientConfig().StripeEnabled)
-        {
-            return PaymentErrors.RefundStripeDisabled;
-        }
-
         if (payment.Status != PaymentStatus.Completed ||
             string.IsNullOrWhiteSpace(payment.StripePaymentIntentId))
         {
@@ -234,6 +230,33 @@ public sealed class RefundLifecycleService(
         PaymentRefund refund,
         CancellationToken ct)
     {
+        if (!clientConfigProvider.GetClientConfig().StripeEnabled)
+        {
+            if (refund.AttemptCount > 1)
+            {
+                refund.MarkSucceeded();
+                var stateResult = await RecalculateRefundedPaymentStateAsync(payment, ct);
+                if (stateResult.IsFailure)
+                {
+                    return stateResult.Errors;
+                }
+
+                await context.SaveChangesAsync(ct);
+                await NotifyRefundRealtimeAsync(refund, payment, ct);
+                return refund;
+            }
+
+            refund.MarkFailed(
+                PaymentErrors.RefundUnavailable.Code,
+                PaymentErrors.RefundUnavailable.Description,
+                GenericCustomerFailureMessage,
+                canRetry: true);
+            await context.SaveChangesAsync(ct);
+            await NotifyAdminsRefundFailedAsync(refund, payment, ct);
+            await NotifyRefundRealtimeAsync(refund, payment, ct);
+            return refund;
+        }
+
         if (optionsProvider.GetOptions().ForceRefundFailure)
         {
             refund.MarkFailed(
@@ -275,6 +298,11 @@ public sealed class RefundLifecycleService(
         if (string.Equals(stripeRefund.Status, "succeeded", StringComparison.OrdinalIgnoreCase))
         {
             refund.MarkSucceeded();
+            var stateResult = await RecalculateRefundedPaymentStateAsync(payment, ct);
+            if (stateResult.IsFailure)
+            {
+                return stateResult.Errors;
+            }
         }
 
         await context.SaveChangesAsync(ct);
@@ -344,6 +372,43 @@ public sealed class RefundLifecycleService(
                 refund.Id,
                 payment.Id);
         }
+    }
+
+    private async Task<Result<Success>> RecalculateRefundedPaymentStateAsync(Payment payment, CancellationToken ct)
+    {
+        var refunds = await context.PaymentRefunds
+            .Where(refund => refund.PaymentId == payment.Id)
+            .ToListAsync(ct);
+        var totals = PaymentRefundAccounting.Calculate(payment.Amount, refunds);
+        if (!totals.IsFullyRefunded || payment.Status == PaymentStatus.Refunded)
+        {
+            return Result.Success;
+        }
+
+        var refundedResult = payment.MarkAsRefunded();
+        if (refundedResult.IsFailure)
+        {
+            return refundedResult.Error;
+        }
+
+        if (payment.Kind != PaymentKind.Fare)
+        {
+            return Result.Success;
+        }
+
+        var trip = await context.Trips.FirstOrDefaultAsync(trip => trip.Id == payment.TripId, ct);
+        if (trip is null)
+        {
+            return TripErrors.NotFound;
+        }
+
+        if (trip.Status is not (TripStatus.Cancelled or TripStatus.Completed))
+        {
+            return Result.Success;
+        }
+
+        var tripRefundedResult = trip.MarkRefunded(totals.SuccessfulAmount);
+        return tripRefundedResult.IsFailure ? tripRefundedResult.Error : Result.Success;
     }
 
     private async Task<PaymentRefund?> FindLatestRefundAsync(

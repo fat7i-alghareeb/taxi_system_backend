@@ -203,7 +203,7 @@ public sealed class SignalRTripNotifier(IHubContext<TripHub> hubContext, ILogger
         Guid refundIssueId,
         Guid tripId,
         Guid passengerId,
-        Guid paymentId,
+        Guid? paymentId,
         string requestType,
         string reviewStatus,
         CancellationToken ct = default,

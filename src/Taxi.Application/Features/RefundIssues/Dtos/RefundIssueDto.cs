@@ -4,7 +4,7 @@ public record RefundIssueDto(
     Guid Id,
     Guid PassengerId,
     Guid TripId,
-    Guid PaymentId,
+    Guid? PaymentId,
     Guid? PaymentRefundId,
     Guid? TripCancellationId,
     string RequestType,

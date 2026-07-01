@@ -11,47 +11,28 @@ public static class CancellationPolicy
     /// <summary>Refund when cancelling inside the free window.</summary>
     public const int WithinWindowRefundPercent = 100;
 
-    /// <summary>Refund when a passenger cancels after the free window has closed.</summary>
-    public const int AfterWindowRefundPercent = 20;
+    /// <summary>Refund when a passenger cancels after the 5-minute free window has closed.</summary>
+    public const int AfterWindowRefundPercent = 45;
 
-    /// <summary>Refund issued to the passenger on a driver/admin no-show cancellation.</summary>
-    public const int DriverCancelRefundPercent = 20;
-
-    /// <summary>
-    /// Flat fee charged when a passenger cancels after the driver has already arrived at
-    /// the pickup point (regardless of the 1-hour booking window).
-    /// The passenger is refunded the remaining fare after this fee is deducted.
-    /// </summary>
-    public const decimal ArrivedCancellationFee = 6.50m;
+    /// <summary>Refund issued to the passenger when a driver/admin cancels due to passenger no-show.</summary>
+    public const int DriverCancelRefundPercent = 45;
 
     /// <summary>
-    /// Free-cancellation grace measured from booking time. Applies to immediate trips
-    /// and also protects a scheduled trip that was just booked.
+    /// Free-cancellation grace measured from booking creation time.
+    /// Applies to all trip types (immediate and scheduled). After this window,
+    /// the passenger receives <see cref="AfterWindowRefundPercent"/> of the fare.
     /// </summary>
-    public static readonly TimeSpan FreeWindowFromBooking = TimeSpan.FromHours(1);
-
-    /// <summary>
-    /// For scheduled trips, cancellation stays free until this lead time before the
-    /// agreed pickup, regardless of when the booking was made.
-    /// </summary>
-    public static readonly TimeSpan ScheduledFreeWindowLeadTime = TimeSpan.FromHours(1);
+    public static readonly TimeSpan FreeWindowFromBooking = TimeSpan.FromMinutes(5);
 
     /// <summary>
     /// Whether a passenger cancellation is still free at <paramref name="now"/>.
-    /// Free if it is within the booking grace OR (for scheduled trips) still earlier
-    /// than the lead-time cutoff before the scheduled pickup.
+    /// Free if cancellation occurs within <see cref="FreeWindowFromBooking"/> of booking creation.
+    /// The window is inclusive: exactly at the boundary is still free.
     /// </summary>
     public static bool IsWithinFreeWindow(
         DateTimeOffset createdAtUtc,
-        DateTimeOffset? scheduledAtUtc,
         DateTimeOffset now)
     {
-        if (now <= createdAtUtc + FreeWindowFromBooking)
-        {
-            return true;
-        }
-
-        return scheduledAtUtc is { } scheduledAt
-            && now <= scheduledAt - ScheduledFreeWindowLeadTime;
+        return now <= createdAtUtc + FreeWindowFromBooking;
     }
 }

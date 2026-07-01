@@ -1,6 +1,8 @@
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.RefundIssues.Dtos;
 using Taxi.Contracts.Common;
@@ -50,17 +52,17 @@ public sealed class SubmitRefundIssueCommandHandler(
             .OrderByDescending(payment => payment.ProcessedAtUtc)
             .ThenByDescending(payment => payment.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
-        if (payment is null)
-        {
-            return PaymentErrors.NotFound;
-        }
 
-        var latestRefund = await context.PaymentRefunds
-            .AsNoTracking()
-            .Where(refund => refund.PaymentId == payment.Id)
-            .OrderByDescending(refund => refund.RequestedAtUtc)
-            .ThenByDescending(refund => refund.Id)
-            .FirstOrDefaultAsync(ct);
+        PaymentRefund? latestRefund = null;
+        if (payment is not null)
+        {
+            latestRefund = await context.PaymentRefunds
+                .AsNoTracking()
+                .Where(refund => refund.PaymentId == payment.Id)
+                .OrderByDescending(refund => refund.RequestedAtUtc)
+                .ThenByDescending(refund => refund.Id)
+                .FirstOrDefaultAsync(ct);
+        }
 
         var latestCancellation = await context.TripCancellations
             .AsNoTracking()
@@ -68,19 +70,22 @@ public sealed class SubmitRefundIssueCommandHandler(
             .OrderByDescending(cancellation => cancellation.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
 
+        var refundAmountSnapshot = latestRefund?.Amount ?? latestCancellation?.RefundAmount;
+        var refundCurrencySnapshot = latestRefund?.Currency ?? latestCancellation?.CurrencyCode;
+
         var issueResult = RefundIssue.Create(
             Guid.NewGuid(),
             trip.PassengerId,
             trip.Id,
-            payment.Id,
+            payment?.Id,
             requestType,
             request.CustomerReason,
             request.Note,
             latestRefund?.Id,
             latestCancellation?.Id,
             latestRefund?.Status,
-            latestRefund?.Amount,
-            latestRefund?.Currency,
+            refundAmountSnapshot,
+            refundCurrencySnapshot,
             request.WhatsAppOpened);
         if (issueResult.IsFailure)
         {
@@ -105,9 +110,12 @@ public sealed class SubmitRefundIssueCommandHandler(
                 ["type"] = "refund_issue_created",
                 ["refundIssueId"] = issue.Id.ToString(),
                 ["tripId"] = issue.TripId.ToString(),
-                ["paymentId"] = issue.PaymentId.ToString(),
                 ["reviewStatus"] = issue.ReviewStatus.ToString(),
             };
+            if (issue.PaymentId.HasValue)
+            {
+                data["paymentId"] = issue.PaymentId.Value.ToString();
+            }
 
             await notificationService.SendPushNotificationToAdminsAsync(
                 LocalizationKeys.RefundIssue.CreatedAdminTitle,

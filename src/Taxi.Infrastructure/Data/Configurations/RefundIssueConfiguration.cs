@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 using Taxi.Domain.Payments;
 using Taxi.Domain.RefundIssues;
 using Taxi.Domain.Trips;
@@ -69,6 +70,7 @@ public sealed class RefundIssueConfiguration : IEntityTypeConfiguration<RefundIs
         builder.HasOne<Payment>()
             .WithMany()
             .HasForeignKey(x => x.PaymentId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<PaymentRefund>()

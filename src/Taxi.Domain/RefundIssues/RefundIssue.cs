@@ -12,7 +12,7 @@ public sealed class RefundIssue : AuditableEntity
         Guid id,
         Guid passengerId,
         Guid tripId,
-        Guid paymentId,
+        Guid? paymentId,
         RefundIssueRequestType requestType,
         string customerReason,
         string? note,
@@ -42,7 +42,7 @@ public sealed class RefundIssue : AuditableEntity
 
     public Guid PassengerId { get; private set; }
     public Guid TripId { get; private set; }
-    public Guid PaymentId { get; private set; }
+    public Guid? PaymentId { get; private set; }
     public Guid? PaymentRefundId { get; private set; }
     public Guid? TripCancellationId { get; private set; }
     public RefundIssueRequestType RequestType { get; private set; }
@@ -61,7 +61,7 @@ public sealed class RefundIssue : AuditableEntity
         Guid id,
         Guid passengerId,
         Guid tripId,
-        Guid paymentId,
+        Guid? paymentId,
         RefundIssueRequestType requestType,
         string customerReason,
         string? note = null,
@@ -75,7 +75,6 @@ public sealed class RefundIssue : AuditableEntity
         if (id == Guid.Empty ||
             passengerId == Guid.Empty ||
             tripId == Guid.Empty ||
-            paymentId == Guid.Empty ||
             string.IsNullOrWhiteSpace(customerReason) ||
             !Enum.IsDefined(requestType))
         {

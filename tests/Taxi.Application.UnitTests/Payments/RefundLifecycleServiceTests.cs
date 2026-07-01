@@ -240,6 +240,76 @@ public class RefundLifecycleServiceTests
     }
 
     [Fact]
+    public async Task RequestRefundAsync_StripeDisabled_CreatesTrackedFailedRefundAndNotifiesAdmins()
+    {
+        var payment = CreateCompletedPayment();
+        var context = BuildContext(payment);
+        clientConfig.GetClientConfig().Returns(new ClientConfig(false, "pk_test", true));
+        var service = CreateService(context);
+
+        var result = await service.RequestRefundAsync(
+            new RefundRequest(
+                payment.Id,
+                15m,
+                PaymentRefundSourceType.PassengerCancellation,
+                15m,
+                false,
+                payment.TripId,
+                TripCancellationId: Guid.NewGuid(),
+                PassengerId: Guid.NewGuid()),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Failed, result.Value.Status);
+        Assert.Equal(PaymentErrors.RefundUnavailable.Code, result.Value.FailureCode);
+        Assert.True(result.Value.RequiresAdminAction);
+        Assert.True(result.Value.CanRetry);
+        Assert.Equal(1, result.Value.AttemptCount);
+        Assert.Equal(LocalizationKeys.Payment.RefundCustomerFailureMessage, result.Value.SafeCustomerFailureMessage);
+        context.PaymentRefunds.Received(1).Add(Arg.Any<PaymentRefund>());
+        await stripe.DidNotReceive().CreateRefundAsync(
+            Arg.Any<string>(),
+            Arg.Any<decimal?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>());
+        await notifications.Received(1).SendPushNotificationToAdminsAsync(
+            LocalizationKeys.Payment.RefundFailedAdminTitle,
+            LocalizationKeys.Payment.RefundFailedAdminBody,
+            Arg.Any<Dictionary<string, string>>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Is<object[]?>(args => args == null),
+            Arg.Is<object[]?>(args => args != null && args.Length == 3));
+    }
+
+    [Fact]
+    public async Task RetryRefundAsync_StripeDisabled_CompletesRetryWithoutCallingStripe()
+    {
+        var payment = CreateCompletedPayment();
+        var failedRefund = CreateFailedRefund(payment, 20m, PaymentRefundSourceType.PassengerCancellation);
+        var context = BuildContext(payment, [failedRefund]);
+        clientConfig.GetClientConfig().Returns(new ClientConfig(false, "pk_test", true));
+        var service = CreateService(context);
+
+        var result = await service.RetryRefundAsync(
+            failedRefund.Id,
+            Guid.NewGuid(),
+            "retry from admin",
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Succeeded, result.Value.Status);
+        Assert.False(result.Value.RequiresAdminAction);
+        Assert.False(result.Value.CanRetry);
+        Assert.Null(result.Value.FailureCode);
+        Assert.Equal(2, result.Value.AttemptCount);
+        await stripe.DidNotReceive().CreateRefundAsync(
+            Arg.Any<string>(),
+            Arg.Any<decimal?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>());
+    }
+
+    [Fact]
     public async Task RetryRefundAsync_WhenBalanceNoLongerCoversRefund_BlocksRetry()
     {
         var payment = CreateCompletedPayment();

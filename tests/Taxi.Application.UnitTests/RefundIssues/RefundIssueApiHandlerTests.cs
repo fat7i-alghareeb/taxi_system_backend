@@ -7,6 +7,7 @@ using Taxi.Application.Features.RefundIssues.Commands.SubmitRefundIssue;
 using Taxi.Application.Features.RefundIssues.Dtos;
 using Taxi.Application.Features.Refunds.Commands.RetryRefund;
 using Taxi.Application.Features.Refunds.Queries.GetRefundById;
+using Taxi.Application.Features.Refunds.Queries.GetRefunds;
 using Taxi.Application.UnitTests.Infrastructure;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Payments;
@@ -71,6 +72,47 @@ public class RefundIssueApiHandlerTests
     }
 
     [Fact]
+    public async Task SubmitRefundIssue_WhenPaymentDoesNotExist_CreatesSupportRecordFromCancellationSnapshot()
+    {
+        var passengerId = Guid.NewGuid();
+        var trip = CreateTrip(passengerId);
+        var cancellation = CreateCancellation(trip.Id, 20m, 20m);
+        var context = BuildContext(
+            trips: [trip],
+            cancellations: [cancellation],
+            users: [PaymentTestBuilders.CreatePassenger(passengerId)]);
+        var currentUser = Substitute.For<IUser>();
+        currentUser.Id.Returns(passengerId.ToString());
+        currentUser.IsAdmin.Returns(false);
+        var handler = new SubmitRefundIssueCommandHandler(
+            context,
+            currentUser,
+            Substitute.For<INotificationService>(),
+            Substitute.For<ITripNotifier>(),
+            Substitute.For<ILogger<SubmitRefundIssueCommandHandler>>());
+
+        var result = await handler.Handle(
+            new SubmitRefundIssueCommand(
+                trip.Id,
+                nameof(RefundIssueRequestType.ReceivedLessThanExpected),
+                "received-less",
+                "No card payment exists because Stripe is disabled.",
+                false),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.PaymentId);
+        Assert.Null(result.Value.PaymentRefundId);
+        Assert.Equal(cancellation.Id, result.Value.TripCancellationId);
+        Assert.Equal(cancellation.RefundAmount, result.Value.RefundAmountSnapshot);
+        Assert.Equal(cancellation.CurrencyCode, result.Value.RefundCurrencySnapshot);
+        context.RefundIssues.Received(1).Add(Arg.Is<RefundIssue>(issue =>
+            issue.PaymentId == null &&
+            issue.TripCancellationId == cancellation.Id &&
+            issue.RefundAmountSnapshot == cancellation.RefundAmount));
+    }
+
+    [Fact]
     public void CustomerRefundDtos_DoNotExposeStripeInternals()
     {
         var customerRefundProperties = typeof(RefundSummaryDto)
@@ -107,6 +149,56 @@ public class RefundIssueApiHandlerTests
         Assert.Equal("stripe_failed", result.Value.FailureCode);
         Assert.Equal("Stripe declined the refund.", result.Value.FailureReason);
         Assert.True(result.Value.CanRetry);
+    }
+
+    [Fact]
+    public async Task GetRefunds_ReturnsFailedCancellationWorkItemWhenNoPaymentRefundExists()
+    {
+        var passengerId = Guid.NewGuid();
+        var trip = CreateTrip(passengerId);
+        var cancellation = CreateCancellation(trip.Id, 25m, 25m);
+        var context = BuildContext(trips: [trip], cancellations: [cancellation]);
+        var handler = new GetRefundsQueryHandler(context);
+
+        var result = await handler.Handle(new GetRefundsQuery(), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var item = Assert.Single(result.Value.Items);
+        Assert.Null(item.RefundId);
+        Assert.Null(item.PaymentId);
+        Assert.Equal(cancellation.Id, item.TripCancellationId);
+        Assert.Equal(PaymentRefundStatus.Failed.ToString(), item.Status);
+        Assert.Equal(PaymentRefundSourceType.PassengerCancellation.ToString(), item.SourceType);
+        Assert.Equal(cancellation.RefundAmount, item.Amount);
+        Assert.True(item.RequiresAdminAction);
+        Assert.False(item.IsManualObligation);
+        Assert.False(item.CanRetry);
+        Assert.Equal(PaymentErrors.RefundUnavailable.Code, item.FailureCode);
+        Assert.Equal(PaymentErrors.RefundUnavailable.Code, item.RetryBlockedReason);
+    }
+
+    [Fact]
+    public async Task GetRefunds_DoesNotDuplicateCancellationWhenPaymentRefundExists()
+    {
+        var passengerId = Guid.NewGuid();
+        var trip = CreateTrip(passengerId);
+        var payment = CreateCompletedPayment(trip.Id);
+        var cancellation = CreateCancellation(trip.Id, 25m, 25m);
+        var refund = CreateSucceededRefund(payment, 25m, cancellation.Id);
+        var context = BuildContext(
+            trips: [trip],
+            payments: [payment],
+            refunds: [refund],
+            cancellations: [cancellation]);
+        var handler = new GetRefundsQueryHandler(context);
+
+        var result = await handler.Handle(new GetRefundsQuery(), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var item = Assert.Single(result.Value.Items);
+        Assert.Equal(refund.Id, item.RefundId);
+        Assert.False(item.IsManualObligation);
+        Assert.Equal(cancellation.Id, item.TripCancellationId);
     }
 
     [Fact]
@@ -169,7 +261,7 @@ public class RefundIssueApiHandlerTests
         return payment;
     }
 
-    private static PaymentRefund CreateSucceededRefund(Payment payment, decimal amount)
+    private static PaymentRefund CreateSucceededRefund(Payment payment, decimal amount, Guid? tripCancellationId = null)
     {
         var refund = PaymentRefund.Create(
             Guid.NewGuid(),
@@ -180,6 +272,7 @@ public class RefundIssueApiHandlerTests
             payment.Amount,
             refundPercent: amount,
             tripId: payment.TripId,
+            tripCancellationId: tripCancellationId,
             stripePaymentIntentId: payment.StripePaymentIntentId,
             stripeChargeId: payment.StripeChargeId,
             idempotencyKey: Guid.NewGuid().ToString("N")).Value;
@@ -188,6 +281,17 @@ public class RefundIssueApiHandlerTests
         refund.MarkSucceeded();
         return refund;
     }
+
+    private static TripCancellation CreateCancellation(Guid tripId, decimal refundPercent, decimal refundAmount)
+        => TripCancellation.Create(
+            Guid.NewGuid(),
+            tripId,
+            CancellationActor.Passenger,
+            CancellationReason.PassengerAfterOneHour,
+            refundPercent,
+            refundAmount,
+            "EUR",
+            "customer cancelled").Value;
 
     private static PaymentRefund CreateFailedRefund(Payment payment, decimal amount)
     {

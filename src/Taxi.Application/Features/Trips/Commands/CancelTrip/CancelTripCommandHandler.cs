@@ -60,21 +60,18 @@ public class CancelTripCommandHandler(
         var fare = quote?.FinalFare ?? 0;
         var currency = quote?.CurrencyCode ?? "EUR";
 
-        // Free window is measured from booking for immediate trips, but for scheduled
-        // trips it also stays open until shortly before the agreed pickup — otherwise an
-        // advance booking would lose the free window an hour after booking, long before
-        // the ride. See CancellationPolicy.IsWithinFreeWindow.
+        // Free window is 5 minutes from booking creation for all trip types (immediate and scheduled).
+        // See CancellationPolicy.IsWithinFreeWindow.
         var isWithinPassengerWindow = CancellationPolicy.IsWithinFreeWindow(
             trip.CreatedAtUtc,
-            trip.ScheduledAtUtc,
             timeProvider.GetUtcNow());
 
         // Cancellation policy:
         //   - Admin override: full refund (nothing charged yet => 0).
         //   - Passenger, never charged (AwaitingPayment): no refund.
-        //   - Passenger, driver already Arrived: flat €6.50 fee; remainder refunded.
-        //   - Passenger inside the free window: free cancellation (100% refund).
-        //   - Passenger after the free window: still cancellable, but only 20% refunded.
+        //   - Passenger inside the 5-minute free window: free cancellation (100% refund).
+        //   - Passenger after the free window: still cancellable, but only 45% refunded.
+        //     Applies to all statuses including Arrived — no flat-fee exception.
         CancellationActor actor;
         CancellationReason reason;
         decimal refundPercent;
@@ -94,27 +91,19 @@ public class CancelTripCommandHandler(
             actor = CancellationActor.Passenger;
             if (preCancelStatus == TripStatus.AwaitingPayment)
             {
-                reason = CancellationReason.PassengerWithinOneHour;
+                reason = CancellationReason.PassengerWithinFiveMinutes;
                 refundPercent = 0;
                 refundAmount = 0;
             }
-            else if (preCancelStatus == TripStatus.Arrived)
-            {
-                // Driver is at the pickup point: charge a flat arrived-cancellation fee.
-                reason = CancellationReason.PassengerCancelledAfterArrival;
-                var charged = Math.Min(fare, CancellationPolicy.ArrivedCancellationFee);
-                refundAmount = Math.Round(fare - charged, 2, MidpointRounding.AwayFromZero);
-                refundPercent = fare > 0 ? Math.Round(refundAmount / fare * 100m, 2) : 0;
-            }
             else if (isWithinPassengerWindow)
             {
-                reason = CancellationReason.PassengerWithinOneHour;
+                reason = CancellationReason.PassengerWithinFiveMinutes;
                 refundPercent = CancellationPolicy.WithinWindowRefundPercent;
                 refundAmount = Math.Round(fare * refundPercent / 100m, 2, MidpointRounding.AwayFromZero);
             }
             else
             {
-                reason = CancellationReason.PassengerAfterOneHour;
+                reason = CancellationReason.PassengerAfterFiveMinutes;
                 refundPercent = CancellationPolicy.AfterWindowRefundPercent;
                 refundAmount = Math.Round(fare * refundPercent / 100m, 2, MidpointRounding.AwayFromZero);
             }
@@ -147,11 +136,10 @@ public class CancelTripCommandHandler(
 
         context.TripCancellations.Add(cancellationResult.Value);
 
-        var stripeEnabled = clientConfig.GetClientConfig().StripeEnabled;
-
-        if (stripeEnabled && payment is not null && !string.IsNullOrWhiteSpace(payment.StripePaymentIntentId))
+        if (payment is not null && !string.IsNullOrWhiteSpace(payment.StripePaymentIntentId))
         {
-            if (preCancelStatus == TripStatus.AwaitingPayment && payment.Status == PaymentStatus.Pending)
+            var stripeEnabled = clientConfig.GetClientConfig().StripeEnabled;
+            if (stripeEnabled && preCancelStatus == TripStatus.AwaitingPayment && payment.Status == PaymentStatus.Pending)
             {
                 // PaymentSheet was never completed: cancel the intent so the user is never charged.
                 var cancelIntentResult = await stripe.CancelPaymentIntentAsync(payment.StripePaymentIntentId, ct);

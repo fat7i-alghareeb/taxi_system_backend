@@ -80,7 +80,7 @@ public interface ITripNotifier
         Guid refundIssueId,
         Guid tripId,
         Guid passengerId,
-        Guid paymentId,
+        Guid? paymentId,
         string requestType,
         string reviewStatus,
         CancellationToken ct = default,

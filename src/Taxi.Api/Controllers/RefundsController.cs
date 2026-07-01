@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Taxi.Application.Features.Refunds.Commands.RetryRefund;
 using Taxi.Application.Features.Refunds.Dtos;
 using Taxi.Application.Features.Refunds.Queries.GetRefundById;
+using Taxi.Application.Features.Refunds.Queries.GetRefundCancellationById;
 using Taxi.Application.Features.Refunds.Queries.GetRefunds;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Contracts.Requests.Refunds;
@@ -64,6 +65,18 @@ public sealed class RefundsController(ISender sender) : ApiController
     public async Task<IActionResult> GetRefundById(Guid refundId, CancellationToken ct)
     {
         var result = await sender.Send(new GetRefundByIdQuery(refundId), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpGet("cancellations/{tripCancellationId:guid}")]
+    [ProducesResponseType(typeof(AdminRefundDetailDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Admin manual refund obligation detail from a trip cancellation.")]
+    [EndpointName("GetRefundCancellationById")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetRefundCancellationById(Guid tripCancellationId, CancellationToken ct)
+    {
+        var result = await sender.Send(new GetRefundCancellationByIdQuery(tripCancellationId), ct);
         return result.Match(Ok, Problem);
     }
 

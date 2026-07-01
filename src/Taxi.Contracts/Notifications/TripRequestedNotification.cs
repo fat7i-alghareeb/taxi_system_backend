@@ -91,7 +91,7 @@ public sealed record RefundIssueCreatedNotification(
     Guid RefundIssueId,
     Guid TripId,
     Guid PassengerId,
-    Guid PaymentId,
+    Guid? PaymentId,
     string RequestType,
     string ReviewStatus,
     Guid EventId = default);

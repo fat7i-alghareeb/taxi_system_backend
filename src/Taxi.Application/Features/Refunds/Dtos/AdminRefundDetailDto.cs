@@ -1,8 +1,8 @@
 namespace Taxi.Application.Features.Refunds.Dtos;
 
 public record AdminRefundDetailDto(
-    Guid RefundId,
-    Guid PaymentId,
+    Guid? RefundId,
+    Guid? PaymentId,
     Guid? TripId,
     Guid? PassengerId,
     string Status,
@@ -32,4 +32,6 @@ public record AdminRefundDetailDto(
     Guid? CustomerIncidentId,
     Guid? TripCompensationClaimId,
     Guid? RequestedByAdminId,
-    string? AdminNote);
+    string? AdminNote,
+    bool IsManualObligation = false,
+    string? CancellationReason = null);
