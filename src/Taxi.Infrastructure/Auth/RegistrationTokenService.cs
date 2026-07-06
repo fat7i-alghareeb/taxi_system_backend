@@ -79,7 +79,11 @@ internal sealed class RegistrationTokenService(
 
         try
         {
-            var handler = new JwtSecurityTokenHandler();
+            // MapInboundClaims = false keeps the raw JWT claim names ("email", "name",
+            // "scope", ...). With the default (true), JwtSecurityTokenHandler renames
+            // "email"/"name" to long XML-schema URIs, so FindFirstValue("email") would
+            // return null and every token would be rejected as invalid.
+            var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
             var principal = handler.ValidateToken(token, parameters, out _);
 
             if (principal.FindFirstValue(ScopeClaim) != ScopeValue)
