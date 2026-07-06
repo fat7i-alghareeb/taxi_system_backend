@@ -15,6 +15,14 @@ public interface IIdentityService
 
     Task<Result<AppUserDto>> GetUserByIdAsync(string userId);
     Task<Result<string>> GetOrCreateUserByPhoneAsync(string phone, string role);
+
+    /// <summary>
+    /// Creates a passwordless Identity (AppUser) for a Google/email sign-up where the
+    /// domain account is keyed by a verified email (and an unverified contact phone).
+    /// A random unusable password is set; these users authenticate via OTP/Google, not passwords.
+    /// </summary>
+    Task<Result<string>> CreatePasswordlessUserAsync(string email, string? phone, string role);
+
     Task<Result<string>> CreateUserAsync(string phone, string email, string password, string role);
     Task<Result<string>> CreateAdminUserAsync(string userName, string email, string password);
     Task<string?> GetUserNameAsync(string userId);

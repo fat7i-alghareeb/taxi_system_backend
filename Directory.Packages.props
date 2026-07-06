@@ -44,6 +44,8 @@
     <PackageVersion Include="FluentValidation.AspNetCore" Version="11.3.1" />
     <!-- QuestPDF -->
     <PackageVersion Include="QuestPDF" Version="2026.2.4" />
+    <!-- Email (Titan SMTP) -->
+    <PackageVersion Include="MailKit" Version="4.17.0" />
     <!-- Blazor -->
     <PackageVersion Include="Blazored.LocalStorage" Version="4.5.0" />
     <PackageVersion Include="Humanizer" Version="3.0.10" />

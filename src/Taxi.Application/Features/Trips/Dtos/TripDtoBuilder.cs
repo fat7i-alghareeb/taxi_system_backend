@@ -124,6 +124,8 @@ public static class TripDtoBuilder
             DispatchWindowOpensAtUtc: trip.DispatchWindowOpensAtUtc,
             CanMarkEnRoute: trip.CanMarkEnRoute(now),
             AttentionState: trip.GetAttentionState(now).ToString(),
-            Refund: latestRefund?.ToRefundDto());
+            Refund: latestRefund?.ToRefundDto(),
+            PassengerCount: trip.PassengerCount,
+            BagCount: trip.BagCount);
     }
 }

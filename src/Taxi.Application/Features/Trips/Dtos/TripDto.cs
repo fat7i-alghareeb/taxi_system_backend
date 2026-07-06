@@ -42,7 +42,9 @@ public record TripDto(
     bool CanMarkEnRoute = false,
     string AttentionState = "Normal",
     int RecordingCount = 0,
-    TripRefundDto? Refund = null);
+    TripRefundDto? Refund = null,
+    int PassengerCount = 1,
+    int BagCount = 0);
 
 public record TripRouteSegmentDto(
     int DistanceMeters,

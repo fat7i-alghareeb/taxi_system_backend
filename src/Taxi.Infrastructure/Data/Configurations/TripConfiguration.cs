@@ -112,6 +112,14 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
         builder.Property(t => t.AcceptedReminder30SentAtUtc).IsRequired(false);
         builder.Property(t => t.AcceptedReminder15SentAtUtc).IsRequired(false);
 
+        builder.Property(t => t.PassengerCount)
+            .IsRequired()
+            .HasDefaultValue(1);
+
+        builder.Property(t => t.BagCount)
+            .IsRequired()
+            .HasDefaultValue(0);
+
         builder.Property(t => t.PassengerRating)
             .IsRequired(false);
 

@@ -13,6 +13,14 @@ public static class UserErrors
         code: LocalizationKeys.User.PhoneRequired,
         description: "Phone number is required.");
 
+    public static readonly Error EmailRequired = Error.Validation(
+        code: LocalizationKeys.User.EmailRequired,
+        description: "Email is required.");
+
+    public static readonly Error GoogleIdRequired = Error.Validation(
+        code: LocalizationKeys.User.GoogleIdRequired,
+        description: "Google account id is required.");
+
     public static readonly Error ProfileNameRequired = Error.Validation(
         code: LocalizationKeys.User.ProfileNameRequired,
         description: "Profile name is required.");

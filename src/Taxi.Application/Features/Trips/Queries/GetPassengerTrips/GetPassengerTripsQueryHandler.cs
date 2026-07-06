@@ -25,9 +25,22 @@ public class GetPassengerTripsQueryHandler(
             "[Projection] {QueryName} — PassengerId='{PassengerId}'. Paging={Page}/{PageSize}.",
             nameof(GetPassengerTripsQuery), passengerId, request.Page, request.PageSize);
 
+        // "Start fresh" hides pre-reset trips from THIS customer-facing history only.
+        // Admin, accounting, payment and invoice queries never apply this epoch and keep
+        // seeing every row.
+        var profileResetAtUtc = await context.DomainUsers
+            .Where(u => u.Id == passengerId)
+            .Select(u => u.ProfileResetAtUtc)
+            .FirstOrDefaultAsync(ct);
+
         var query = context.Trips
             .AsNoTracking()
             .Where(t => t.PassengerId == passengerId && t.Status != TripStatus.AwaitingPayment);
+
+        if (profileResetAtUtc is not null)
+        {
+            query = query.Where(t => t.CreatedAtUtc >= profileResetAtUtc.Value);
+        }
 
         if (!string.IsNullOrWhiteSpace(request.Search))
         {

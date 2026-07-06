@@ -50,11 +50,12 @@ public class CompleteTripCommandHandler(
         // Settle any open waiting meter first so its accrued fee is computed and
         // visible (via the tracked entity) to the invoice that the TripCompleted
         // domain-event handler issues during SaveChangesAsync.
+        var now = timeProvider.GetUtcNow();
         var activeWaiting = await _context.TripWaitingSessions
             .FirstOrDefaultAsync(s => s.TripId == trip.Id && s.StoppedAtUtc == null, ct);
-        activeWaiting?.Stop();
+        activeWaiting?.Stop(now);
 
-        var transitionResult = trip.Complete(timeProvider.GetUtcNow());
+        var transitionResult = trip.Complete(now);
         if (transitionResult.IsFailure)
         {
             return transitionResult.Error;

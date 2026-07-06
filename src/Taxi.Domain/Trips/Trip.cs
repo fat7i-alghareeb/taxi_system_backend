@@ -79,9 +79,14 @@ public sealed class Trip : AuditableEntity
     public DateTimeOffset? AcceptedReminder30SentAtUtc { get; private set; }
     public DateTimeOffset? AcceptedReminder15SentAtUtc { get; private set; }
 
+    public int PassengerCount { get; private set; } = 1;
+    public int BagCount { get; private set; } = 0;
+
     /// <summary>Passenger's star rating (1-5) for a completed trip; null until rated.</summary>
     public int? PassengerRating { get; private set; }
     public string? RatingComment { get; private set; }
+
+    private bool IsWithinEditWindow => DateTimeOffset.UtcNow <= CreatedAtUtc.AddHours(1);
 
     public static Result<Trip> Request(
         Guid id,
@@ -525,6 +530,101 @@ public sealed class Trip : AuditableEntity
         PassengerRating = stars;
         RatingComment = NormalizePassengerNote(comment);
         return Result.Success;
+    }
+
+    public Result<Success> UpdateScheduledTime(DateTimeOffset? newScheduledAtUtc)
+    {
+        if (!IsWithinEditWindow)
+        {
+            return TripErrors.EditWindowExpired;
+        }
+
+        if (Status is not (TripStatus.AwaitingAdminAcceptance or TripStatus.Accepted))
+        {
+            return TripErrors.InvalidStatus(Status);
+        }
+
+        ScheduledAtUtc = newScheduledAtUtc;
+        return Result.Success;
+    }
+
+    public Result<Success> UpdateStops(IReadOnlyList<TripStop> newStops)
+    {
+        if (!IsWithinEditWindow)
+        {
+            return TripErrors.EditWindowExpired;
+        }
+
+        if (Status is not (TripStatus.AwaitingAdminAcceptance or TripStatus.Accepted))
+        {
+            return TripErrors.InvalidStatus(Status);
+        }
+
+        if (newStops.Count < 2)
+        {
+            return TripErrors.InvalidStops;
+        }
+
+        _stops.Clear();
+        _stops.AddRange(newStops);
+        return Result.Success;
+    }
+
+    public Result<Success> UpdatePassengerCount(int count, Guid? newVehicleTypeId = null)
+    {
+        if (!IsWithinEditWindow)
+        {
+            return TripErrors.EditWindowExpired;
+        }
+
+        if (Status is not (TripStatus.AwaitingAdminAcceptance or TripStatus.Accepted))
+        {
+            return TripErrors.InvalidStatus(Status);
+        }
+
+        if (count < 1)
+        {
+            return TripErrors.InvalidPassengerCount;
+        }
+
+        PassengerCount = count;
+
+        if (newVehicleTypeId.HasValue)
+        {
+            VehicleTypeId = newVehicleTypeId.Value;
+        }
+
+        return Result.Success;
+    }
+
+    public Result<Success> UpdateBagCount(int count)
+    {
+        if (!IsWithinEditWindow)
+        {
+            return TripErrors.EditWindowExpired;
+        }
+
+        if (Status is not (TripStatus.AwaitingAdminAcceptance or TripStatus.Accepted))
+        {
+            return TripErrors.InvalidStatus(Status);
+        }
+
+        if (count < 0)
+        {
+            return TripErrors.InvalidBagCount;
+        }
+
+        BagCount = count;
+        return Result.Success;
+    }
+
+    public void UpdateQuote(Guid newQuoteId, Guid? newVehicleTypeId = null)
+    {
+        QuoteId = newQuoteId;
+        if (newVehicleTypeId.HasValue)
+        {
+            VehicleTypeId = newVehicleTypeId.Value;
+        }
     }
 
     private static string? NormalizePassengerNote(string? passengerNote)

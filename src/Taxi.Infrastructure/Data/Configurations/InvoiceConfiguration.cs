@@ -38,6 +38,12 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         builder.Property(x => x.TaxRate).HasPrecision(5, 4);
         builder.Property(x => x.TaxAmount).HasPrecision(18, 2);
         builder.Property(x => x.GrossAmount).HasPrecision(18, 2);
+        builder.Property(x => x.FareAmount).HasPrecision(18, 2);
+        builder.Property(x => x.WaitingFeeAmount).HasPrecision(18, 2);
+        builder.Property(x => x.DiscountAmount).HasPrecision(18, 2);
+        builder.Property(x => x.TotalPaidAmount).HasPrecision(18, 2);
+        builder.Property(x => x.RefundedAmount).HasPrecision(18, 2);
+        builder.Property(x => x.RemainingAmount).HasPrecision(18, 2);
         builder.Property(x => x.DistanceKm).HasPrecision(10, 3);
         builder.Property(x => x.DurationMin).HasPrecision(10, 2);
 

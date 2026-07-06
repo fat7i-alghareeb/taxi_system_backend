@@ -127,6 +127,31 @@ public class IdentityService(
         return user.Id;
     }
 
+    public async Task<Result<string>> CreatePasswordlessUserAsync(string email, string? phone, string role)
+    {
+        var user = new AppUser
+        {
+            Id = Guid.NewGuid().ToString(),
+            UserName = email,
+            Email = email,
+            PhoneNumber = phone,
+            EmailConfirmed = true,
+            PhoneNumberConfirmed = false,
+        };
+
+        // Passwordless accounts (Google/email OTP) never sign in with a password; set a
+        // random unusable one so Identity's password column is populated.
+        var result = await _userManager.CreateAsync(user, Guid.NewGuid().ToString() + "A1!");
+        if (!result.Succeeded)
+        {
+            return Error.Failure("Identity.CreateFailed", string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
+
+        await _userManager.AddToRoleAsync(user, role);
+
+        return user.Id;
+    }
+
     public async Task<Result<string>> CreateUserAsync(string phone, string email, string password, string role)
     {
         var user = new AppUser

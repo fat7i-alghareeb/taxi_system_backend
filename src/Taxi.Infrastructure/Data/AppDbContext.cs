@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Domain.Admins;
 using Taxi.Domain.Audit;
+using Taxi.Domain.Auth;
 using Taxi.Domain.Common;
 using Taxi.Domain.Configuration;
 using Taxi.Domain.CustomerIncidents;
@@ -47,6 +48,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<InvoiceCounter> InvoiceCounters => this.Set<InvoiceCounter>();
     public DbSet<CustomerIncident> CustomerIncidents => this.Set<CustomerIncident>();
     public DbSet<RefundIssue> RefundIssues => this.Set<RefundIssue>();
+    public DbSet<OtpCode> OtpCodes => this.Set<OtpCode>();
 
     // Transactional outbox table. Rows are written automatically by
     // ConvertDomainEventsToOutboxInterceptor on save, and drained by OutboxDispatcherService.

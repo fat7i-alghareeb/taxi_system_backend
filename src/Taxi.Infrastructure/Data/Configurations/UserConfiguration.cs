@@ -18,11 +18,39 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasMaxLength(20);
 
+        // Only VERIFIED phones are unique. Unverified phones are contact/profile data and
+        // may duplicate; they can never be used for phone login. A partial index keeps the
+        // real owner from being blocked by someone else's unverified copy of the number.
         builder.HasIndex(x => x.Phone)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("\"IsPhoneVerified\" AND \"DeletedAtUtc\" IS NULL");
 
         builder.Property(x => x.Email)
             .HasMaxLength(150);
+
+        // Only VERIFIED emails are unique and usable as a login identity. Unverified emails
+        // are contact data.
+        builder.HasIndex(x => x.Email)
+            .IsUnique()
+            .HasFilter("\"IsEmailVerified\" AND \"Email\" IS NOT NULL AND \"DeletedAtUtc\" IS NULL");
+
+        builder.Property(x => x.IsPhoneVerified)
+            .HasDefaultValue(false)
+            .IsRequired();
+
+        builder.Property(x => x.IsEmailVerified)
+            .HasDefaultValue(false)
+            .IsRequired();
+
+        builder.Property(x => x.GoogleId)
+            .HasMaxLength(128);
+
+        // A Google identity maps to at most one active account.
+        builder.HasIndex(x => x.GoogleId)
+            .IsUnique()
+            .HasFilter("\"GoogleId\" IS NOT NULL AND \"DeletedAtUtc\" IS NULL");
+
+        builder.Property(x => x.ProfileResetAtUtc);
 
         builder.Property(x => x.ProfilePhotoUrl)
             .HasMaxLength(500);

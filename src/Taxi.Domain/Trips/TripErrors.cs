@@ -138,6 +138,22 @@ public static class TripErrors
         code: LocalizationKeys.Trip.InvalidRating,
         description: "The rating must be between 1 and 5 stars.");
 
+    public static readonly Error EditWindowExpired = Error.Validation(
+        code: LocalizationKeys.Trip.EditWindowExpired,
+        description: "Editing is only allowed within 1 hour of booking creation.");
+
+    public static readonly Error InvalidPassengerCount = Error.Validation(
+        code: LocalizationKeys.Trip.InvalidPassengerCount,
+        description: "Passenger count must be at least 1.");
+
+    public static readonly Error InvalidBagCount = Error.Validation(
+        code: LocalizationKeys.Trip.InvalidBagCount,
+        description: "Bag count cannot be negative.");
+
+    public static readonly Error NoSuitableVehicleForPassengerCount = Error.Validation(
+        code: LocalizationKeys.Trip.NoSuitableVehicleForPassengerCount,
+        description: "No suitable vehicle type found for the requested passenger count.");
+
     public static readonly Error ChatClosed = Error.Validation(
         code: LocalizationKeys.Trip.ChatClosed,
         description: "The chat for this trip is closed.");

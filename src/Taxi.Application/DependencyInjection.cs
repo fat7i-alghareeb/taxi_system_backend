@@ -4,6 +4,7 @@ using System.Reflection;
 using FluentValidation;
 using Taxi.Application.Common.Behaviours;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Features.Auth.Services;
 using Taxi.Application.Features.Payments.Services;
 
 public static class DependencyInjection
@@ -12,6 +13,7 @@ public static class DependencyInjection
     {
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         services.AddScoped<IRefundLifecycleService, RefundLifecycleService>();
+        services.AddScoped<IAuthSessionFactory, AuthSessionFactory>();
 
         services.AddMediatR(cfg =>
         {

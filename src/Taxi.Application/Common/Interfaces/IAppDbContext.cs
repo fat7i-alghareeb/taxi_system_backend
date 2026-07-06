@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Taxi.Domain.Admins;
 using Taxi.Domain.Audit;
+using Taxi.Domain.Auth;
 using Taxi.Domain.Configuration;
 using Taxi.Domain.CustomerIncidents;
 using Taxi.Domain.Drivers;
@@ -42,6 +43,7 @@ public interface IAppDbContext
     public DbSet<InvoiceCounter> InvoiceCounters { get; }
     public DbSet<CustomerIncident> CustomerIncidents { get; }
     public DbSet<RefundIssue> RefundIssues { get; }
+    public DbSet<OtpCode> OtpCodes { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

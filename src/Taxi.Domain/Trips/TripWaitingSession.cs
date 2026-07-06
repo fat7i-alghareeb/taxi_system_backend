@@ -76,14 +76,14 @@ public sealed class TripWaitingSession : AuditableEntity
             startedAtUtc ?? DateTimeOffset.UtcNow);
     }
 
-    public Result<Success> Stop()
+    public Result<Success> Stop(DateTimeOffset? stoppedAtUtc = null)
     {
         if (StoppedAtUtc.HasValue)
         {
             return Result.Success;
         }
 
-        StoppedAtUtc = DateTimeOffset.UtcNow;
+        StoppedAtUtc = stoppedAtUtc ?? DateTimeOffset.UtcNow;
         var totalMinutes = Math.Max(0, (int)Math.Ceiling((StoppedAtUtc.Value - StartedAtUtc).TotalMinutes));
         Minutes = totalMinutes;
         BillableMinutes = Math.Max(0, totalMinutes - GraceMinutes);

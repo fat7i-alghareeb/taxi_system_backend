@@ -27,6 +27,10 @@ using Taxi.Application.Features.Trips.Commands.StartTripWaiting;
 using Taxi.Application.Features.Trips.Commands.StopTripWaiting;
 using Taxi.Application.Features.Trips.Commands.SubmitCompensationClaim;
 using Taxi.Application.Features.Trips.Commands.UpdatePassengerNote;
+using Taxi.Application.Features.Trips.Commands.UpdateTripBagCount;
+using Taxi.Application.Features.Trips.Commands.UpdateTripPassengerCount;
+using Taxi.Application.Features.Trips.Commands.UpdateTripScheduledTime;
+using Taxi.Application.Features.Trips.Commands.UpdateTripStops;
 using Taxi.Application.Features.Trips.Commands.UploadTripRecording;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Application.Features.Trips.Queries.GetAllRecordings;
@@ -169,6 +173,65 @@ public class TripsController(ISender sender) : ApiController
     {
         var result = await sender.Send(new UpdatePassengerNoteCommand(id, request.PassengerNote), ct);
         return result.Match(Ok, Problem);
+    }
+
+    [HttpPut("{id:guid}/scheduled-time")]
+    [Authorize(Roles = "Passenger")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Updates the scheduled pickup time. Only allowed within 1 hour of booking creation.")]
+    [EndpointName("UpdateTripScheduledTime")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> UpdateScheduledTime(Guid id, [FromBody] UpdateTripScheduledTimeRequest request, CancellationToken ct)
+    {
+        var result = await sender.Send(new UpdateTripScheduledTimeCommand(id, request.ScheduledAtUtc), ct);
+        return result.Match(_ => NoContent(), Problem);
+    }
+
+    [HttpPut("{id:guid}/stops")]
+    [Authorize(Roles = "Passenger")]
+    [ProducesResponseType(typeof(TripDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Updates trip pickup/destination addresses and recalculates fare. Only allowed within 1 hour of booking creation.")]
+    [EndpointName("UpdateTripStops")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> UpdateStops(Guid id, [FromBody] UpdateTripStopsRequest request, CancellationToken ct)
+    {
+        var stops = request.Stops
+            .Select(s => new UpdateTripStopItem(s.Latitude, s.Longitude, s.Label))
+            .ToList();
+        var result = await sender.Send(new UpdateTripStopsCommand(id, stops), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpPut("{id:guid}/passenger-count")]
+    [Authorize(Roles = "Passenger")]
+    [ProducesResponseType(typeof(TripDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Updates the number of passengers. Triggers van upgrade and fare recalculation if count exceeds current vehicle capacity. Only allowed within 1 hour of booking creation.")]
+    [EndpointName("UpdateTripPassengerCount")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> UpdatePassengerCount(Guid id, [FromBody] UpdateTripPassengerCountRequest request, CancellationToken ct)
+    {
+        var result = await sender.Send(new UpdateTripPassengerCountCommand(id, request.PassengerCount), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpPut("{id:guid}/bag-count")]
+    [Authorize(Roles = "Passenger")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Updates the number of bags. Only allowed within 1 hour of booking creation.")]
+    [EndpointName("UpdateTripBagCount")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> UpdateBagCount(Guid id, [FromBody] UpdateTripBagCountRequest request, CancellationToken ct)
+    {
+        var result = await sender.Send(new UpdateTripBagCountCommand(id, request.BagCount), ct);
+        return result.Match(_ => NoContent(), Problem);
     }
 
     [HttpPost("{id:guid}/cancellations")]

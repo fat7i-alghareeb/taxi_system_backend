@@ -34,6 +34,27 @@ public static class LocalizationKeys
         public const string FirebasePhoneMissing = "Auth.FirebasePhoneMissing";
         public const string PhoneMismatch = "Auth.PhoneMismatch";
         public const string Unauthorized = "Identity.Unauthorized";
+
+        // Backend-owned OTP auth flow (phone/email/google).
+        public const string NoAccountFound = "Auth.NoAccountFound";
+        public const string AccountAlreadyExists = "Auth.AccountAlreadyExists";
+        public const string EmailAlreadyRegistered = "Auth.EmailAlreadyRegistered";
+        public const string PhoneAlreadyVerifiedElsewhere = "Auth.PhoneAlreadyVerifiedElsewhere";
+        public const string RegistrationTokenInvalid = "Auth.RegistrationTokenInvalid";
+        public const string InvalidGoogleToken = "Auth.InvalidGoogleToken";
+        public const string GoogleEmailMissing = "Auth.GoogleEmailMissing";
+    }
+
+    public static class Otp
+    {
+        public const string NotFound = "Otp.NotFound";
+        public const string Expired = "Otp.Expired";
+        public const string Invalid = "Otp.Invalid";
+        public const string MaxAttempts = "Otp.MaxAttempts";
+        public const string AlreadyUsed = "Otp.AlreadyUsed";
+        public const string ResendCooldown = "Otp.ResendCooldown";
+        public const string SendFailed = "Otp.SendFailed";
+        public const string ChannelMismatch = "Otp.ChannelMismatch";
     }
 
     public static class User
@@ -49,6 +70,8 @@ public static class LocalizationKeys
         public const string NameEsRequired = "User.NameEsRequired";
         public const string NameRoRequired = "User.NameRoRequired";
         public const string PhoneRequired = "User.PhoneRequired";
+        public const string EmailRequired = "User.EmailRequired";
+        public const string GoogleIdRequired = "User.GoogleIdRequired";
         public const string Inactive = "User.Inactive";
         public const string NotFound = "User.NotFound";
         public const string NotADriver = "User.NotADriver";
@@ -177,6 +200,10 @@ public static class LocalizationKeys
         public const string FlightNumberRequired = "Trip.FlightNumber.Required";
         public const string FlightNumberInvalid = "Trip.FlightNumber.Invalid";
         public const string InvalidRating = "Trip.Rating.Invalid";
+        public const string EditWindowExpired = "Trip.EditWindow.Expired";
+        public const string InvalidPassengerCount = "Trip.PassengerCount.Invalid";
+        public const string InvalidBagCount = "Trip.BagCount.Invalid";
+        public const string NoSuitableVehicleForPassengerCount = "Trip.VehicleType.NoSuitableForPassengerCount";
         public const string ChatClosed = "Trip.Chat.Closed";
         public const string ChatNotParticipant = "Trip.Chat.NotParticipant";
         public const string ChatEmptyMessage = "Trip.Chat.EmptyMessage";
@@ -274,17 +301,22 @@ public static class LocalizationKeys
         public const string ServiceType = "Invoice.ServiceType";
         public const string ServiceTitle = "Invoice.ServiceTitle";
         public const string RideDate = "Invoice.RideDate";
+        public const string Fare = "Invoice.Fare";
         public const string WaitingFee = "Invoice.WaitingFee";
+        public const string Discount = "Invoice.Discount";
         public const string ColumnTotal = "Invoice.Column.Total";
         public const string Subtotal = "Invoice.Subtotal";
         public const string Vat = "Invoice.Vat";
         public const string Total = "Invoice.Total";
         public const string TotalPaid = "Invoice.TotalPaid";
+        public const string Refunded = "Invoice.Refunded";
+        public const string Remaining = "Invoice.Remaining";
         public const string PaidVia = "Invoice.PaidVia";
         public const string TransactionId = "Invoice.TransactionId";
         public const string PaymentCompleted = "Invoice.PaymentCompleted";
         public const string MethodIdeal = "Invoice.Method.iDEAL";
         public const string MethodKlarna = "Invoice.Method.Klarna";
+        public const string StatusOpen = "Invoice.Status.Open";
 
         // Issuer company/legal block under the brand name.
         public const string CompanyCountry = "Invoice.Company.Country";

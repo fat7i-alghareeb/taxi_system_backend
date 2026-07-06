@@ -20,6 +20,26 @@ services:
       AppSettings__Stripe__PublishableKey: ${STRIPE_PUBLISHABLE_KEY}
       AppSettings__Stripe__WebhookSecret: ${STRIPE_WEBHOOK_SECRET}
       AppSettings__Features__StripeEnabled: ${STRIPE_ENABLED}
+      # Auth — OTP policy (backend-owned)
+      Otp__HashSecret: ${OTP_HASH_SECRET}
+      Otp__CodeLength: ${OTP_CODE_LENGTH:-6}
+      Otp__ExpiryMinutes: ${OTP_EXPIRY_MINUTES:-5}
+      Otp__MaxAttempts: ${OTP_MAX_ATTEMPTS:-5}
+      Otp__ResendCooldownSeconds: ${OTP_RESEND_COOLDOWN_SECONDS:-60}
+      Otp__OtpRetentionDays: ${OTP_RETENTION_DAYS:-30}
+      # Auth — CM.com SMS
+      Sms__CmCom__BaseUrl: ${CM_BASE_URL:-https://gw.messaging.cm.com/}
+      Sms__CmCom__ProductToken: ${CM_PRODUCT_TOKEN}
+      Sms__CmCom__Sender: ${CM_SENDER:-Fat7i}
+      # Auth — Titan.email SMTP
+      Email__Titan__Host: ${TITAN_HOST:-smtp.titan.email}
+      Email__Titan__Port: ${TITAN_PORT:-465}
+      Email__Titan__UseSsl: ${TITAN_USE_SSL:-true}
+      Email__Titan__Username: ${TITAN_USERNAME}
+      Email__Titan__Password: ${TITAN_PASSWORD}
+      Email__Titan__FromEmail: ${TITAN_FROM_EMAIL}
+      Email__Titan__FromName: ${TITAN_FROM_NAME:-Fat7i}
+      Email__Titan__ReplyToEmail: ${TITAN_REPLY_TO_EMAIL:-}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://seq:5341/ingest/otlp/v1/traces
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
     restart: on-failure

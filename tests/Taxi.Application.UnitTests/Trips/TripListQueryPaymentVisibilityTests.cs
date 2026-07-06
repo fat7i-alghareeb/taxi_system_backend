@@ -233,7 +233,9 @@ public class TripListQueryPaymentVisibilityTests
         var recordingsSet = DbSetMockFactory.Create(recordings ?? new List<TripRecording>());
         var adminProfilesSet = DbSetMockFactory.Create(
             new List<Taxi.Domain.Admins.AdminProfile>());
+        var domainUsersSet = DbSetMockFactory.Create(new List<Taxi.Domain.Users.User>());
 
+        context.DomainUsers.Returns(domainUsersSet);
         context.Trips.Returns(tripsSet);
         context.PricingQuotes.Returns(pricingQuotesSet);
         context.VehicleTypes.Returns(vehicleTypesSet);

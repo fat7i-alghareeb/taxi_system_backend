@@ -51,10 +51,35 @@ public sealed class InvoiceIssuanceService(
         var quote = await db.PricingQuotes
             .FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
 
-        var payment = await db.Payments
-            .Where(p => p.TripId == trip.Id && p.Kind == PaymentKind.Fare)
+        var payments = await db.Payments
+            .Where(p => p.TripId == trip.Id)
+            .OrderBy(p => p.CreatedAtUtc)
+            .ToListAsync(ct);
+
+        var paymentIds = payments.Select(p => p.Id).ToList();
+        var refunds = paymentIds.Count == 0
+            ? await db.PaymentRefunds
+                .Where(r => r.TripId == trip.Id && r.Status == PaymentRefundStatus.Succeeded)
+                .ToListAsync(ct)
+            : await db.PaymentRefunds
+                .Where(r =>
+                    r.Status == PaymentRefundStatus.Succeeded &&
+                    (r.TripId == trip.Id || paymentIds.Contains(r.PaymentId)))
+                .ToListAsync(ct);
+
+        var farePayment = payments
+            .Where(p => p.Kind == PaymentKind.Fare)
             .OrderByDescending(p => p.CreatedAtUtc)
-            .FirstOrDefaultAsync(ct);
+            .FirstOrDefault();
+
+        var capturedPayments = payments
+            .Where(IsCaptured)
+            .ToList();
+
+        var capturedFarePayment = capturedPayments
+            .Where(p => p.Kind == PaymentKind.Fare)
+            .OrderByDescending(p => p.ProcessedAtUtc ?? p.CreatedAtUtc.UtcDateTime)
+            .FirstOrDefault();
 
         var vehicleType = await db.VehicleTypes
             .FirstOrDefaultAsync(v => v.Id == trip.VehicleTypeId, ct);
@@ -62,39 +87,22 @@ public sealed class InvoiceIssuanceService(
         var passenger = await db.DomainUsers
             .FirstOrDefaultAsync(u => u.Id == trip.PassengerId, ct);
 
-        // Stripe-charged amount wins when available; cash trips fall back
-        // to the quoted final fare since there's no payment row carrying
-        // the authoritative amount.
-        decimal gross;
-        string currency;
-        PaymentMethod method;
-        string? paymentReference;
-        DateTimeOffset? paidAtUtc;
+        var fareAmount = RoundMoney(capturedFarePayment?.Amount ?? quote?.FinalFare ?? farePayment?.Amount ?? 0m);
+        var discountAmount = RoundMoney(Math.Max(0m, (quote?.OriginalFare ?? fareAmount) - (quote?.FinalFare ?? fareAmount)));
+        var currency = capturedFarePayment?.Currency ?? farePayment?.Currency ?? quote?.CurrencyCode ?? "EUR";
 
-        // Exact Stripe method (ideal/klarna/card) captured on the completed payment,
+        var displayPayment = capturedFarePayment
+            ?? capturedPayments.OrderByDescending(p => p.ProcessedAtUtc ?? p.CreatedAtUtc.UtcDateTime).FirstOrDefault()
+            ?? farePayment;
+
+        var method = displayPayment?.Method ?? PaymentMethod.Cash;
+        var paymentReference = method == PaymentMethod.Cash
+            ? "cash"
+            : displayPayment?.StripeChargeId ?? displayPayment?.TransactionReference;
+
+        // Exact Stripe method (ideal/klarna/card) captured on the settled fare payment,
         // used to print "Betaald via: iDEAL". Null for cash / non-Stripe trips.
-        var stripePaymentMethodType = payment is { Status: PaymentStatus.Completed }
-            ? payment.StripePaymentMethodType
-            : null;
-
-        if (payment is { Status: PaymentStatus.Completed, Method: PaymentMethod.CreditCard })
-        {
-            gross = payment.Amount;
-            currency = payment.Currency;
-            method = PaymentMethod.CreditCard;
-            paymentReference = payment.StripeChargeId ?? payment.TransactionReference;
-            paidAtUtc = payment.ProcessedAtUtc is { } p
-                ? new DateTimeOffset(DateTime.SpecifyKind(p, DateTimeKind.Utc))
-                : null;
-        }
-        else
-        {
-            gross = quote?.FinalFare ?? 0m;
-            currency = quote?.CurrencyCode ?? "EUR";
-            method = payment?.Method ?? PaymentMethod.Cash;
-            paymentReference = method == PaymentMethod.Cash ? "cash" : payment?.TransactionReference;
-            paidAtUtc = trip.CompletedAtUtc;
-        }
+        var stripePaymentMethodType = capturedFarePayment?.StripePaymentMethodType;
 
         // Add any accrued waiting fee (per-minute charge beyond the free grace
         // window once the driver has arrived) to the invoiced amount. For card
@@ -102,11 +110,23 @@ public sealed class InvoiceIssuanceService(
         // invoice records the true amount owed, and collecting the difference is
         // handled separately.
         var waitingFee = await db.TripWaitingSessions
-            .Where(s => s.TripId == trip.Id)
+            .Where(s => s.TripId == trip.Id && s.StoppedAtUtc != null)
             .Select(s => s.EstimatedFee ?? 0m)
             .ToListAsync(ct);
-        var waitingFeeTotal = waitingFee.Sum();
-        gross += waitingFeeTotal;
+        var waitingFeeTotal = RoundMoney(waitingFee.Sum());
+        var gross = RoundMoney(fareAmount + waitingFeeTotal);
+
+        var totalPaidAmount = RoundMoney(capturedPayments.Sum(p => p.Amount));
+        if (method == PaymentMethod.Cash)
+        {
+            // Cash trips do not always have a payment ledger row; a completed cash
+            // ride is considered settled at completion, preserving existing behavior.
+            totalPaidAmount = Math.Max(totalPaidAmount, gross);
+        }
+
+        var refundedAmount = RoundMoney(refunds.Sum(r => r.Amount));
+        var remainingAmount = RoundMoney(Math.Max(0m, gross - totalPaidAmount));
+        var paidAtUtc = ResolvePaidAtUtc(capturedPayments, method, trip.CompletedAtUtc, totalPaidAmount);
 
         var stopsSnapshot = trip.Stops
             .OrderBy(s => s.Sequence)
@@ -157,7 +177,12 @@ public sealed class InvoiceIssuanceService(
             passengerAddress: passenger?.HomeAddress?.Label,
             stripePaymentMethodType: stripePaymentMethodType,
             taxRate: taxRate,
-            waitingFeeAmount: waitingFeeTotal);
+            waitingFeeAmount: waitingFeeTotal,
+            fareAmount: fareAmount,
+            discountAmount: discountAmount,
+            totalPaidAmount: totalPaidAmount,
+            refundedAmount: refundedAmount,
+            remainingAmount: remainingAmount);
 
         if (result.IsFailure)
         {
@@ -193,4 +218,35 @@ public sealed class InvoiceIssuanceService(
         return inner.Contains("duplicate key", StringComparison.OrdinalIgnoreCase)
             || inner.Contains("unique constraint", StringComparison.OrdinalIgnoreCase);
     }
+
+    private static bool IsCaptured(Payment payment) =>
+        payment.Status is PaymentStatus.Completed or PaymentStatus.Refunded;
+
+    private static DateTimeOffset? ResolvePaidAtUtc(
+        IReadOnlyCollection<Payment> capturedPayments,
+        PaymentMethod method,
+        DateTimeOffset? tripCompletedAtUtc,
+        decimal totalPaidAmount)
+    {
+        if (totalPaidAmount <= 0m)
+        {
+            return null;
+        }
+
+        var latestProcessed = capturedPayments
+            .Where(p => p.ProcessedAtUtc.HasValue)
+            .OrderByDescending(p => p.ProcessedAtUtc)
+            .Select(p => p.ProcessedAtUtc!.Value)
+            .FirstOrDefault();
+
+        if (latestProcessed != default)
+        {
+            return new DateTimeOffset(DateTime.SpecifyKind(latestProcessed, DateTimeKind.Utc));
+        }
+
+        return method == PaymentMethod.Cash ? tripCompletedAtUtc : null;
+    }
+
+    private static decimal RoundMoney(decimal amount) =>
+        decimal.Round(amount, 2, MidpointRounding.AwayFromZero);
 }

@@ -134,6 +134,20 @@ public static class DependencyInjection
                 limiterOptions.AutoReplenishment = true;
             });
 
+            // Stricter, per-IP limiter for OTP request/resend endpoints to curb SMS/email
+            // spam and OTP brute-force (defence in depth alongside per-recipient cooldown).
+            options.AddPolicy("OtpRequest", httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 5,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0,
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        AutoReplenishment = true,
+                    }));
+
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
         });
 

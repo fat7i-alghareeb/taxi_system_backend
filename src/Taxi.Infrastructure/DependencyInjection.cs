@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 using Taxi.Application.Common.Interfaces;
@@ -20,6 +21,7 @@ using Taxi.Infrastructure.BackgroundJobs;
 using Taxi.Infrastructure.Common;
 using Taxi.Infrastructure.Data;
 using Taxi.Infrastructure.Data.Interceptors;
+using Taxi.Infrastructure.Email;
 using Taxi.Infrastructure.Identity;
 using Taxi.Infrastructure.Incidents;
 using Taxi.Infrastructure.Maps;
@@ -29,6 +31,7 @@ using Taxi.Infrastructure.Payments;
 using Taxi.Infrastructure.RealTime;
 using Taxi.Infrastructure.Services.Invoices;
 using Taxi.Infrastructure.Settings;
+using Taxi.Infrastructure.Sms;
 using Taxi.Infrastructure.Storage;
 
 public static class DependencyInjection
@@ -38,6 +41,9 @@ public static class DependencyInjection
         services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
         services.Configure<InvoiceIssuerOptions>(configuration.GetSection(InvoiceIssuerOptions.SectionName));
         services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.SectionName));
+        services.Configure<OtpOptions>(configuration.GetSection(OtpOptions.SectionName));
+        services.Configure<CmComSmsOptions>(configuration.GetSection(CmComSmsOptions.SectionName));
+        services.Configure<TitanEmailOptions>(configuration.GetSection(TitanEmailOptions.SectionName));
 
         if (FirebaseApp.DefaultInstance == null)
         {
@@ -152,6 +158,20 @@ public static class DependencyInjection
         services.AddTransient<ITokenProvider, TokenProvider>();
 
         services.AddSingleton<IFirebaseAuthService, FirebaseAuthService>();
+
+        // Backend-owned OTP + external providers (CM.com SMS, Titan SMTP). Providers are
+        // isolated behind interfaces so they can be replaced without touching auth logic.
+        services.AddSingleton<IOtpCodeHasher, OtpCodeHasher>();
+        services.AddSingleton<IRegistrationTokenService, RegistrationTokenService>();
+        services.AddScoped<IOtpService, OtpService>();
+        services.AddScoped<IEmailSender, TitanEmailSender>();
+        services.AddHttpClient<ISmsSender, CmComSmsSender>((sp, client) =>
+        {
+            var smsOptions = sp.GetRequiredService<IOptions<CmComSmsOptions>>().Value;
+            client.BaseAddress = new Uri(smsOptions.BaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(15);
+        });
+
         services.AddHttpClient<IDirectionsService, GoogleMapsService>(client =>
         {
             client.BaseAddress = new Uri("https://maps.googleapis.com/");
@@ -191,6 +211,7 @@ public static class DependencyInjection
         services.AddHostedService<ScheduledTripActivationService>();
         services.AddHostedService<OutboxDispatcherService>();
         services.AddHostedService<TripChatCleanupService>();
+        services.AddHostedService<OtpCleanupService>();
 
         return services;
     }

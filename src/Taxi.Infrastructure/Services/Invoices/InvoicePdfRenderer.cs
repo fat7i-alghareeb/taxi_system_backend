@@ -18,7 +18,7 @@ namespace Taxi.Infrastructure.Services.Invoices;
 /// <summary>
 /// Renders the branded Fat7i invoice PDF (logo, orange/black theme,
 /// billed-to + trip cards, black line-item table, payment-method card and a
-/// contact footer). VAT (BTW) is intentionally not itemised.
+/// contact footer). VAT (BTW) is itemised in the totals card.
 /// </summary>
 public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory) : IInvoicePdfRenderer
 {
@@ -88,9 +88,10 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
         // prefixed (€0.53); otherwise the ISO code is appended (0.53 PLN).
         string FormatMoney(decimal amount)
         {
-            var number = amount.ToString("N2", CultureInfo.InvariantCulture);
+            var sign = amount < 0m ? "-" : string.Empty;
+            var number = Math.Abs(amount).ToString("N2", CultureInfo.InvariantCulture);
             var (symbol, isPrefix) = CurrencyAffix(invoice.CurrencyCode);
-            return isPrefix ? symbol + number : number + " " + symbol;
+            return isPrefix ? sign + symbol + number : sign + number + " " + symbol;
         }
 
         string FormatDate(DateTimeOffset value) =>
@@ -99,7 +100,8 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
         string FormatDateTime(DateTimeOffset value) =>
             value.ToLocalTime().ToString("dd MMM yyyy, HH:mm", culture);
 
-        var isPaid = invoice.PaidAtUtc is not null;
+        var isPaid = invoice.RemainingAmount <= 0m;
+        var hasPayment = invoice.TotalPaidAmount > 0m;
         var route = ParseRoute(invoice.StopsJson);
         var methodLabel = ResolvePaymentMethod(invoice, T);
 
@@ -189,7 +191,9 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
                                     }
                                     else
                                     {
-                                        e.Text("—").FontColor(Muted);
+                                        e.Background(Brand).PaddingVertical(3).PaddingHorizontal(12)
+                                            .Text(T(LocalizationKeys.Invoice.StatusOpen, "Open"))
+                                            .FontColor(Colors.White).SemiBold().FontSize(10);
                                     }
                                 });
                             });
@@ -265,34 +269,53 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
                             HeaderCell(header.Cell(), T(LocalizationKeys.Invoice.ColumnTotal, "Total"), Alignment.Right);
                         });
 
-                        // Transport line item. When a waiting fee accrued it is split
-                        // out onto its own line, so this line shows the fare only.
-                        var transportAmount = invoice.GrossAmount - invoice.WaitingFeeAmount;
-                        table.Cell().PaddingVertical(8).PaddingHorizontal(10).Column(c =>
+                        var rideDate = $"{T(LocalizationKeys.Invoice.RideDate, "Trip date")}: {FormatDate(invoice.TripCompletedAtUtc ?? invoice.IssuedAtUtc)}";
+                        var fareLineAmount = invoice.DiscountAmount > 0m
+                            ? invoice.FareAmount + invoice.DiscountAmount
+                            : invoice.FareAmount;
+                        var fareDetails = string.IsNullOrWhiteSpace(route)
+                            ? new[] { rideDate }
+                            : new[] { route!, rideDate };
+
+                        var lineItems = new List<InvoiceLine>
                         {
-                            c.Item().Text(T(LocalizationKeys.Invoice.ServiceTitle, "Taxi service")).SemiBold();
-                            if (!string.IsNullOrWhiteSpace(route))
-                            {
-                                c.Item().Text(route!).FontSize(9).FontColor(Muted);
-                            }
+                            new(
+                                T(LocalizationKeys.Invoice.Fare, "Trip fare"),
+                                fareDetails,
+                                "1",
+                                fareLineAmount),
+                        };
 
-                            c.Item().Text($"{T(LocalizationKeys.Invoice.RideDate, "Trip date")}: {FormatDate(invoice.TripCompletedAtUtc ?? invoice.IssuedAtUtc)}")
-                                .FontSize(9).FontColor(Muted);
-                        });
-                        table.Cell().PaddingVertical(8).AlignCenter().AlignMiddle().Text("1");
-                        table.Cell().PaddingVertical(8).PaddingHorizontal(10).AlignRight().AlignMiddle()
-                            .Text(FormatMoney(transportAmount)).SemiBold();
+                        if (invoice.DiscountAmount > 0m)
+                        {
+                            lineItems.Add(new(
+                                T(LocalizationKeys.Invoice.Discount, "Discount"),
+                                [],
+                                "1",
+                                -invoice.DiscountAmount));
+                        }
 
-                        // Waiting-fee line item (only when one accrued).
-                        if (invoice.WaitingFeeAmount > 0m)
+                        // Waiting time is always visible so an on-time trip
+                        // clearly shows €0.00 instead of silently omitting it.
+                        lineItems.Add(new(
+                            T(LocalizationKeys.Invoice.WaitingFee, "Waiting fee"),
+                            [],
+                            "1",
+                            invoice.WaitingFeeAmount));
+
+                        foreach (var item in lineItems)
                         {
                             table.Cell().PaddingVertical(8).PaddingHorizontal(10).Column(c =>
                             {
-                                c.Item().Text(T(LocalizationKeys.Invoice.WaitingFee, "Waiting fee")).SemiBold();
+                                c.Item().Text(item.Description).SemiBold();
+                                foreach (var detail in item.Details)
+                                {
+                                    c.Item().Text(detail).FontSize(9).FontColor(Muted);
+                                }
                             });
-                            table.Cell().PaddingVertical(8).AlignCenter().AlignMiddle().Text("1");
+                            table.Cell().PaddingVertical(8).AlignCenter().AlignMiddle().Text(item.Quantity);
                             table.Cell().PaddingVertical(8).PaddingHorizontal(10).AlignRight().AlignMiddle()
-                                .Text(FormatMoney(invoice.WaitingFeeAmount)).SemiBold();
+                                .Text(FormatMoney(item.Amount)).SemiBold();
                         }
                     });
 
@@ -334,7 +357,24 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
                             {
                                 r.RelativeItem().Text(T(LocalizationKeys.Invoice.TotalPaid, "Total paid")).FontSize(9.5f).FontColor(Muted);
                                 r.RelativeItem().AlignRight()
-                                    .Text(FormatMoney(isPaid ? invoice.GrossAmount : 0m)).FontSize(9.5f).FontColor(Muted);
+                                    .Text(FormatMoney(invoice.TotalPaidAmount)).FontSize(9.5f).FontColor(Muted);
+                            });
+
+                            if (invoice.RefundedAmount > 0m)
+                            {
+                                totals.Item().PaddingTop(2).Row(r =>
+                                {
+                                    r.RelativeItem().Text(T(LocalizationKeys.Invoice.Refunded, "Refunded")).FontSize(9.5f).FontColor(Muted);
+                                    r.RelativeItem().AlignRight()
+                                        .Text(FormatMoney(-invoice.RefundedAmount)).FontSize(9.5f).FontColor(Muted);
+                                });
+                            }
+
+                            totals.Item().PaddingTop(2).Row(r =>
+                            {
+                                r.RelativeItem().Text(T(LocalizationKeys.Invoice.Remaining, "Remaining due")).FontSize(9.5f).FontColor(Muted);
+                                r.RelativeItem().AlignRight()
+                                    .Text(FormatMoney(invoice.RemainingAmount)).FontSize(9.5f).FontColor(invoice.RemainingAmount > 0m ? Brand : Muted);
                             });
                         });
                     });
@@ -353,7 +393,7 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
                                 });
                             });
 
-                            if (isPaid)
+                            if (hasPayment && invoice.PaidAtUtc is not null)
                             {
                                 r.ConstantItem(170).AlignRight().Column(paid =>
                                 {
@@ -442,6 +482,12 @@ public sealed class InvoicePdfRenderer(IStringLocalizerFactory localizerFactory)
         Center,
         Right,
     }
+
+    private sealed record InvoiceLine(
+        string Description,
+        IReadOnlyCollection<string> Details,
+        string Quantity,
+        decimal Amount);
 
     /// <summary>Builds "origin → destination" from the stored stop snapshot.</summary>
     private static string? ParseRoute(string stopsJson)

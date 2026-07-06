@@ -72,4 +72,46 @@ public class InvoicePdfRenderSmokeTests
             Assert.Equal("%PDF", Encoding.ASCII.GetString(bytes, 0, 4));
         }
     }
+
+    [Fact]
+    public void Renders_unpaid_waiting_fee_invoice()
+    {
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        var paidAtUtc = DateTimeOffset.UtcNow;
+        var invoice = Invoice.Issue(
+            id: Guid.NewGuid(),
+            tripId: Guid.NewGuid(),
+            passengerId: Guid.NewGuid(),
+            invoiceNumber: "2",
+            issuedAtUtc: paidAtUtc,
+            currencyCode: "EUR",
+            grossAmount: 1.40m,
+            paymentMethod: PaymentMethod.CreditCard,
+            paymentReference: "TRP-WAIT",
+            paidAtUtc: paidAtUtc,
+            issuerName: "Fat7i",
+            issuerAddress: "Frederik Hendrikstraat, 30zw\n3143LD Maassluis\nNetherlands",
+            issuerVatNumber: "NL004808140B65",
+            tripReferenceCode: "WAIT01",
+            tripCompletedAtUtc: paidAtUtc,
+            distanceKm: 1m,
+            durationMin: 5m,
+            vehicleTypeName: "Taxi",
+            passengerName: "Ahmed Al Ali",
+            stopsJson: "[{\"sequence\":0,\"label\":\"Amsterdam\"},{\"sequence\":1,\"label\":\"Utrecht\"}]",
+            taxRate: 0.09m,
+            waitingFeeAmount: 1.30m,
+            fareAmount: 0.10m,
+            totalPaidAmount: 0.10m,
+            remainingAmount: 1.30m).Value;
+
+        var renderer = new InvoicePdfRenderer(new StubFactory());
+
+        var bytes = renderer.Render(invoice, "nl", new InvoiceContact("info@fat7i.dev", "0639550352", "www.fat7i.dev"));
+
+        Assert.NotNull(bytes);
+        Assert.True(bytes.Length > 1000, $"PDF too small: {bytes.Length} bytes");
+        Assert.Equal("%PDF", Encoding.ASCII.GetString(bytes, 0, 4));
+    }
 }

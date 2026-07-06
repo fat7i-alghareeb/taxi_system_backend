@@ -8,6 +8,8 @@ public class UserDto
     public string? Email { get; set; }
     public string Role { get; set; } = string.Empty;
     public string? ProfilePhotoUrl { get; set; }
+    public bool IsPhoneVerified { get; set; }
+    public bool IsEmailVerified { get; set; }
     public Guid? DriverId { get; set; }
     public string? ApprovalStatus { get; set; }
     public Guid? VehicleTypeId { get; set; }

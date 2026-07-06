@@ -36,12 +36,37 @@ public sealed class User : AuditableEntity
     public string? StripeCustomerId { get; private set; }
     public HomeAddress? HomeAddress { get; private set; }
 
+    /// <summary>
+    /// Whether <see cref="Phone"/> has been proven via SMS OTP. Only verified phones are
+    /// unique (partial index) and usable for phone login. Phone entered during Google/email
+    /// sign-up is stored unverified until the user completes the "Verify now" flow.
+    /// </summary>
+    public bool IsPhoneVerified { get; private set; }
+
+    /// <summary>
+    /// Whether <see cref="Email"/> has been proven (email OTP or a provider-verified Google
+    /// email). Only verified emails are unique (partial index) and usable for email login.
+    /// </summary>
+    public bool IsEmailVerified { get; private set; }
+
+    /// <summary>Firebase/Google account uid used to identify a returning Google user.</summary>
+    public string? GoogleId { get; private set; }
+
+    /// <summary>
+    /// Set when the user chooses "start fresh". Customer-facing trip history is hidden before
+    /// this instant; admin/accounting/payment/invoice queries ignore it and keep all rows.
+    /// </summary>
+    public DateTimeOffset? ProfileResetAtUtc { get; private set; }
+
     public static Result<User> Create(
         Guid id,
         string name,
         string phone,
         string? email,
-        UserRole role)
+        UserRole role,
+        bool isPhoneVerified = true,
+        bool isEmailVerified = false,
+        string? googleId = null)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -53,7 +78,14 @@ public sealed class User : AuditableEntity
             return UserErrors.PhoneRequired;
         }
 
-        return new User(id, name.Trim(), phone, email, role);
+        var trimmedEmail = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
+
+        return new User(id, name.Trim(), phone.Trim(), trimmedEmail, role)
+        {
+            IsPhoneVerified = isPhoneVerified,
+            IsEmailVerified = trimmedEmail is not null && isEmailVerified,
+            GoogleId = string.IsNullOrWhiteSpace(googleId) ? null : googleId.Trim(),
+        };
     }
 
     /// <summary>
@@ -123,9 +155,82 @@ public sealed class User : AuditableEntity
         IsActive = true;
         Name = placeholderName.Trim();
         Email = null;
+        IsEmailVerified = false;
+        GoogleId = null;
         ProfilePhotoUrl = null;
         FcmToken = null;
         HomeAddress = null;
+        // Re-registration happens through the verified phone flow, so the phone stays verified.
+        IsPhoneVerified = true;
+        ProfileResetAtUtc = null;
+        return Result.Success;
+    }
+
+    /// <summary>Marks the current phone as SMS-verified (unique-index eligible, login-eligible).</summary>
+    public Result<Success> MarkPhoneVerified()
+    {
+        IsPhoneVerified = true;
+        return Result.Success;
+    }
+
+    /// <summary>Marks the current email as verified (unique-index eligible, login-eligible).</summary>
+    public Result<Success> MarkEmailVerified()
+    {
+        if (string.IsNullOrWhiteSpace(Email))
+        {
+            return UserErrors.EmailRequired;
+        }
+
+        IsEmailVerified = true;
+        return Result.Success;
+    }
+
+    /// <summary>
+    /// Sets (or replaces) the phone and marks it verified. Used by the authorized
+    /// "verify now" flow; uniqueness against other verified accounts is enforced by the
+    /// caller before this is invoked.
+    /// </summary>
+    public Result<Success> SetVerifiedPhone(string phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone) || !Regex.IsMatch(phone, @"^\+?\d{7,15}$"))
+        {
+            return UserErrors.PhoneRequired;
+        }
+
+        Phone = phone.Trim();
+        IsPhoneVerified = true;
+        return Result.Success;
+    }
+
+    public Result<Success> LinkGoogle(string googleId)
+    {
+        if (string.IsNullOrWhiteSpace(googleId))
+        {
+            return UserErrors.GoogleIdRequired;
+        }
+
+        GoogleId = googleId.Trim();
+        return Result.Success;
+    }
+
+    /// <summary>
+    /// "Start fresh": wipes personal profile data and stamps <see cref="ProfileResetAtUtc"/>
+    /// so the user stops seeing pre-reset history, while the account id, phone verification
+    /// and all historical rows (trips/invoices) are preserved for admin/accounting. No hard delete.
+    /// </summary>
+    public Result<Success> ResetForFreshStart(string placeholderName, DateTimeOffset nowUtc)
+    {
+        if (string.IsNullOrWhiteSpace(placeholderName))
+        {
+            return UserErrors.NameRequired;
+        }
+
+        Name = placeholderName.Trim();
+        Email = null;
+        IsEmailVerified = false;
+        ProfilePhotoUrl = null;
+        HomeAddress = null;
+        ProfileResetAtUtc = nowUtc;
         return Result.Success;
     }
 
@@ -146,7 +251,16 @@ public sealed class User : AuditableEntity
         if (email is not null)
         {
             var trimmed = email.Trim();
-            Email = trimmed.Length == 0 ? null : trimmed;
+            var newEmail = trimmed.Length == 0 ? null : trimmed;
+
+            // Changing the email drops its verified status: a self-edited address is
+            // contact data until re-proven through the email OTP flow.
+            if (!string.Equals(newEmail, Email, StringComparison.OrdinalIgnoreCase))
+            {
+                IsEmailVerified = false;
+            }
+
+            Email = newEmail;
         }
 
         return Result.Success;

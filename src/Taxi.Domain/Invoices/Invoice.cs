@@ -20,7 +20,12 @@ public sealed class Invoice : AuditableEntity
         decimal taxRate,
         decimal taxAmount,
         decimal grossAmount,
+        decimal fareAmount,
         decimal waitingFeeAmount,
+        decimal discountAmount,
+        decimal totalPaidAmount,
+        decimal refundedAmount,
+        decimal remainingAmount,
         PaymentMethod paymentMethod,
         string? paymentReference,
         DateTimeOffset? paidAtUtc,
@@ -49,7 +54,12 @@ public sealed class Invoice : AuditableEntity
         TaxRate = taxRate;
         TaxAmount = taxAmount;
         GrossAmount = grossAmount;
+        FareAmount = fareAmount;
         WaitingFeeAmount = waitingFeeAmount;
+        DiscountAmount = discountAmount;
+        TotalPaidAmount = totalPaidAmount;
+        RefundedAmount = refundedAmount;
+        RemainingAmount = remainingAmount;
         PaymentMethod = paymentMethod;
         PaymentReference = paymentReference;
         PaidAtUtc = paidAtUtc;
@@ -79,9 +89,24 @@ public sealed class Invoice : AuditableEntity
     public decimal TaxAmount { get; private set; }
     public decimal GrossAmount { get; private set; }
 
+    /// <summary>Main trip fare portion of <see cref="GrossAmount"/>, excluding waiting fees.</summary>
+    public decimal FareAmount { get; private set; }
+
     /// <summary>Portion of <see cref="GrossAmount"/> that is the accrued waiting fee
     /// (per-minute charge beyond the free grace window). Itemised on the invoice.</summary>
     public decimal WaitingFeeAmount { get; private set; }
+
+    /// <summary>Discount snapshot applied to the trip fare when the quote carried one.</summary>
+    public decimal DiscountAmount { get; private set; }
+
+    /// <summary>Total captured/settled payments for this invoice, before refunds.</summary>
+    public decimal TotalPaidAmount { get; private set; }
+
+    /// <summary>Total successfully refunded against payments for this trip.</summary>
+    public decimal RefundedAmount { get; private set; }
+
+    /// <summary>Amount still owed because it has not been captured yet.</summary>
+    public decimal RemainingAmount { get; private set; }
 
     public PaymentMethod PaymentMethod { get; private set; }
     public string? PaymentReference { get; private set; }
@@ -139,7 +164,12 @@ public sealed class Invoice : AuditableEntity
         string? passengerAddress = null,
         string? stripePaymentMethodType = null,
         decimal taxRate = 0m,
-        decimal waitingFeeAmount = 0m)
+        decimal waitingFeeAmount = 0m,
+        decimal? fareAmount = null,
+        decimal discountAmount = 0m,
+        decimal? totalPaidAmount = null,
+        decimal refundedAmount = 0m,
+        decimal? remainingAmount = null)
     {
         if (tripId == Guid.Empty)
         {
@@ -166,16 +196,35 @@ public sealed class Invoice : AuditableEntity
             return InvoiceErrors.InvalidAmount;
         }
 
+        var normalizedWaitingFeeAmount = RoundMoney(waitingFeeAmount);
+        var normalizedFareAmount = RoundMoney(fareAmount ?? Math.Max(0m, grossAmount - normalizedWaitingFeeAmount));
+        var normalizedDiscountAmount = RoundMoney(discountAmount);
+        var normalizedTotalPaidAmount = RoundMoney(totalPaidAmount ?? (paidAtUtc is null ? 0m : grossAmount));
+        var normalizedRefundedAmount = RoundMoney(refundedAmount);
+        var normalizedRemainingAmount = RoundMoney(remainingAmount ?? Math.Max(0m, grossAmount - normalizedTotalPaidAmount));
+
+        if (normalizedFareAmount < 0 ||
+            normalizedWaitingFeeAmount < 0 ||
+            normalizedDiscountAmount < 0 ||
+            normalizedTotalPaidAmount < 0 ||
+            normalizedRefundedAmount < 0 ||
+            normalizedRemainingAmount < 0)
+        {
+            return InvoiceErrors.InvalidAmount;
+        }
+
         if (taxRate < 0 || taxRate >= 1)
         {
             return InvoiceErrors.InvalidTaxRate;
         }
 
+        var normalizedGrossAmount = RoundMoney(grossAmount);
+
         // Treat grossAmount as tax-inclusive: net + tax = gross.
         var taxAmount = taxRate == 0m
             ? 0m
-            : decimal.Round(grossAmount * taxRate / (1 + taxRate), 2);
-        var netAmount = decimal.Round(grossAmount - taxAmount, 2);
+            : RoundMoney(normalizedGrossAmount * taxRate / (1 + taxRate));
+        var netAmount = RoundMoney(normalizedGrossAmount - taxAmount);
 
         var invoice = new Invoice(
             id,
@@ -187,8 +236,13 @@ public sealed class Invoice : AuditableEntity
             netAmount,
             taxRate,
             taxAmount,
-            grossAmount,
-            waitingFeeAmount,
+            normalizedGrossAmount,
+            normalizedFareAmount,
+            normalizedWaitingFeeAmount,
+            normalizedDiscountAmount,
+            normalizedTotalPaidAmount,
+            normalizedRefundedAmount,
+            normalizedRemainingAmount,
             paymentMethod,
             paymentReference,
             paidAtUtc,
@@ -213,10 +267,13 @@ public sealed class Invoice : AuditableEntity
             TripId = tripId,
             PassengerId = passengerId,
             InvoiceNumber = invoiceNumber,
-            GrossAmount = grossAmount,
+            GrossAmount = normalizedGrossAmount,
             CurrencyCode = currencyCode,
         });
 
         return invoice;
     }
+
+    private static decimal RoundMoney(decimal amount)
+        => decimal.Round(amount, 2, MidpointRounding.AwayFromZero);
 }

@@ -39,11 +39,16 @@ public class StartTripCommandHandler(
             return await TripOwnershipHelper.NotOwnedByCurrentAdminAsync(_context, trip.AcceptedByAdminId, ct);
         }
 
-        var transitionResult = trip.Start(timeProvider.GetUtcNow(), request.ForceScheduledOverride);
+        var now = timeProvider.GetUtcNow();
+        var transitionResult = trip.Start(now, request.ForceScheduledOverride);
         if (transitionResult.IsFailure)
         {
             return transitionResult.Error;
         }
+
+        var activeWaiting = await _context.TripWaitingSessions
+            .FirstOrDefaultAsync(s => s.TripId == trip.Id && s.StoppedAtUtc == null, ct);
+        activeWaiting?.Stop(now);
 
         await _context.SaveChangesAsync(ct);
 

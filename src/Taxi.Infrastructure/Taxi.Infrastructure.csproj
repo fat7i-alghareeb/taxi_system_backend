@@ -20,6 +20,7 @@
         <PackageReference Include="FirebaseAdmin" />
         <PackageReference Include="Stripe.net" />
         <PackageReference Include="QuestPDF" />
+        <PackageReference Include="MailKit" />
 	</ItemGroup>
 
 	<ItemGroup>
