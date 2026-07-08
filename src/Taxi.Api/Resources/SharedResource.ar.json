@@ -307,5 +307,17 @@
   "Refund.Retry.Succeeded.AdminTitle": "تم قبول إعادة محاولة الاسترداد",
   "Refund.Retry.Succeeded.AdminBody": "إعادة محاولة الاسترداد للرحلة {0} أصبحت الآن {1}.",
   "Refund.Retry.Failed.AdminTitle": "فشلت إعادة محاولة الاسترداد",
-  "Refund.Retry.Failed.AdminBody": "تعذر بدء إعادة محاولة الاسترداد للرحلة {0}."
+  "Refund.Retry.Failed.AdminBody": "تعذر بدء إعادة محاولة الاسترداد للرحلة {0}.",
+  "Wallet.Amount.Invalid": "يجب أن يكون مبلغ المحفظة أكبر من صفر.",
+  "Wallet.Account.NotFound": "لم يتم العثور على حساب المحفظة.",
+  "Wallet.Currency.Required": "عملة المحفظة مطلوبة.",
+  "Wallet.IdempotencyKey.Required": "مطلوب مفتاح معاملة للمحفظة.",
+  "Wallet.TopUp.Disabled": "شحن المحفظة غير متاح حاليًا.",
+  "Wallet.TopUp.BelowMinimum": "مبلغ الشحن أقل من الحد الأدنى {0} {1}.",
+  "Wallet.TopUp.AboveMaximum": "مبلغ الشحن يتجاوز الحد الأقصى {0} {1}.",
+  "Notification.WalletTopUp.Succeeded.Title": "تم شحن المحفظة",
+  "Notification.WalletTopUp.Succeeded.Body": "تم شحن رصيد Fat7i الخاص بك بمبلغ {0} {1}. الرصيد الجديد: {2} {1}.",
+  "PassengerPaymentMethod.NotReusableCard": "يمكن حفظ البطاقات القابلة لإعادة الاستخدام فقط للرسوم المستقبلية.",
+  "PassengerPaymentMethod.PreferredMethod.Invalid": "طريقة الدفع المحددة غير متاحة.",
+  "Wallet.InsufficientBalance": "رصيد المحفظة غير كافٍ."
 }

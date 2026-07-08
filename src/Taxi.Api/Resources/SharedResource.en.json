@@ -307,5 +307,17 @@
   "Refund.Retry.Succeeded.AdminTitle": "Refund retry accepted",
   "Refund.Retry.Succeeded.AdminBody": "Refund retry for trip {0} is now {1}.",
   "Refund.Retry.Failed.AdminTitle": "Refund retry failed",
-  "Refund.Retry.Failed.AdminBody": "Refund retry for trip {0} could not be started."
+  "Refund.Retry.Failed.AdminBody": "Refund retry for trip {0} could not be started.",
+  "Wallet.Amount.Invalid": "Wallet amount must be greater than zero.",
+  "Wallet.Account.NotFound": "Wallet account not found.",
+  "Wallet.Currency.Required": "Wallet currency is required.",
+  "Wallet.IdempotencyKey.Required": "A wallet transaction key is required.",
+  "Wallet.TopUp.Disabled": "Wallet top-up is currently unavailable.",
+  "Wallet.TopUp.BelowMinimum": "The top-up amount is below the minimum of {0} {1}.",
+  "Wallet.TopUp.AboveMaximum": "The top-up amount is above the maximum of {0} {1}.",
+  "Notification.WalletTopUp.Succeeded.Title": "Wallet topped up",
+  "Notification.WalletTopUp.Succeeded.Body": "Your Fat7i balance was topped up with {0} {1}. New balance: {2} {1}.",
+  "PassengerPaymentMethod.NotReusableCard": "Only reusable cards can be saved for future charges.",
+  "PassengerPaymentMethod.PreferredMethod.Invalid": "The selected payment method is not available.",
+  "Wallet.InsufficientBalance": "Insufficient wallet balance."
 }

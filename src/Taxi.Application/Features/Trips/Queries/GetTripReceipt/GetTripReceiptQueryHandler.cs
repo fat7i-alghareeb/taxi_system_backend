@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Common.Options;
+using Taxi.Application.Features.Trips.Common;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
@@ -55,11 +56,25 @@ public class GetTripReceiptQueryHandler(
             .AsNoTracking()
             .FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
 
-        var payment = await context.Payments
+        var allPayments = await context.Payments
             .AsNoTracking()
-            .Where(p => p.TripId == trip.Id && p.Kind == PaymentKind.Fare)
+            .Where(p => p.TripId == trip.Id)
+            .ToListAsync(ct);
+
+        var payment = allPayments
+            .Where(p => p.Kind == PaymentKind.Fare)
             .OrderByDescending(p => p.CreatedAtUtc)
-            .FirstOrDefaultAsync(ct);
+            .FirstOrDefault();
+
+        var refunds = await context.PaymentRefunds
+            .AsNoTracking()
+            .Where(r => r.TripId == trip.Id)
+            .ToListAsync(ct);
+
+        var waitingSessions = await context.TripWaitingSessions
+            .AsNoTracking()
+            .Where(s => s.TripId == trip.Id)
+            .ToListAsync(ct);
 
         var vehicleType = await context.VehicleTypes
             .AsNoTracking()
@@ -109,6 +124,11 @@ public class GetTripReceiptQueryHandler(
             paidAtUtc = payment?.ProcessedAtUtc is { } p ? new DateTimeOffset(DateTime.SpecifyKind(p, DateTimeKind.Utc)) : null;
         }
 
+        var fareForBreakdown = quote?.FinalFare
+            ?? allPayments.Where(p => p.Kind == PaymentKind.Fare).Sum(p => p.Amount);
+        var financials = TripFinancialsCalculator.Compute(
+            fareForBreakdown, currency, allPayments, refunds, waitingSessions);
+
         return new TripReceiptDto(
             TripId: trip.Id,
             ReferenceCode: trip.ReferenceCode,
@@ -129,6 +149,12 @@ public class GetTripReceiptQueryHandler(
             InvoiceAvailable: invoice is not null,
             InvoiceNumber: invoice?.InvoiceNumber,
             InvoiceIssuedAtUtc: invoice?.IssuedAtUtc,
-            Stops: stops);
+            Stops: stops,
+            WaitingFeeAmount: financials.WaitingFeeAmount,
+            WalletPaidAmount: financials.WalletPaidAmount,
+            CardPaidAmount: financials.CardPaidAmount,
+            TotalPaidAmount: financials.TotalPaidAmount,
+            UnpaidAmount: financials.UnpaidAmount,
+            RefundedAmount: financials.RefundedAmount);
     }
 }

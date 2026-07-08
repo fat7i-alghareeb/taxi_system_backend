@@ -161,6 +161,18 @@ public static class LocalizationKeys
         public const string RefundFailedAdminBody = "Payment.Refund.Failed.AdminBody";
     }
 
+    public static class Wallet
+    {
+        public const string InvalidAmount = "Wallet.Amount.Invalid";
+        public const string AccountNotFound = "Wallet.Account.NotFound";
+        public const string InsufficientBalance = "Wallet.InsufficientBalance";
+        public const string CurrencyRequired = "Wallet.Currency.Required";
+        public const string IdempotencyKeyRequired = "Wallet.IdempotencyKey.Required";
+        public const string TopUpDisabled = "Wallet.TopUp.Disabled";
+        public const string TopUpBelowMinimum = "Wallet.TopUp.BelowMinimum";
+        public const string TopUpAboveMaximum = "Wallet.TopUp.AboveMaximum";
+    }
+
     public static class Trip
     {
         public const string QuoteExpired = "Trip.Quote.Expired";
@@ -342,6 +354,8 @@ public static class LocalizationKeys
         public const string ExpiryMonthInvalid = "PassengerPaymentMethod.ExpiryMonth.Invalid";
         public const string ExpiryYearInvalid = "PassengerPaymentMethod.ExpiryYear.Invalid";
         public const string NotFound = "PassengerPaymentMethod.NotFound";
+        public const string NotReusableCard = "PassengerPaymentMethod.NotReusableCard";
+        public const string PreferredMethodInvalid = "PassengerPaymentMethod.PreferredMethod.Invalid";
     }
 
     public static class Notification
@@ -397,6 +411,9 @@ public static class LocalizationKeys
 
         public const string WaitingFeeDueTitle = "Notification.WaitingFeeDue.Title";
         public const string WaitingFeeDueBody = "Notification.WaitingFeeDue.Body";
+
+        public const string WalletTopUpSucceededTitle = "Notification.WalletTopUp.Succeeded.Title";
+        public const string WalletTopUpSucceededBody = "Notification.WalletTopUp.Succeeded.Body";
 
         public const string NewMessageTitle = "Notification.NewMessage.Title";
         public const string NewMessageBody = "Notification.NewMessage.Body";

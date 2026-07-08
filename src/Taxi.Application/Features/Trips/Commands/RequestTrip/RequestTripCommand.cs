@@ -9,5 +9,7 @@ public record RequestTripCommand(
     List<CoordinateDto> Stops,
     DateTimeOffset? ScheduledAt = null,
     string? PassengerNote = null,
-    string? FlightNumber = null) : IRequest<Result<TripDto>>;
+    string? FlightNumber = null,
+    TripPaymentMethod PaymentMethod = TripPaymentMethod.Card,
+    Guid? SavedPaymentMethodId = null) : IRequest<Result<TripDto>>;
 

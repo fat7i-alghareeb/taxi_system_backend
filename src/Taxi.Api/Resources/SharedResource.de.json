@@ -307,5 +307,17 @@
   "Refund.Retry.Succeeded.AdminTitle": "Rückerstattungsversuch akzeptiert",
   "Refund.Retry.Succeeded.AdminBody": "Der erneute Rückerstattungsversuch für Fahrt {0} ist jetzt {1}.",
   "Refund.Retry.Failed.AdminTitle": "Rückerstattungsversuch fehlgeschlagen",
-  "Refund.Retry.Failed.AdminBody": "Der erneute Rückerstattungsversuch für Fahrt {0} konnte nicht gestartet werden."
+  "Refund.Retry.Failed.AdminBody": "Der erneute Rückerstattungsversuch für Fahrt {0} konnte nicht gestartet werden.",
+  "Wallet.Amount.Invalid": "Der Wallet-Betrag muss größer als null sein.",
+  "Wallet.Account.NotFound": "Wallet-Konto nicht gefunden.",
+  "Wallet.Currency.Required": "Wallet-Währung ist erforderlich.",
+  "Wallet.IdempotencyKey.Required": "Ein Transaktionsschlüssel für das Wallet ist erforderlich.",
+  "Wallet.TopUp.Disabled": "Das Aufladen des Wallets ist derzeit nicht verfügbar.",
+  "Wallet.TopUp.BelowMinimum": "Der Aufladebetrag liegt unter dem Minimum von {0} {1}.",
+  "Wallet.TopUp.AboveMaximum": "Der Aufladebetrag liegt über dem Maximum von {0} {1}.",
+  "Notification.WalletTopUp.Succeeded.Title": "Guthaben aufgeladen",
+  "Notification.WalletTopUp.Succeeded.Body": "Dein Fat7i-Guthaben wurde um {0} {1} aufgeladen. Neues Guthaben: {2} {1}.",
+  "PassengerPaymentMethod.NotReusableCard": "Nur wiederverwendbare Karten können für zukünftige Zahlungen gespeichert werden.",
+  "PassengerPaymentMethod.PreferredMethod.Invalid": "Die ausgewählte Zahlungsmethode ist nicht verfügbar.",
+  "Wallet.InsufficientBalance": "Unzureichendes Guthaben."
 }

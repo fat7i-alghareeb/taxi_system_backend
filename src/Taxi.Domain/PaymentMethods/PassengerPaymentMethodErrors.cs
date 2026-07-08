@@ -32,4 +32,12 @@ public static class PassengerPaymentMethodErrors
     public static readonly Error NotFound = Error.NotFound(
         code: LocalizationKeys.PassengerPaymentMethod.NotFound,
         description: "Payment method not found.");
+
+    public static readonly Error NotReusableCard = Error.Validation(
+        code: LocalizationKeys.PassengerPaymentMethod.NotReusableCard,
+        description: "Only reusable cards can be saved for future charges.");
+
+    public static readonly Error PreferredMethodInvalid = Error.Validation(
+        code: LocalizationKeys.PassengerPaymentMethod.PreferredMethodInvalid,
+        description: "The selected payment method is not available.");
 }

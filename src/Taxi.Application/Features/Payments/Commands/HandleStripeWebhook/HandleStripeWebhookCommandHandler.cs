@@ -15,6 +15,7 @@ public class HandleStripeWebhookCommandHandler(
     IAppDbContext context,
     IStripeWebhookValidator validator,
     IStripePaymentService stripe,
+    IWalletService wallet,
     INotificationService notificationService,
     ITripNotifier tripNotifier,
     ILogger<HandleStripeWebhookCommandHandler> logger)
@@ -72,6 +73,25 @@ public class HandleStripeWebhookCommandHandler(
             return PaymentErrors.StripeIntentNotFound;
         }
 
+        // Wallet top-ups have no Payment row — they are credited to the wallet ledger.
+        // Idempotent: a duplicate webhook returns AlreadyCredited and does not re-credit.
+        var topUpResult = await wallet.CreditTopUpFromWebhookAsync(
+            evt.PaymentIntentId, evt.AmountReceived, evt.ChargeId, ct);
+        if (topUpResult.IsFailure)
+        {
+            return topUpResult.Error;
+        }
+
+        if (topUpResult.Value.Status != WalletTopUpCreditStatus.NotAWalletTopUp)
+        {
+            if (topUpResult.Value.Status == WalletTopUpCreditStatus.Credited)
+            {
+                await NotifyWalletTopUpSucceededAsync(topUpResult.Value, ct);
+            }
+
+            return Result.Success;
+        }
+
         var payment = await context.Payments
             .FirstOrDefaultAsync(p => p.StripePaymentIntentId == evt.PaymentIntentId, ct);
 
@@ -115,8 +135,48 @@ public class HandleStripeWebhookCommandHandler(
             }
         }
 
+        // MIXED trips: the card portion just succeeded, so commit the wallet hold and record the
+        // wallet-funded portion of the fare. Card-only trips have no hold — this is a no-op.
+        if (payment.Kind == PaymentKind.Fare)
+        {
+            var commit = await wallet.CommitTripHoldAsync(payment.TripId, ct);
+            if (commit.IsSuccess && commit.Value > 0m)
+            {
+                await AddWalletFarePaymentIfMissingAsync(payment.TripId, commit.Value, payment.Currency, ct);
+            }
+        }
+
         await context.SaveChangesAsync(ct);
         return Result.Success;
+    }
+
+    private async Task AddWalletFarePaymentIfMissingAsync(
+        Guid tripId,
+        decimal amount,
+        string currency,
+        CancellationToken ct)
+    {
+        if (amount <= 0m)
+        {
+            return;
+        }
+
+        var exists = await context.Payments.AnyAsync(
+            p => p.TripId == tripId && p.Kind == PaymentKind.Fare && p.Method == PaymentMethod.Wallet, ct);
+        if (exists)
+        {
+            return;
+        }
+
+        var paymentResult = Payment.CreateFareWalletPayment(Guid.NewGuid(), tripId, amount, currency);
+        if (paymentResult.IsFailure)
+        {
+            return;
+        }
+
+        var walletPayment = paymentResult.Value;
+        walletPayment.MarkAsCompleted();
+        context.Payments.Add(walletPayment);
     }
 
     private async Task<Result<Success>> HandleFailedAsync(StripeWebhookEvent evt, string reason, CancellationToken ct)
@@ -177,6 +237,13 @@ public class HandleStripeWebhookCommandHandler(
                     quote.Id,
                     trip.Id);
             }
+        }
+
+        // MIXED trips: the card portion failed, so release the wallet hold and restore the balance.
+        // Card-only trips have no hold — this is a no-op.
+        if (payment.Kind == PaymentKind.Fare)
+        {
+            await wallet.ReleaseTripHoldAsync(payment.TripId, ct);
         }
 
         await context.SaveChangesAsync(ct);
@@ -347,6 +414,37 @@ public class HandleStripeWebhookCommandHandler(
 
         var tripRefundedResult = trip.MarkRefunded(amount);
         return tripRefundedResult.IsFailure ? tripRefundedResult.Error : Result.Success;
+    }
+
+    private async Task NotifyWalletTopUpSucceededAsync(WalletTopUpCreditOutcome outcome, CancellationToken ct)
+    {
+        try
+        {
+            var amountText = outcome.Amount.ToString("0.00");
+            var balanceText = outcome.NewBalance.ToString("0.00");
+
+            var data = new Dictionary<string, string>
+            {
+                ["type"] = "wallet_topup_succeeded",
+                ["amount"] = amountText,
+                ["currency"] = outcome.Currency,
+                ["balance"] = balanceText,
+            };
+
+            object[] bodyArgs = [amountText, outcome.Currency, balanceText];
+
+            await notificationService.SendPushNotificationAsync(
+                outcome.UserId,
+                LocalizationKeys.Notification.WalletTopUpSucceededTitle,
+                LocalizationKeys.Notification.WalletTopUpSucceededBody,
+                data,
+                ct,
+                bodyArgs: bodyArgs);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send wallet top-up success notification to user {UserId}", outcome.UserId);
+        }
     }
 
     private async Task NotifyAdminsRefundFailedAsync(PaymentRefund refund, Payment payment, CancellationToken ct)

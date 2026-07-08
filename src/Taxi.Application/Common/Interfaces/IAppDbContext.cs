@@ -14,6 +14,7 @@ using Taxi.Domain.RefundIssues;
 using Taxi.Domain.Trips;
 using Taxi.Domain.Users;
 using Taxi.Domain.Vehicles;
+using Taxi.Domain.Wallet;
 
 namespace Taxi.Application.Common.Interfaces;
 
@@ -44,6 +45,8 @@ public interface IAppDbContext
     public DbSet<CustomerIncident> CustomerIncidents { get; }
     public DbSet<RefundIssue> RefundIssues { get; }
     public DbSet<OtpCode> OtpCodes { get; }
+    public DbSet<WalletAccount> WalletAccounts { get; }
+    public DbSet<WalletTransaction> WalletTransactions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

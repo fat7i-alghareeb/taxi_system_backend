@@ -45,5 +45,9 @@ public sealed class TestWebApplicationFactory(string connectionString) : WebAppl
     {
         public Task<Result<string>> VerifyIdTokenAndGetPhoneAsync(string idToken, CancellationToken ct = default)
             => Task.FromResult<Result<string>>(idToken);
+
+        public Task<Result<FirebaseIdentity>> VerifyIdTokenAndGetIdentityAsync(string idToken, CancellationToken ct = default)
+            => Task.FromResult<Result<FirebaseIdentity>>(
+                new FirebaseIdentity(idToken, Email: null, EmailVerified: false, Name: null, Phone: idToken, SignInProvider: "phone"));
     }
 }

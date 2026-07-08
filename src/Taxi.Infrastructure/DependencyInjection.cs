@@ -33,6 +33,7 @@ using Taxi.Infrastructure.Services.Invoices;
 using Taxi.Infrastructure.Settings;
 using Taxi.Infrastructure.Sms;
 using Taxi.Infrastructure.Storage;
+using Taxi.Infrastructure.Wallet;
 
 public static class DependencyInjection
 {
@@ -42,6 +43,8 @@ public static class DependencyInjection
         services.Configure<InvoiceIssuerOptions>(configuration.GetSection(InvoiceIssuerOptions.SectionName));
         services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.SectionName));
         services.Configure<OtpOptions>(configuration.GetSection(OtpOptions.SectionName));
+        services.Configure<WalletOptions>(configuration.GetSection(WalletOptions.SectionName));
+        services.Configure<PaymentPreferenceOptions>(configuration.GetSection(PaymentPreferenceOptions.SectionName));
         services.Configure<CmComSmsOptions>(configuration.GetSection(CmComSmsOptions.SectionName));
         services.Configure<TitanEmailOptions>(configuration.GetSection(TitanEmailOptions.SectionName));
 
@@ -191,6 +194,7 @@ public static class DependencyInjection
 
         services.AddScoped<IStripePaymentService, StripePaymentService>();
         services.AddScoped<IStripeWebhookValidator, StripeWebhookValidator>();
+        services.AddScoped<IWalletService, WalletService>();
         services.AddSingleton<IClientConfigProvider, ClientConfigProvider>();
         services.AddSingleton<IRefundProcessingOptionsProvider, RefundProcessingOptionsProvider>();
 

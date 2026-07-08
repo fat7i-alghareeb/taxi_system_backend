@@ -5,6 +5,7 @@ using Stripe;
 
 using Taxi.Application.Common.Interfaces;
 using Taxi.Domain.Common.Results;
+using Taxi.Domain.PaymentMethods;
 using Taxi.Domain.Payments;
 using Taxi.Infrastructure.Settings;
 
@@ -220,6 +221,88 @@ public sealed class StripePaymentService : IStripePaymentService
         }
     }
 
+    public async Task<Result<StripePaymentIntentResult>> CreateTopUpPaymentIntentAsync(
+        Guid walletTransactionId,
+        decimal amount,
+        string currency,
+        Guid userId,
+        string? existingStripeCustomerId,
+        string? userEmail,
+        string? userPhone,
+        string userName,
+        CancellationToken ct = default)
+    {
+        if (amount <= 0)
+        {
+            return PaymentErrors.InvalidAmount;
+        }
+
+        try
+        {
+            var customerService = new CustomerService();
+            string customerId;
+
+            if (!string.IsNullOrWhiteSpace(existingStripeCustomerId))
+            {
+                customerId = existingStripeCustomerId;
+            }
+            else
+            {
+                var customer = await customerService.CreateAsync(
+                    new CustomerCreateOptions
+                    {
+                        Name = userName,
+                        Email = userEmail,
+                        Phone = userPhone,
+                        Metadata = new Dictionary<string, string>
+                        {
+                            ["passengerId"] = userId.ToString(),
+                        },
+                    },
+                    cancellationToken: ct);
+                customerId = customer.Id;
+            }
+
+            var ekService = new EphemeralKeyService();
+            var ephemeralKey = await ekService.CreateAsync(
+                new EphemeralKeyCreateOptions { Customer = customerId },
+                cancellationToken: ct);
+
+            var intentService = new PaymentIntentService();
+            var options = new PaymentIntentCreateOptions
+            {
+                Amount = ToMinorUnits(amount),
+                Currency = currency.ToLowerInvariant(),
+                CaptureMethod = "automatic",
+                Customer = customerId,
+                AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions { Enabled = true },
+                Metadata = new Dictionary<string, string>
+                {
+                    // Resolved by the payment_intent.succeeded webhook to credit the wallet ledger.
+                    ["type"] = "wallet_topup",
+                    ["userId"] = userId.ToString(),
+                    ["walletTransactionId"] = walletTransactionId.ToString(),
+                },
+            };
+
+            // Idempotent per top-up: a retried request reuses the same intent/client secret.
+            var requestOptions = new RequestOptions { IdempotencyKey = $"wallet-topup-{walletTransactionId}" };
+
+            var intent = await intentService.CreateAsync(options, requestOptions, ct);
+            return new StripePaymentIntentResult(
+                intent.Id,
+                intent.ClientSecret,
+                this.settings.PublishableKey,
+                customerId,
+                ephemeralKey.Secret);
+        }
+        catch (StripeException ex)
+        {
+            this.logger.LogError(ex, "Stripe wallet top-up PaymentIntent creation failed for user {UserId}", userId);
+            return PaymentErrors.StripeInitiationFailed;
+        }
+    }
+
     public async Task<Result<Success>> CancelPaymentIntentAsync(string paymentIntentId, CancellationToken ct = default)
     {
         try
@@ -296,6 +379,198 @@ public sealed class StripePaymentService : IStripePaymentService
             var requiresAction = string.Equals(ex.StripeError?.Code, "authentication_required", StringComparison.OrdinalIgnoreCase);
             this.logger.LogWarning(
                 ex, "Off-session waiting-fee charge failed for trip {TripId}: code={Code}", tripId, ex.StripeError?.Code);
+
+            if (pi is not null)
+            {
+                return new StripeSurchargeResult(pi.Id, pi.Status ?? "failed", pi.LatestChargeId, requiresAction);
+            }
+
+            return PaymentErrors.StripeInitiationFailed;
+        }
+    }
+
+    public async Task<Result<StripeSetupIntentResult>> CreateSetupIntentAsync(
+        Guid userId,
+        string? existingStripeCustomerId,
+        string? userEmail,
+        string? userPhone,
+        string userName,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var customerService = new CustomerService();
+            string customerId;
+
+            if (!string.IsNullOrWhiteSpace(existingStripeCustomerId))
+            {
+                customerId = existingStripeCustomerId;
+            }
+            else
+            {
+                var customer = await customerService.CreateAsync(
+                    new CustomerCreateOptions
+                    {
+                        Name = userName,
+                        Email = userEmail,
+                        Phone = userPhone,
+                        Metadata = new Dictionary<string, string>
+                        {
+                            ["passengerId"] = userId.ToString(),
+                        },
+                    },
+                    cancellationToken: ct);
+                customerId = customer.Id;
+            }
+
+            var ekService = new EphemeralKeyService();
+            var ephemeralKey = await ekService.CreateAsync(
+                new EphemeralKeyCreateOptions { Customer = customerId },
+                cancellationToken: ct);
+
+            var setupService = new SetupIntentService();
+            var setupIntent = await setupService.CreateAsync(
+                new SetupIntentCreateOptions
+                {
+                    Customer = customerId,
+                    // Save the method for later customer-not-present ride-related charges.
+                    Usage = "off_session",
+                    AutomaticPaymentMethods = new SetupIntentAutomaticPaymentMethodsOptions
+                    {
+                        Enabled = true,
+                        AllowRedirects = "never",
+                    },
+                    Metadata = new Dictionary<string, string>
+                    {
+                        ["passengerId"] = userId.ToString(),
+                        ["purpose"] = "save_reusable_method",
+                    },
+                },
+                cancellationToken: ct);
+
+            return new StripeSetupIntentResult(
+                setupIntent.Id,
+                setupIntent.ClientSecret,
+                this.settings.PublishableKey,
+                customerId,
+                ephemeralKey.Secret);
+        }
+        catch (StripeException ex)
+        {
+            this.logger.LogError(ex, "Stripe SetupIntent creation failed for user {UserId}", userId);
+            return PaymentErrors.StripeInitiationFailed;
+        }
+    }
+
+    public async Task<Result<StripePaymentMethodDetails>> GetPaymentMethodDetailsAsync(
+        string paymentMethodId,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(paymentMethodId))
+        {
+            return PassengerPaymentMethodErrors.NotReusableCard;
+        }
+
+        try
+        {
+            var pmService = new PaymentMethodService();
+            var pm = await pmService.GetAsync(paymentMethodId, cancellationToken: ct);
+
+            if (pm.Card is null)
+            {
+                // Only reusable cards (incl. those behind Apple/Google Pay) are supported for saving.
+                return PassengerPaymentMethodErrors.NotReusableCard;
+            }
+
+            return new StripePaymentMethodDetails(
+                pm.Card.Brand ?? "card",
+                pm.Card.Last4 ?? "0000",
+                (int)pm.Card.ExpMonth,
+                (int)pm.Card.ExpYear,
+                pm.BillingDetails?.Name);
+        }
+        catch (StripeException ex)
+        {
+            this.logger.LogWarning(ex, "Could not retrieve Stripe payment method {PaymentMethodId}", paymentMethodId);
+            return PassengerPaymentMethodErrors.NotReusableCard;
+        }
+    }
+
+    public async Task<Result<Success>> DetachPaymentMethodAsync(string paymentMethodId, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(paymentMethodId))
+        {
+            return Result.Success;
+        }
+
+        try
+        {
+            var pmService = new PaymentMethodService();
+            await pmService.DetachAsync(paymentMethodId, cancellationToken: ct);
+            return Result.Success;
+        }
+        catch (StripeException ex)
+        {
+            // Best-effort: a detach failure must not block the local soft-delete.
+            this.logger.LogWarning(ex, "Stripe detach failed for payment method {PaymentMethodId}", paymentMethodId);
+            return Result.Success;
+        }
+    }
+
+    public async Task<Result<StripeSurchargeResult>> ChargeOffSessionAsync(
+        string stripeCustomerId,
+        string paymentMethodId,
+        decimal amount,
+        string currency,
+        Guid tripId,
+        string kind,
+        string idempotencyKey,
+        CancellationToken ct = default)
+    {
+        if (amount <= 0)
+        {
+            return PaymentErrors.InvalidAmount;
+        }
+
+        if (string.IsNullOrWhiteSpace(stripeCustomerId) || string.IsNullOrWhiteSpace(paymentMethodId))
+        {
+            return PaymentErrors.StripeInitiationFailed;
+        }
+
+        try
+        {
+            var intentService = new PaymentIntentService();
+            var options = new PaymentIntentCreateOptions
+            {
+                Amount = ToMinorUnits(amount),
+                Currency = currency.ToLowerInvariant(),
+                Customer = stripeCustomerId,
+                PaymentMethod = paymentMethodId,
+                Confirm = true,
+                OffSession = true,
+                CaptureMethod = "automatic",
+                Metadata = new Dictionary<string, string>
+                {
+                    ["tripId"] = tripId.ToString(),
+                    ["kind"] = kind,
+                },
+            };
+
+            var requestOptions = new RequestOptions { IdempotencyKey = idempotencyKey };
+            var intent = await intentService.CreateAsync(options, requestOptions, ct);
+
+            return new StripeSurchargeResult(
+                intent.Id,
+                intent.Status,
+                intent.LatestChargeId,
+                string.Equals(intent.Status, "requires_action", StringComparison.OrdinalIgnoreCase));
+        }
+        catch (StripeException ex)
+        {
+            var pi = ex.StripeError?.PaymentIntent;
+            var requiresAction = string.Equals(ex.StripeError?.Code, "authentication_required", StringComparison.OrdinalIgnoreCase);
+            this.logger.LogWarning(
+                ex, "Off-session charge failed for trip {TripId} ({Kind}): code={Code}", tripId, kind, ex.StripeError?.Code);
 
             if (pi is not null)
             {

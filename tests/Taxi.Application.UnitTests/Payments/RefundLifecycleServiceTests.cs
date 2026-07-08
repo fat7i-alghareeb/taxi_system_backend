@@ -5,6 +5,7 @@ using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Payments.Services;
 using Taxi.Application.UnitTests.Infrastructure;
 using Taxi.Contracts.Common;
+using Taxi.Domain.Common.Results;
 using Taxi.Domain.Payments;
 
 using Xunit;
@@ -16,6 +17,7 @@ public class RefundLifecycleServiceTests
     private readonly IClientConfigProvider clientConfig = Substitute.For<IClientConfigProvider>();
     private readonly IRefundProcessingOptionsProvider options = Substitute.For<IRefundProcessingOptionsProvider>();
     private readonly IStripePaymentService stripe = Substitute.For<IStripePaymentService>();
+    private readonly IWalletService wallet = Substitute.For<IWalletService>();
     private readonly INotificationService notifications = Substitute.For<INotificationService>();
     private readonly ILogger<RefundLifecycleService> logger = Substitute.For<ILogger<RefundLifecycleService>>();
 
@@ -111,6 +113,44 @@ public class RefundLifecycleServiceTests
             Arg.Any<CancellationToken>(),
             Arg.Is<object[]?>(args => args == null),
             Arg.Is<object[]?>(args => args != null && args.Length == 3));
+    }
+
+    [Fact]
+    public async Task RequestRefundAsync_WalletPayment_ReversesToWalletLedgerNotStripe()
+    {
+        var passengerId = Guid.NewGuid();
+        var tripId = Guid.NewGuid();
+        var payment = Payment.CreateWaitingFeeWalletPayment(Guid.NewGuid(), tripId, 8m, "EUR", "wtxn-1").Value;
+        payment.MarkAsCompleted();
+        var context = BuildContext(payment);
+
+        wallet.CreditRefundReversalAsync(
+                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(),
+                Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<Success>>(Result.Success));
+
+        var service = CreateService(context);
+
+        var result = await service.RequestRefundAsync(
+            new RefundRequest(
+                payment.Id,
+                8m,
+                PaymentRefundSourceType.ManualIncidentRefund,
+                null,
+                true,
+                tripId,
+                PassengerId: passengerId),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Succeeded, result.Value.Status);
+        Assert.Null(result.Value.StripeRefundId);
+        // Wallet money is reversed to the wallet ledger; no Stripe refund is attempted.
+        await wallet.Received(1).CreditRefundReversalAsync(
+            passengerId, tripId, payment.Id, Arg.Any<Guid>(), 8m, "EUR",
+            Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await stripe.DidNotReceive().CreateRefundAsync(
+            Arg.Any<string>(), Arg.Any<decimal?>(), Arg.Any<CancellationToken>(), Arg.Any<string?>());
     }
 
     [Fact]
@@ -556,5 +596,5 @@ public class RefundLifecycleServiceTests
     }
 
     private RefundLifecycleService CreateService(IAppDbContext context)
-        => new(context, clientConfig, options, stripe, notifications, Substitute.For<ITripNotifier>(), logger);
+        => new(context, clientConfig, options, stripe, wallet, notifications, Substitute.For<ITripNotifier>(), logger);
 }

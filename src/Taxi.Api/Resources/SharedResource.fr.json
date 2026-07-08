@@ -307,5 +307,17 @@
   "Refund.Retry.Succeeded.AdminTitle": "Nouvelle tentative de remboursement acceptée",
   "Refund.Retry.Succeeded.AdminBody": "La nouvelle tentative de remboursement pour la course {0} est maintenant {1}.",
   "Refund.Retry.Failed.AdminTitle": "Nouvelle tentative de remboursement échouée",
-  "Refund.Retry.Failed.AdminBody": "La nouvelle tentative de remboursement pour la course {0} n'a pas pu être lancée."
+  "Refund.Retry.Failed.AdminBody": "La nouvelle tentative de remboursement pour la course {0} n'a pas pu être lancée.",
+  "Wallet.Amount.Invalid": "Le montant du portefeuille doit être supérieur à zéro.",
+  "Wallet.Account.NotFound": "Compte de portefeuille introuvable.",
+  "Wallet.Currency.Required": "La devise du portefeuille est requise.",
+  "Wallet.IdempotencyKey.Required": "Une clé de transaction du portefeuille est requise.",
+  "Wallet.TopUp.Disabled": "Le rechargement du portefeuille est actuellement indisponible.",
+  "Wallet.TopUp.BelowMinimum": "Le montant du rechargement est inférieur au minimum de {0} {1}.",
+  "Wallet.TopUp.AboveMaximum": "Le montant du rechargement est supérieur au maximum de {0} {1}.",
+  "Notification.WalletTopUp.Succeeded.Title": "Portefeuille rechargé",
+  "Notification.WalletTopUp.Succeeded.Body": "Votre solde Fat7i a été rechargé de {0} {1}. Nouveau solde : {2} {1}.",
+  "PassengerPaymentMethod.NotReusableCard": "Seules les cartes réutilisables peuvent être enregistrées pour de futurs paiements.",
+  "PassengerPaymentMethod.PreferredMethod.Invalid": "Le mode de paiement sélectionné n'est pas disponible.",
+  "Wallet.InsufficientBalance": "Solde insuffisant."
 }

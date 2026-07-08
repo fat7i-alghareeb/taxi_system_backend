@@ -8,6 +8,7 @@ using Taxi.Domain.Common.Results;
 using Taxi.Domain.Payments;
 using Taxi.Domain.Trips;
 using Taxi.Domain.Users;
+using Taxi.Domain.Wallet;
 
 namespace Taxi.Application.Features.Trips.Commands.RequestTrip;
 
@@ -16,6 +17,7 @@ public class RequestTripCommandHandler(
     IUser currentUser,
     IClientConfigProvider clientConfig,
     IStripePaymentService stripe,
+    IWalletService wallet,
     TimeProvider timeProvider) : IRequestHandler<RequestTripCommand, Result<TripDto>>
 {
     private readonly IAppDbContext _context = context;
@@ -67,9 +69,21 @@ public class RequestTripCommandHandler(
                 return TripErrors.QuoteAlreadyUsed;
             }
 
+            // Reuse the amount of the existing card payment so a mixed trip re-issues only the
+            // card portion (not the full fare). Stripe keys on quoteId, so same amount => same
+            // intent. Card-only trips have a full-fare card payment, so this is unchanged for them.
+            var existingCardPayment = await _context.Payments
+                .Where(p => p.TripId == existingTrip.Id
+                    && p.Kind == PaymentKind.Fare
+                    && p.Method == PaymentMethod.CreditCard
+                    && p.StripePaymentIntentId != null)
+                .OrderByDescending(p => p.CreatedAtUtc)
+                .FirstOrDefaultAsync(ct);
+            var resumeAmount = existingCardPayment?.Amount ?? quote.FinalFare;
+
             var resumeIntentResult = await stripe.CreatePaymentIntentAsync(
                 quoteId: quote.Id,
-                amount: quote.FinalFare,
+                amount: resumeAmount,
                 currency: quote.CurrencyCode,
                 tripId: existingTrip.Id,
                 passengerId: passengerId,
@@ -157,58 +171,239 @@ public class RequestTripCommandHandler(
         }
         else
         {
-            var intentResult = await stripe.CreatePaymentIntentAsync(
-                quoteId: quote.Id,
-                amount: quote.FinalFare,
-                currency: quote.CurrencyCode,
-                tripId: trip.Id,
-                passengerId: passengerId,
-                existingStripeCustomerId: passenger.StripeCustomerId,
-                passengerEmail: passenger.Email,
-                passengerPhone: passenger.Phone,
-                passengerName: passenger.Name,
-                passengerPreferredLanguage: passenger.PreferredLanguage,
-                ct: ct);
-
-            if (intentResult.IsFailure)
+            // The card path (default / absent selection) is unchanged. Wallet and mixed are new,
+            // gated behind an explicit selection so existing clients keep the exact card flow.
+            var paymentResult = request.PaymentMethod switch
             {
-                return intentResult.Error;
-            }
-
-            var intent = intentResult.Value;
-
-            if (string.IsNullOrWhiteSpace(passenger.StripeCustomerId))
-            {
-                passenger.SetStripeCustomerId(intent.CustomerId);
-            }
-
-            var paymentResult = Payment.CreateForStripe(
-                Guid.NewGuid(),
-                trip.Id,
-                quote.FinalFare,
-                quote.CurrencyCode,
-                intent.PaymentIntentId,
-                intent.ClientSecret);
+                TripPaymentMethod.Wallet => await HandleWalletPaymentAsync(trip, quote, passenger, ct),
+                TripPaymentMethod.Mixed => await HandleMixedPaymentAsync(trip, quote, passenger, ct),
+                _ => await HandleCardPaymentAsync(trip, quote, passenger, ct),
+            };
 
             if (paymentResult.IsFailure)
             {
                 return paymentResult.Error;
             }
 
-            _context.Trips.Add(trip);
-            _context.Payments.Add(paymentResult.Value);
-            AddTripRouteIfAvailable(trip, quote);
-            await _context.SaveChangesAsync(ct);
-
-            stripePaymentDto = new StripePaymentDto(
-                intent.PaymentIntentId,
-                intent.ClientSecret,
-                intent.PublishableKey,
-                intent.CustomerId,
-                intent.EphemeralKeySecret);
+            stripePaymentDto = paymentResult.Value;
         }
 
         return await BuildTripResultAsync(trip, quote, stripePaymentDto, ct);
+    }
+
+    // Card path — full fare on the Stripe sheet. Unchanged from the original behavior.
+    private async Task<Result<StripePaymentDto?>> HandleCardPaymentAsync(
+        Trip trip,
+        PricingQuote quote,
+        User passenger,
+        CancellationToken ct)
+    {
+        var intentResult = await stripe.CreatePaymentIntentAsync(
+            quoteId: quote.Id,
+            amount: quote.FinalFare,
+            currency: quote.CurrencyCode,
+            tripId: trip.Id,
+            passengerId: passenger.Id,
+            existingStripeCustomerId: passenger.StripeCustomerId,
+            passengerEmail: passenger.Email,
+            passengerPhone: passenger.Phone,
+            passengerName: passenger.Name,
+            passengerPreferredLanguage: passenger.PreferredLanguage,
+            ct: ct);
+
+        if (intentResult.IsFailure)
+        {
+            return intentResult.Error;
+        }
+
+        var intent = intentResult.Value;
+
+        if (string.IsNullOrWhiteSpace(passenger.StripeCustomerId))
+        {
+            passenger.SetStripeCustomerId(intent.CustomerId);
+        }
+
+        var paymentResult = Payment.CreateForStripe(
+            Guid.NewGuid(), trip.Id, quote.FinalFare, quote.CurrencyCode,
+            intent.PaymentIntentId, intent.ClientSecret);
+        if (paymentResult.IsFailure)
+        {
+            return paymentResult.Error;
+        }
+
+        _context.Trips.Add(trip);
+        _context.Payments.Add(paymentResult.Value);
+        AddTripRouteIfAvailable(trip, quote);
+        await _context.SaveChangesAsync(ct);
+
+        return new StripePaymentDto(
+            intent.PaymentIntentId, intent.ClientSecret, intent.PublishableKey,
+            intent.CustomerId, intent.EphemeralKeySecret);
+    }
+
+    // Wallet-only — the whole fare from the balance, synchronously (no Stripe, no webhook).
+    private async Task<Result<StripePaymentDto?>> HandleWalletPaymentAsync(
+        Trip trip,
+        PricingQuote quote,
+        User passenger,
+        CancellationToken ct)
+    {
+        var fare = quote.FinalFare;
+
+        // Pre-check so an under-funded wallet-only request persists nothing (no phantom trip).
+        var account = await _context.WalletAccounts
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.UserId == passenger.Id, ct);
+        if (account is null || account.Balance < fare)
+        {
+            return WalletErrors.InsufficientBalance;
+        }
+
+        var holdResult = await wallet.TryHoldForTripAsync(
+            passenger.Id, trip.Id, fare, quote.CurrencyCode, $"trip-{trip.Id:N}", ct);
+        if (holdResult.IsFailure)
+        {
+            return holdResult.Error;
+        }
+
+        if (holdResult.Value.HeldAmount < fare)
+        {
+            // Balance dropped between the check and the hold (rare race) — release and fail.
+            await wallet.ReleaseTripHoldAsync(trip.Id, ct);
+            return WalletErrors.InsufficientBalance;
+        }
+
+        _context.Trips.Add(trip);
+        AddTripRouteIfAvailable(trip, quote);
+
+        var commitResult = await wallet.CommitTripHoldAsync(trip.Id, ct);
+        if (commitResult.IsFailure)
+        {
+            return commitResult.Error;
+        }
+
+        AddWalletFarePayment(
+            trip.Id, commitResult.Value > 0m ? commitResult.Value : fare,
+            quote.CurrencyCode, holdResult.Value.HoldTransactionId);
+
+        var confirmResult = trip.ConfirmPayment();
+        if (confirmResult.IsFailure)
+        {
+            return confirmResult.Error;
+        }
+
+        await _context.SaveChangesAsync(ct);
+        return Result<StripePaymentDto?>.SuccessOrNull(null);
+    }
+
+    // Mixed — wallet first (held), the remainder on the card. The webhook commits the hold on
+    // card success and releases it on failure, so wallet money is never lost or double-deducted.
+    private async Task<Result<StripePaymentDto?>> HandleMixedPaymentAsync(
+        Trip trip,
+        PricingQuote quote,
+        User passenger,
+        CancellationToken ct)
+    {
+        var fare = quote.FinalFare;
+
+        var holdResult = await wallet.TryHoldForTripAsync(
+            passenger.Id, trip.Id, fare, quote.CurrencyCode, $"trip-{trip.Id:N}", ct);
+        if (holdResult.IsFailure)
+        {
+            return holdResult.Error;
+        }
+
+        var held = holdResult.Value.HeldAmount;
+        var cardPortion = decimal.Round(fare - held, 2, MidpointRounding.AwayFromZero);
+
+        // Wallet fully covers the fare — settle like wallet-only.
+        if (cardPortion <= 0m)
+        {
+            _context.Trips.Add(trip);
+            AddTripRouteIfAvailable(trip, quote);
+
+            var commitResult = await wallet.CommitTripHoldAsync(trip.Id, ct);
+            if (commitResult.IsFailure)
+            {
+                return commitResult.Error;
+            }
+
+            AddWalletFarePayment(
+                trip.Id, commitResult.Value > 0m ? commitResult.Value : fare,
+                quote.CurrencyCode, holdResult.Value.HoldTransactionId);
+
+            var confirmResult = trip.ConfirmPayment();
+            if (confirmResult.IsFailure)
+            {
+                return confirmResult.Error;
+            }
+
+            await _context.SaveChangesAsync(ct);
+            return Result<StripePaymentDto?>.SuccessOrNull(null);
+        }
+
+        var intentResult = await stripe.CreatePaymentIntentAsync(
+            quoteId: quote.Id,
+            amount: cardPortion,
+            currency: quote.CurrencyCode,
+            tripId: trip.Id,
+            passengerId: passenger.Id,
+            existingStripeCustomerId: passenger.StripeCustomerId,
+            passengerEmail: passenger.Email,
+            passengerPhone: passenger.Phone,
+            passengerName: passenger.Name,
+            passengerPreferredLanguage: passenger.PreferredLanguage,
+            ct: ct);
+
+        if (intentResult.IsFailure)
+        {
+            await wallet.ReleaseTripHoldAsync(trip.Id, ct);
+            return intentResult.Error;
+        }
+
+        var intent = intentResult.Value;
+
+        if (string.IsNullOrWhiteSpace(passenger.StripeCustomerId))
+        {
+            passenger.SetStripeCustomerId(intent.CustomerId);
+        }
+
+        var cardPaymentResult = Payment.CreateForStripe(
+            Guid.NewGuid(), trip.Id, cardPortion, quote.CurrencyCode,
+            intent.PaymentIntentId, intent.ClientSecret);
+        if (cardPaymentResult.IsFailure)
+        {
+            await wallet.ReleaseTripHoldAsync(trip.Id, ct);
+            return cardPaymentResult.Error;
+        }
+
+        _context.Trips.Add(trip);
+        _context.Payments.Add(cardPaymentResult.Value);
+        AddTripRouteIfAvailable(trip, quote);
+        await _context.SaveChangesAsync(ct);
+
+        return new StripePaymentDto(
+            intent.PaymentIntentId, intent.ClientSecret, intent.PublishableKey,
+            intent.CustomerId, intent.EphemeralKeySecret);
+    }
+
+    private void AddWalletFarePayment(Guid tripId, decimal amount, string currency, Guid? holdTransactionId)
+    {
+        if (amount <= 0m)
+        {
+            return;
+        }
+
+        var paymentResult = Payment.CreateFareWalletPayment(
+            Guid.NewGuid(), tripId, amount, currency, holdTransactionId?.ToString());
+        if (paymentResult.IsFailure)
+        {
+            return;
+        }
+
+        var payment = paymentResult.Value;
+        payment.MarkAsCompleted();
+        _context.Payments.Add(payment);
     }
 
     private async Task<Result<TripDto>> BuildTripResultAsync(

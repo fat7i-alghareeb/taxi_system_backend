@@ -307,5 +307,17 @@
   "Refund.Retry.Succeeded.AdminTitle": "Ponowna próba zwrotu zaakceptowana",
   "Refund.Retry.Succeeded.AdminBody": "Ponowna próba zwrotu dla przejazdu {0} ma teraz status {1}.",
   "Refund.Retry.Failed.AdminTitle": "Ponowna próba zwrotu nie powiodła się",
-  "Refund.Retry.Failed.AdminBody": "Nie można rozpocząć ponownej próby zwrotu dla przejazdu {0}."
+  "Refund.Retry.Failed.AdminBody": "Nie można rozpocząć ponownej próby zwrotu dla przejazdu {0}.",
+  "Wallet.Amount.Invalid": "Kwota portfela musi być większa niż zero.",
+  "Wallet.Account.NotFound": "Nie znaleziono konta portfela.",
+  "Wallet.Currency.Required": "Wymagana jest waluta portfela.",
+  "Wallet.IdempotencyKey.Required": "Wymagany jest klucz transakcji portfela.",
+  "Wallet.TopUp.Disabled": "Doładowanie portfela jest obecnie niedostępne.",
+  "Wallet.TopUp.BelowMinimum": "Kwota doładowania jest poniżej minimum {0} {1}.",
+  "Wallet.TopUp.AboveMaximum": "Kwota doładowania przekracza maksimum {0} {1}.",
+  "Notification.WalletTopUp.Succeeded.Title": "Portfel doładowany",
+  "Notification.WalletTopUp.Succeeded.Body": "Twoje saldo Fat7i zostało doładowane o {0} {1}. Nowe saldo: {2} {1}.",
+  "PassengerPaymentMethod.NotReusableCard": "Do przyszłych płatności można zapisać tylko karty wielokrotnego użytku.",
+  "PassengerPaymentMethod.PreferredMethod.Invalid": "Wybrana metoda płatności jest niedostępna.",
+  "Wallet.InsufficientBalance": "Niewystarczające saldo."
 }

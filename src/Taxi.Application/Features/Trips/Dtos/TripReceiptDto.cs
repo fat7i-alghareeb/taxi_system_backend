@@ -20,4 +20,11 @@ public record TripReceiptDto(
     bool InvoiceAvailable,
     string? InvoiceNumber,
     DateTimeOffset? InvoiceIssuedAtUtc,
-    List<TripStopDto> Stops);
+    List<TripStopDto> Stops,
+    // Money breakdown (wallet vs card vs unpaid vs refunded).
+    decimal WaitingFeeAmount,
+    decimal WalletPaidAmount,
+    decimal CardPaidAmount,
+    decimal TotalPaidAmount,
+    decimal UnpaidAmount,
+    decimal RefundedAmount);

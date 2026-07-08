@@ -54,6 +54,54 @@ public interface IStripePaymentService
         string? passengerPhone,
         string passengerName,
         CancellationToken ct = default);
+
+    // Creates a SetupIntent so the customer can save a reusable payment method (usually a card)
+    // for future off-session ride-related charges. Returns the payment-sheet (setup mode) details.
+    Task<Result<StripeSetupIntentResult>> CreateSetupIntentAsync(
+        Guid userId,
+        string? existingStripeCustomerId,
+        string? userEmail,
+        string? userPhone,
+        string userName,
+        CancellationToken ct = default);
+
+    // Retrieves card metadata (brand / last four / expiry) for a saved payment method so it can
+    // be shown in the app. Card data itself is never stored on our side. Returns a failure if the
+    // method is missing or is not a reusable card.
+    Task<Result<StripePaymentMethodDetails>> GetPaymentMethodDetailsAsync(
+        string paymentMethodId,
+        CancellationToken ct = default);
+
+    // Detaches a saved payment method from the Stripe customer (best-effort; used on delete).
+    Task<Result<Success>> DetachPaymentMethodAsync(string paymentMethodId, CancellationToken ct = default);
+
+    // Charges a specific saved payment method off-session (customer not present) for a ride-related
+    // fee. Soft declines / authentication_required surface via the result's Status/RequiresAction.
+    Task<Result<StripeSurchargeResult>> ChargeOffSessionAsync(
+        string stripeCustomerId,
+        string paymentMethodId,
+        decimal amount,
+        string currency,
+        Guid tripId,
+        string kind,
+        string idempotencyKey,
+        CancellationToken ct = default);
+
+    // Creates an on-session PaymentIntent so the customer can top up their in-app wallet
+    // balance (Stripe only collects the money; the wallet is credited by the backend ledger
+    // once the payment_intent.succeeded webhook arrives). The intent metadata carries
+    // {type: wallet_topup, userId, walletTransactionId} so the webhook can resolve it, and the
+    // idempotency key is derived from walletTransactionId so a retried request reuses the intent.
+    Task<Result<StripePaymentIntentResult>> CreateTopUpPaymentIntentAsync(
+        Guid walletTransactionId,
+        decimal amount,
+        string currency,
+        Guid userId,
+        string? existingStripeCustomerId,
+        string? userEmail,
+        string? userPhone,
+        string userName,
+        CancellationToken ct = default);
 }
 
 public sealed record StripePaymentIntentResult(
@@ -62,6 +110,20 @@ public sealed record StripePaymentIntentResult(
     string PublishableKey,
     string CustomerId,
     string EphemeralKeySecret);
+
+public sealed record StripeSetupIntentResult(
+    string SetupIntentId,
+    string ClientSecret,
+    string PublishableKey,
+    string CustomerId,
+    string EphemeralKeySecret);
+
+public sealed record StripePaymentMethodDetails(
+    string Brand,
+    string LastFour,
+    int ExpiryMonth,
+    int ExpiryYear,
+    string? CardholderName);
 
 public sealed record StripeRefundResult(
     string RefundId,

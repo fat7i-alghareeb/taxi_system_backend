@@ -307,5 +307,17 @@
   "Refund.Retry.Succeeded.AdminTitle": "Reintento de reembolso aceptado",
   "Refund.Retry.Succeeded.AdminBody": "El reintento de reembolso para el viaje {0} ahora está {1}.",
   "Refund.Retry.Failed.AdminTitle": "Reintento de reembolso fallido",
-  "Refund.Retry.Failed.AdminBody": "No se pudo iniciar el reintento de reembolso para el viaje {0}."
+  "Refund.Retry.Failed.AdminBody": "No se pudo iniciar el reintento de reembolso para el viaje {0}.",
+  "Wallet.Amount.Invalid": "El importe del monedero debe ser mayor que cero.",
+  "Wallet.Account.NotFound": "Cuenta de monedero no encontrada.",
+  "Wallet.Currency.Required": "Se requiere la moneda del monedero.",
+  "Wallet.IdempotencyKey.Required": "Se requiere una clave de transacción del monedero.",
+  "Wallet.TopUp.Disabled": "La recarga del monedero no está disponible en este momento.",
+  "Wallet.TopUp.BelowMinimum": "El importe de recarga es inferior al mínimo de {0} {1}.",
+  "Wallet.TopUp.AboveMaximum": "El importe de recarga supera el máximo de {0} {1}.",
+  "Notification.WalletTopUp.Succeeded.Title": "Monedero recargado",
+  "Notification.WalletTopUp.Succeeded.Body": "Tu saldo de Fat7i se ha recargado con {0} {1}. Nuevo saldo: {2} {1}.",
+  "PassengerPaymentMethod.NotReusableCard": "Solo se pueden guardar tarjetas reutilizables para cargos futuros.",
+  "PassengerPaymentMethod.PreferredMethod.Invalid": "El método de pago seleccionado no está disponible.",
+  "Wallet.InsufficientBalance": "Saldo insuficiente."
 }

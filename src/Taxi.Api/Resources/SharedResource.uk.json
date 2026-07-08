@@ -307,5 +307,17 @@
   "Refund.Retry.Succeeded.AdminTitle": "Повторну спробу повернення прийнято",
   "Refund.Retry.Succeeded.AdminBody": "Повторна спроба повернення для поїздки {0} тепер має статус {1}.",
   "Refund.Retry.Failed.AdminTitle": "Повторна спроба повернення не вдалася",
-  "Refund.Retry.Failed.AdminBody": "Не вдалося запустити повторну спробу повернення для поїздки {0}."
+  "Refund.Retry.Failed.AdminBody": "Не вдалося запустити повторну спробу повернення для поїздки {0}.",
+  "Wallet.Amount.Invalid": "Сума гаманця має бути більшою за нуль.",
+  "Wallet.Account.NotFound": "Обліковий запис гаманця не знайдено.",
+  "Wallet.Currency.Required": "Потрібна валюта гаманця.",
+  "Wallet.IdempotencyKey.Required": "Потрібен ключ транзакції гаманця.",
+  "Wallet.TopUp.Disabled": "Поповнення гаманця наразі недоступне.",
+  "Wallet.TopUp.BelowMinimum": "Сума поповнення нижча за мінімум {0} {1}.",
+  "Wallet.TopUp.AboveMaximum": "Сума поповнення перевищує максимум {0} {1}.",
+  "Notification.WalletTopUp.Succeeded.Title": "Гаманець поповнено",
+  "Notification.WalletTopUp.Succeeded.Body": "Ваш баланс Fat7i поповнено на {0} {1}. Новий баланс: {2} {1}.",
+  "PassengerPaymentMethod.NotReusableCard": "Для майбутніх платежів можна зберігати лише багаторазові картки.",
+  "PassengerPaymentMethod.PreferredMethod.Invalid": "Обраний спосіб оплати недоступний.",
+  "Wallet.InsufficientBalance": "Недостатньо коштів на балансі."
 }

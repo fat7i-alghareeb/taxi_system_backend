@@ -15,6 +15,8 @@ using Taxi.Application.Features.Users.Commands.UpdatePreferredLanguage;
 using Taxi.Application.Features.Users.Commands.UpdateUserProfile;
 using Taxi.Application.Features.Users.Queries.GetAllUsers;
 using Taxi.Application.Features.Users.Queries.GetCurrentUser;
+using Taxi.Application.Features.Wallet.Dtos;
+using Taxi.Application.Features.Wallet.Queries.GetUserWallet;
 
 namespace Taxi.Api.Controllers;
 
@@ -138,6 +140,19 @@ public class UsersController(ISender sender) : ApiController
     public async Task<IActionResult> GetAllUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 15, [FromQuery] string? search = null, [FromQuery] string? role = null, CancellationToken ct = default)
     {
         var result = await sender.Send(new GetAllUsersQuery(page, pageSize, search, role), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpGet("{userId:guid}/wallet")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(AdminUserWalletDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Admin retrieves a passenger's wallet balance and recent ledger (read-only).")]
+    [EndpointName("GetUserWalletAdmin")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetUserWallet(Guid userId, [FromQuery] int limit = 50, CancellationToken ct = default)
+    {
+        var result = await sender.Send(new GetUserWalletQuery(userId, limit), ct);
         return result.Match(Ok, Problem);
     }
 

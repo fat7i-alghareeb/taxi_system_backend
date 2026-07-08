@@ -83,6 +83,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasIndex(x => x.StripeCustomerId);
 
+        builder.Property(x => x.PreferredPaymentMethodType)
+            .HasMaxLength(30)
+            .IsRequired(false);
+
         // Optional home address (owned type). Nullable columns leave existing rows untouched.
         builder.OwnsOne(x => x.HomeAddress, address =>
         {

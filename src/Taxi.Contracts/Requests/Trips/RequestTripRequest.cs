@@ -19,5 +19,11 @@ public class RequestTripRequest
 
     [MaxLength(15, ErrorMessage = LocalizationKeys.Trip.FlightNumberInvalid)]
     public string? FlightNumber { get; set; }
+
+    /// <summary>"card" (default), "wallet", or "mixed". Absent/unknown is treated as "card".</summary>
+    public string? PaymentMethod { get; set; }
+
+    /// <summary>Optional saved reusable payment method to use for the card portion.</summary>
+    public Guid? SavedPaymentMethodId { get; set; }
 }
 

@@ -111,6 +111,54 @@ public sealed class Payment : AuditableEntity
         return payment;
     }
 
+    // Records the wallet-funded portion of a trip fare (wallet-only or the wallet part of a mixed
+    // payment). No Stripe intent — the money moves through the wallet ledger. The caller marks it
+    // completed once the wallet debit is committed.
+    public static Result<Payment> CreateFareWalletPayment(
+        Guid id,
+        Guid tripId,
+        decimal amount,
+        string currency,
+        string? walletTransactionReference = null)
+    {
+        if (amount <= 0)
+        {
+            return PaymentErrors.InvalidAmount;
+        }
+
+        var payment = new Payment(id, tripId, amount, currency, PaymentMethod.Wallet)
+        {
+            Kind = PaymentKind.Fare,
+            TransactionReference = walletTransactionReference,
+        };
+
+        return payment;
+    }
+
+    // Records the wallet-funded portion of a ride-related fee (e.g. a waiting fee paid from the
+    // in-app balance). No Stripe intent — the money moves through the wallet ledger. The caller
+    // marks it completed once the wallet debit is committed.
+    public static Result<Payment> CreateWaitingFeeWalletPayment(
+        Guid id,
+        Guid tripId,
+        decimal amount,
+        string currency,
+        string? walletTransactionReference = null)
+    {
+        if (amount <= 0)
+        {
+            return PaymentErrors.InvalidAmount;
+        }
+
+        var payment = new Payment(id, tripId, amount, currency, PaymentMethod.Wallet)
+        {
+            Kind = PaymentKind.WaitingFee,
+            TransactionReference = walletTransactionReference,
+        };
+
+        return payment;
+    }
+
     public Result<Success> MarkAsCompleted(string? chargeId = null, string? stripePaymentMethodType = null)
     {
         if (Status == PaymentStatus.Completed)

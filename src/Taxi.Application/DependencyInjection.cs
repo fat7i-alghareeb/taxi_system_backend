@@ -13,6 +13,7 @@ public static class DependencyInjection
     {
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         services.AddScoped<IRefundLifecycleService, RefundLifecycleService>();
+        services.AddScoped<IFeeSettlementService, FeeSettlementService>();
         services.AddScoped<IAuthSessionFactory, AuthSessionFactory>();
 
         services.AddMediatR(cfg =>

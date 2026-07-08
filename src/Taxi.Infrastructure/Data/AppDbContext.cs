@@ -17,6 +17,7 @@ using Taxi.Domain.RefundIssues;
 using Taxi.Domain.Trips;
 using Taxi.Domain.Users;
 using Taxi.Domain.Vehicles;
+using Taxi.Domain.Wallet;
 using Taxi.Infrastructure.Identity;
 using Taxi.Infrastructure.Outbox;
 
@@ -49,6 +50,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<CustomerIncident> CustomerIncidents => this.Set<CustomerIncident>();
     public DbSet<RefundIssue> RefundIssues => this.Set<RefundIssue>();
     public DbSet<OtpCode> OtpCodes => this.Set<OtpCode>();
+    public DbSet<WalletAccount> WalletAccounts => this.Set<WalletAccount>();
+    public DbSet<WalletTransaction> WalletTransactions => this.Set<WalletTransaction>();
 
     // Transactional outbox table. Rows are written automatically by
     // ConvertDomainEventsToOutboxInterceptor on save, and drained by OutboxDispatcherService.

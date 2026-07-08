@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "iVSsSrSrSW0=",
+  "dgSpecHash": "aSbDj4DVAlk=",
   "success": true,
-  "projectFilePath": "c:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Client\\Taxi.Client.csproj",
+  "projectFilePath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Client\\Taxi.Client.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\fat7i\\.nuget\\packages\\blazored.localstorage\\4.5.0\\blazored.localstorage.4.5.0.nupkg.sha512",
     "C:\\Users\\fat7i\\.nuget\\packages\\humanizer\\3.0.10\\humanizer.3.0.10.nupkg.sha512",

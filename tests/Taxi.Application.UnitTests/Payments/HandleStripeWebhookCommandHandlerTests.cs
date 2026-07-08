@@ -4,6 +4,7 @@ using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Payments.Commands.HandleStripeWebhook;
 using Taxi.Application.UnitTests.Infrastructure;
 using Taxi.Contracts.Common;
+using Taxi.Domain.Common.Results;
 using Taxi.Domain.Payments;
 using Taxi.Domain.Trips;
 using Xunit;
@@ -14,6 +15,7 @@ public class HandleStripeWebhookCommandHandlerTests
 {
     private readonly IStripeWebhookValidator _validator = Substitute.For<IStripeWebhookValidator>();
     private readonly IStripePaymentService _stripe = Substitute.For<IStripePaymentService>();
+    private readonly IWalletService _wallet = Substitute.For<IWalletService>();
     private readonly INotificationService _notifications = Substitute.For<INotificationService>();
     private readonly ILogger<HandleStripeWebhookCommandHandler> _logger =
         Substitute.For<ILogger<HandleStripeWebhookCommandHandler>>();
@@ -461,8 +463,83 @@ public class HandleStripeWebhookCommandHandlerTests
         Assert.True(result.IsSuccess);
     }
 
+    // ── Wallet top-up crediting ──────────────────────────────────────────────
+
+    [Fact]
+    public async Task Handle_PaymentIntentSucceeded_WalletTopUp_Credited_NotifiesAndSucceeds()
+    {
+        _validator.Parse(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(new StripeWebhookEvent("evt_topup", StripeWebhookEventKind.PaymentIntentSucceeded,
+                "pi_topup", "ch_topup", 25m, "eur", null, null, null));
+
+        var context = Substitute.For<IAppDbContext>();
+        var handler = CreateHandler(context);
+
+        var userId = Guid.NewGuid();
+        _wallet.CreditTopUpFromWebhookAsync("pi_topup", 25m, "ch_topup", Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<WalletTopUpCreditOutcome>>(
+                new WalletTopUpCreditOutcome(WalletTopUpCreditStatus.Credited, userId, 25m, 25m, "EUR")));
+
+        var result = await handler.Handle(new HandleStripeWebhookCommand("json", "sig"), default);
+
+        Assert.True(result.IsSuccess);
+        await _notifications.Received(1).SendPushNotificationAsync(
+            userId,
+            LocalizationKeys.Notification.WalletTopUpSucceededTitle,
+            LocalizationKeys.Notification.WalletTopUpSucceededBody,
+            Arg.Any<Dictionary<string, string>>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<object[]?>(),
+            Arg.Any<object[]?>());
+        // Never touched the trip-payment path.
+        _ = context.DidNotReceive().Payments;
+    }
+
+    [Fact]
+    public async Task Handle_PaymentIntentSucceeded_WalletTopUp_AlreadyCredited_DoesNotNotifyAndSucceeds()
+    {
+        _validator.Parse(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(new StripeWebhookEvent("evt_topup_dup", StripeWebhookEventKind.PaymentIntentSucceeded,
+                "pi_topup", "ch_topup", 25m, "eur", null, null, null));
+
+        var context = Substitute.For<IAppDbContext>();
+        var handler = CreateHandler(context);
+
+        _wallet.CreditTopUpFromWebhookAsync("pi_topup", 25m, "ch_topup", Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<WalletTopUpCreditOutcome>>(
+                new WalletTopUpCreditOutcome(WalletTopUpCreditStatus.AlreadyCredited, Guid.NewGuid(), 25m, 25m, "EUR")));
+
+        var result = await handler.Handle(new HandleStripeWebhookCommand("json", "sig"), default);
+
+        Assert.True(result.IsSuccess);
+        // Duplicate webhook: no second notification, no double credit (idempotent no-op).
+        await _notifications.DidNotReceive().SendPushNotificationAsync(
+            Arg.Any<Guid>(),
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<Dictionary<string, string>>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<object[]?>(),
+            Arg.Any<object[]?>());
+    }
+
     private HandleStripeWebhookCommandHandler CreateHandler(IAppDbContext context)
-        => new(context, _validator, _stripe, _notifications, Substitute.For<ITripNotifier>(), _logger);
+    {
+        // By default the PaymentIntent is not a wallet top-up, so the handler falls through
+        // to its normal trip-payment path. Wallet-specific tests override this.
+        _wallet.CreditTopUpFromWebhookAsync(
+                Arg.Any<string>(), Arg.Any<decimal?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<WalletTopUpCreditOutcome>>(
+                new WalletTopUpCreditOutcome(WalletTopUpCreditStatus.NotAWalletTopUp, Guid.Empty, 0m, 0m, string.Empty)));
+
+        // No wallet hold by default (card-only trips): commit is a no-op, release is a no-op.
+        _wallet.CommitTripHoldAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<decimal>>(0m));
+        _wallet.ReleaseTripHoldAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<Success>>(Result.Success));
+
+        return new(context, _validator, _stripe, _wallet, _notifications, Substitute.For<ITripNotifier>(), _logger);
+    }
 
     private static Trip CreateCompletedTrip()
     {

@@ -15,6 +15,7 @@ public sealed class RefundLifecycleService(
     IClientConfigProvider clientConfigProvider,
     IRefundProcessingOptionsProvider optionsProvider,
     IStripePaymentService stripe,
+    IWalletService wallet,
     INotificationService notificationService,
     ITripNotifier tripNotifier,
     ILogger<RefundLifecycleService> logger) : IRefundLifecycleService
@@ -195,7 +196,10 @@ public sealed class RefundLifecycleService(
             return PaymentErrors.RefundUnavailable;
         }
 
-        if (clientConfigProvider.GetClientConfig().StripeEnabled &&
+        // Wallet-funded payments are reversed through the wallet ledger, not Stripe, so they do
+        // not require a Stripe PaymentIntent. Card payments still do.
+        if (payment.Method != PaymentMethod.Wallet &&
+            clientConfigProvider.GetClientConfig().StripeEnabled &&
             string.IsNullOrWhiteSpace(payment.StripePaymentIntentId))
         {
             return PaymentErrors.RefundUnavailable;
@@ -236,6 +240,13 @@ public sealed class RefundLifecycleService(
         PaymentRefund refund,
         CancellationToken ct)
     {
+        // Source split: wallet-funded money is reversed back to the wallet (never to a card),
+        // card money is refunded to the original Stripe payment method.
+        if (payment.Method == PaymentMethod.Wallet)
+        {
+            return await ExecuteWalletReversalAsync(payment, refund, ct);
+        }
+
         if (!clientConfigProvider.GetClientConfig().StripeEnabled)
         {
             if (refund.AttemptCount > 1)
@@ -309,6 +320,62 @@ public sealed class RefundLifecycleService(
             {
                 return stateResult.Errors;
             }
+        }
+
+        await context.SaveChangesAsync(ct);
+        await NotifyRefundRealtimeAsync(refund, payment, ct);
+        return refund;
+    }
+
+    private async Task<Result<PaymentRefund>> ExecuteWalletReversalAsync(
+        Payment payment,
+        PaymentRefund refund,
+        CancellationToken ct)
+    {
+        var passengerId = refund.PassengerId;
+        if (passengerId is null || passengerId == Guid.Empty)
+        {
+            var trip = await context.Trips.FirstOrDefaultAsync(trip => trip.Id == payment.TripId, ct);
+            passengerId = trip?.PassengerId;
+        }
+
+        if (passengerId is null || passengerId == Guid.Empty)
+        {
+            refund.MarkFailed(
+                PaymentErrors.RefundUnavailable.Code,
+                PaymentErrors.RefundUnavailable.Description,
+                GenericCustomerFailureMessage,
+                canRetry: false);
+            await context.SaveChangesAsync(ct);
+            await NotifyAdminsRefundFailedAsync(refund, payment, ct);
+            await NotifyRefundRealtimeAsync(refund, payment, ct);
+            return refund;
+        }
+
+        // Stable idempotency key across retries so the wallet is never credited twice.
+        var reversalKey = $"refund-reversal-{refund.Id:N}";
+        var reversalResult = await wallet.CreditRefundReversalAsync(
+            passengerId.Value, payment.TripId, payment.Id, refund.Id,
+            refund.Amount, payment.Currency, reversalKey, ct);
+
+        if (reversalResult.IsFailure)
+        {
+            refund.MarkFailed(
+                reversalResult.Error.Code,
+                reversalResult.Error.Description,
+                GenericCustomerFailureMessage,
+                canRetry: true);
+            await context.SaveChangesAsync(ct);
+            await NotifyAdminsRefundFailedAsync(refund, payment, ct);
+            await NotifyRefundRealtimeAsync(refund, payment, ct);
+            return refund;
+        }
+
+        refund.MarkSucceeded();
+        var stateResult = await RecalculateRefundedPaymentStateAsync(payment, ct);
+        if (stateResult.IsFailure)
+        {
+            return stateResult.Errors;
         }
 
         await context.SaveChangesAsync(ct);

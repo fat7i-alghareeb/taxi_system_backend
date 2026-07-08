@@ -14,7 +14,7 @@ public class CompleteTripCommandHandler(
     IAppDbContext context,
     IUser currentUser,
     IClientConfigProvider clientConfig,
-    IStripePaymentService stripe,
+    IFeeSettlementService feeSettlement,
     INotificationService notifications,
     TimeProvider timeProvider,
     ILogger<CompleteTripCommandHandler> logger)
@@ -70,9 +70,9 @@ public class CompleteTripCommandHandler(
         return Result.Success;
     }
 
-    // Charges the accrued waiting fee off-session against the card saved during the
-    // upfront fare payment. Records a WaitingFee Payment row and, if the charge does
-    // not succeed, notifies the passenger to settle it.
+    // Settles the accrued waiting fee via the fee engine (wallet first, then the default saved
+    // reusable card, else Unpaid). Best-effort — never fails the completion. Notifies the
+    // passenger if any portion could not be collected.
     private async Task TrySettleWaitingFeeAsync(Trip trip, decimal fee, CancellationToken ct)
     {
         if (fee <= 0m)
@@ -85,61 +85,18 @@ public class CompleteTripCommandHandler(
             return;
         }
 
-        // Reuse the original upfront fare card payment (it has the saved customer +
-        // payment method). Cash / one-off-method trips have no reusable card, so the
-        // fee stays on the invoice for out-of-band collection.
-        var farePayment = await _context.Payments
-            .Where(p => p.TripId == trip.Id
-                && p.Kind == PaymentKind.Fare
-                && p.Method == PaymentMethod.CreditCard
-                && p.Status == PaymentStatus.Completed
-                && p.StripePaymentIntentId != null)
+        var currency = await _context.Payments
+            .Where(p => p.TripId == trip.Id && p.Kind == PaymentKind.Fare)
             .OrderByDescending(p => p.CreatedAtUtc)
-            .FirstOrDefaultAsync(ct);
-
-        if (farePayment?.StripePaymentIntentId is not { } fareIntentId)
-        {
-            return;
-        }
+            .Select(p => p.Currency)
+            .FirstOrDefaultAsync(ct) ?? "EUR";
 
         try
         {
-            var idempotencyKey = $"waiting-fee-{trip.Id}";
-            var chargeResult = await stripe.ChargeWaitingFeeAsync(
-                fareIntentId, fee, farePayment.Currency, trip.Id, idempotencyKey, ct);
+            var outcome = await feeSettlement.SettleWaitingFeeAsync(
+                trip.Id, trip.PassengerId, fee, currency, $"waiting-fee-{trip.Id}", ct);
 
-            if (chargeResult.IsFailure)
-            {
-                // Hard failure with no PaymentIntent to record — just prompt settlement.
-                await NotifyWaitingFeeDueAsync(trip, ct);
-                return;
-            }
-
-            var surcharge = chargeResult.Value;
-
-            var paymentResult = Payment.CreateWaitingFeeSurcharge(
-                Guid.NewGuid(), trip.Id, fee, farePayment.Currency, surcharge.PaymentIntentId);
-            if (paymentResult.IsError)
-            {
-                return;
-            }
-
-            var surchargePayment = paymentResult.Value;
-            if (surcharge.Succeeded)
-            {
-                surchargePayment.MarkAsCompleted(surcharge.ChargeId);
-            }
-            else
-            {
-                surchargePayment.MarkAsFailed(
-                    surcharge.RequiresAction ? "authentication_required" : surcharge.Status,
-                    "Off-session waiting-fee charge was not completed.");
-            }
-
-            _context.Payments.Add(surchargePayment);
-            await _context.SaveChangesAsync(ct);
-
-            if (!surcharge.Succeeded)
+            if (outcome.IsSuccess && outcome.Value.HasUnpaid)
             {
                 await NotifyWaitingFeeDueAsync(trip, ct);
             }

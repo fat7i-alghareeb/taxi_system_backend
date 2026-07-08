@@ -34,6 +34,14 @@ public sealed class User : AuditableEntity
     public string? FcmToken { get; private set; }
     public string PreferredLanguage { get; private set; } = "en";
     public string? StripeCustomerId { get; private set; }
+
+    /// <summary>
+    /// The passenger's preferred payment-method TYPE for new trip bookings (e.g. "card",
+    /// "ideal", "apple_pay"). Metadata only — it does not drive automatic extra-fee charging.
+    /// Null means "no preference / ask each time".
+    /// </summary>
+    public string? PreferredPaymentMethodType { get; private set; }
+
     public HomeAddress? HomeAddress { get; private set; }
 
     /// <summary>
@@ -316,6 +324,18 @@ public sealed class User : AuditableEntity
         }
 
         StripeCustomerId = stripeCustomerId.Trim();
+        return Result.Success;
+    }
+
+    /// <summary>
+    /// Sets (or clears, when null/blank) the preferred trip payment-method type. The value is
+    /// normalized to lower-case; callers validate it against the enabled method types.
+    /// </summary>
+    public Result<Success> SetPreferredPaymentMethodType(string? methodType)
+    {
+        PreferredPaymentMethodType = string.IsNullOrWhiteSpace(methodType)
+            ? null
+            : methodType.Trim().ToLowerInvariant();
         return Result.Success;
     }
 

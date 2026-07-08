@@ -41,6 +41,7 @@ using Taxi.Application.Features.Trips.Queries.GetPassengerTripCount;
 using Taxi.Application.Features.Trips.Queries.GetPassengerTrips;
 using Taxi.Application.Features.Trips.Queries.GetTripById;
 using Taxi.Application.Features.Trips.Queries.GetTripDetails;
+using Taxi.Application.Features.Trips.Queries.GetTripFinancials;
 using Taxi.Application.Features.Trips.Queries.GetTripInvoice;
 using Taxi.Application.Features.Trips.Queries.GetTripInvoicePdf;
 using Taxi.Application.Features.Trips.Queries.GetTripReceipt;
@@ -140,6 +141,13 @@ public class TripsController(ISender sender) : ApiController
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> RequestTrip([FromBody] RequestTripRequest request, CancellationToken ct)
     {
+        var paymentMethod = request.PaymentMethod?.Trim().ToLowerInvariant() switch
+        {
+            "wallet" => TripPaymentMethod.Wallet,
+            "mixed" => TripPaymentMethod.Mixed,
+            _ => TripPaymentMethod.Card,
+        };
+
         var command = new RequestTripCommand(
             request.QuoteId,
             request.Stops.Select(s => new CoordinateDto(
@@ -149,7 +157,9 @@ public class TripsController(ISender sender) : ApiController
                 s.IsAirport)).ToList(),
             request.ScheduledAt,
             request.PassengerNote,
-            request.FlightNumber);
+            request.FlightNumber,
+            paymentMethod,
+            request.SavedPaymentMethodId);
 
         var result = await sender.Send(command, ct);
 
@@ -537,6 +547,19 @@ public class TripsController(ISender sender) : ApiController
     public async Task<IActionResult> GetDetails(Guid id, CancellationToken ct)
     {
         var result = await sender.Send(new GetTripDetailsQuery(id), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpGet("{id:guid}/financials")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(TripFinancialsDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Admin retrieves the money breakdown for a trip (fare, fees, wallet/card paid, unpaid, refunds).")]
+    [EndpointName("GetTripFinancialsAdmin")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetFinancials(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new GetTripFinancialsQuery(id), ct);
         return result.Match(Ok, Problem);
     }
 
