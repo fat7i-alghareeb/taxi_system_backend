@@ -317,6 +317,8 @@
   "Wallet.TopUp.AboveMaximum": "El importe de recarga supera el máximo de {0} {1}.",
   "Notification.WalletTopUp.Succeeded.Title": "Monedero recargado",
   "Notification.WalletTopUp.Succeeded.Body": "Tu saldo de Fat7i se ha recargado con {0} {1}. Nuevo saldo: {2} {1}.",
+  "Notification.WalletTopUp.Failed.Title": "Recarga fallida",
+  "Notification.WalletTopUp.Failed.Body": "No se pudo completar tu recarga de {0} {1}. Inténtalo de nuevo.",
   "PassengerPaymentMethod.NotReusableCard": "Solo se pueden guardar tarjetas reutilizables para cargos futuros.",
   "PassengerPaymentMethod.PreferredMethod.Invalid": "El método de pago seleccionado no está disponible.",
   "Wallet.InsufficientBalance": "Saldo insuficiente."

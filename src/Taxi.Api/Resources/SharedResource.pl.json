@@ -317,6 +317,8 @@
   "Wallet.TopUp.AboveMaximum": "Kwota doładowania przekracza maksimum {0} {1}.",
   "Notification.WalletTopUp.Succeeded.Title": "Portfel doładowany",
   "Notification.WalletTopUp.Succeeded.Body": "Twoje saldo Fat7i zostało doładowane o {0} {1}. Nowe saldo: {2} {1}.",
+  "Notification.WalletTopUp.Failed.Title": "Doładowanie nie powiodło się",
+  "Notification.WalletTopUp.Failed.Body": "Twoje doładowanie kwotą {0} {1} nie powiodło się. Spróbuj ponownie.",
   "PassengerPaymentMethod.NotReusableCard": "Do przyszłych płatności można zapisać tylko karty wielokrotnego użytku.",
   "PassengerPaymentMethod.PreferredMethod.Invalid": "Wybrana metoda płatności jest niedostępna.",
   "Wallet.InsufficientBalance": "Niewystarczające saldo."

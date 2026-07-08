@@ -225,6 +225,30 @@ public sealed class WalletTransaction : AuditableEntity
         return Result.Success;
     }
 
+    /// <summary>
+    /// Marks a Pending entry (e.g. a top-up) as failed — the underlying Stripe PaymentIntent
+    /// was declined/cancelled and never affected the balance. Idempotent: a second call
+    /// (duplicate failure webhook, or a failure arriving after the entry was already committed
+    /// by a prior success webhook) is a no-op and never overrides a terminal state.
+    /// </summary>
+    public Result<Success> MarkFailed(string? reason = null)
+    {
+        if (Status is WalletTransactionStatus.Failed or WalletTransactionStatus.Committed)
+        {
+            return Result.Success;
+        }
+
+        Status = WalletTransactionStatus.Failed;
+        CompletedAtUtc = DateTimeOffset.UtcNow;
+
+        if (!string.IsNullOrWhiteSpace(reason))
+        {
+            Description = reason;
+        }
+
+        return Result.Success;
+    }
+
     private static Error? ValidateCommon(decimal amount, string currency, string idempotencyKey)
     {
         if (amount <= 0m)

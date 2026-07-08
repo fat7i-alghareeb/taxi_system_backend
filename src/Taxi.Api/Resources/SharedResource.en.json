@@ -317,6 +317,8 @@
   "Wallet.TopUp.AboveMaximum": "The top-up amount is above the maximum of {0} {1}.",
   "Notification.WalletTopUp.Succeeded.Title": "Wallet topped up",
   "Notification.WalletTopUp.Succeeded.Body": "Your Fat7i balance was topped up with {0} {1}. New balance: {2} {1}.",
+  "Notification.WalletTopUp.Failed.Title": "Top-up failed",
+  "Notification.WalletTopUp.Failed.Body": "Your top-up of {0} {1} could not be completed. Please try again.",
   "PassengerPaymentMethod.NotReusableCard": "Only reusable cards can be saved for future charges.",
   "PassengerPaymentMethod.PreferredMethod.Invalid": "The selected payment method is not available.",
   "Wallet.InsufficientBalance": "Insufficient wallet balance."

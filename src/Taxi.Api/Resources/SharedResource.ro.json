@@ -317,6 +317,8 @@
   "Wallet.TopUp.AboveMaximum": "Suma de reîncărcare depășește maximul de {0} {1}.",
   "Notification.WalletTopUp.Succeeded.Title": "Portofel reîncărcat",
   "Notification.WalletTopUp.Succeeded.Body": "Soldul tău Fat7i a fost reîncărcat cu {0} {1}. Sold nou: {2} {1}.",
+  "Notification.WalletTopUp.Failed.Title": "Reîncărcare eșuată",
+  "Notification.WalletTopUp.Failed.Body": "Reîncărcarea ta de {0} {1} nu a putut fi finalizată. Te rugăm să încerci din nou.",
   "PassengerPaymentMethod.NotReusableCard": "Doar cardurile reutilizabile pot fi salvate pentru plăți viitoare.",
   "PassengerPaymentMethod.PreferredMethod.Invalid": "Metoda de plată selectată nu este disponibilă.",
   "Wallet.InsufficientBalance": "Sold insuficient."

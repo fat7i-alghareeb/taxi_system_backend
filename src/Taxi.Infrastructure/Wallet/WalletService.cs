@@ -140,6 +140,51 @@ public sealed class WalletService(AppDbContext db, ILogger<WalletService> logger
         return WalletErrors.AccountNotFound;
     }
 
+    public async Task<Result<WalletTopUpFailOutcome>> FailTopUpFromWebhookAsync(
+        string stripePaymentIntentId,
+        string? reason,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(stripePaymentIntentId))
+        {
+            return NotAWalletTopUpFail();
+        }
+
+        var txn = await db.WalletTransactions
+            .FirstOrDefaultAsync(
+                t => t.StripePaymentIntentId == stripePaymentIntentId && t.Type == WalletTransactionType.TopUp,
+                ct);
+
+        if (txn is null)
+        {
+            // Not a wallet top-up PaymentIntent — let the caller handle it (e.g. trip payment).
+            return NotAWalletTopUpFail();
+        }
+
+        var account = await db.WalletAccounts.FirstOrDefaultAsync(a => a.Id == txn.WalletAccountId, ct);
+        if (account is null)
+        {
+            return WalletErrors.AccountNotFound;
+        }
+
+        if (txn.Status == WalletTransactionStatus.Committed)
+        {
+            // A success webhook already credited this top-up; a failure arriving after that
+            // (out-of-order delivery) must not undo it.
+            return new WalletTopUpFailOutcome(WalletTopUpFailStatus.AlreadyCommitted, account.UserId, txn.Amount, account.Currency);
+        }
+
+        if (txn.Status == WalletTransactionStatus.Failed)
+        {
+            return new WalletTopUpFailOutcome(WalletTopUpFailStatus.AlreadyFailed, account.UserId, txn.Amount, account.Currency);
+        }
+
+        txn.MarkFailed(reason);
+        await db.SaveChangesAsync(ct);
+
+        return new WalletTopUpFailOutcome(WalletTopUpFailStatus.Failed, account.UserId, txn.Amount, account.Currency);
+    }
+
     public async Task<Result<WalletDebitOutcome>> DebitForFeeAsync(
         Guid userId,
         Guid tripId,
@@ -501,4 +546,7 @@ public sealed class WalletService(AppDbContext db, ILogger<WalletService> logger
 
     private static WalletTopUpCreditOutcome NotAWalletTopUp()
         => new(WalletTopUpCreditStatus.NotAWalletTopUp, Guid.Empty, 0m, 0m, string.Empty);
+
+    private static WalletTopUpFailOutcome NotAWalletTopUpFail()
+        => new(WalletTopUpFailStatus.NotAWalletTopUp, Guid.Empty, 0m, string.Empty);
 }

@@ -415,6 +415,9 @@ public static class LocalizationKeys
         public const string WalletTopUpSucceededTitle = "Notification.WalletTopUp.Succeeded.Title";
         public const string WalletTopUpSucceededBody = "Notification.WalletTopUp.Succeeded.Body";
 
+        public const string WalletTopUpFailedTitle = "Notification.WalletTopUp.Failed.Title";
+        public const string WalletTopUpFailedBody = "Notification.WalletTopUp.Failed.Body";
+
         public const string NewMessageTitle = "Notification.NewMessage.Title";
         public const string NewMessageBody = "Notification.NewMessage.Body";
         public const string NewPhotoMessageBody = "Notification.NewMessage.PhotoBody";

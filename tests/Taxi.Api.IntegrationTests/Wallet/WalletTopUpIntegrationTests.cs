@@ -79,6 +79,69 @@ public class WalletTopUpIntegrationTests(ApiTestFixture fixture)
         await AssertBalanceAndCommittedCountAsync(userId, expectedBalance: 30m, expectedCommitted: 1);
     }
 
+    [Fact]
+    public async Task TopUp_FailureWebhook_MarksFailed_AndDoesNotCreditBalance()
+    {
+        var userId = await SeedPassengerAsync();
+        var txnId = Guid.NewGuid();
+        var paymentIntentId = $"pi_int_{Guid.NewGuid():N}";
+
+        await using (var scope = fixture.Factory.Services.CreateAsyncScope())
+        {
+            var wallet = scope.ServiceProvider.GetRequiredService<IWalletService>();
+            var pending = await wallet.CreatePendingTopUpAsync(txnId, userId, 25m, "EUR", paymentIntentId);
+            Assert.True(pending.IsSuccess);
+
+            var firstFail = await wallet.FailTopUpFromWebhookAsync(paymentIntentId, "card_declined");
+            Assert.True(firstFail.IsSuccess);
+            Assert.Equal(WalletTopUpFailStatus.Failed, firstFail.Value.Status);
+        }
+
+        // Duplicate failure webhook delivery: must be an idempotent no-op.
+        await using (var scope = fixture.Factory.Services.CreateAsyncScope())
+        {
+            var wallet = scope.ServiceProvider.GetRequiredService<IWalletService>();
+            var secondFail = await wallet.FailTopUpFromWebhookAsync(paymentIntentId, "card_declined");
+            Assert.True(secondFail.IsSuccess);
+            Assert.Equal(WalletTopUpFailStatus.AlreadyFailed, secondFail.Value.Status);
+        }
+
+        await AssertBalanceAndCommittedCountAsync(userId, expectedBalance: 0m, expectedCommitted: 0);
+        await AssertFailedCountAsync(userId, expectedFailed: 1);
+    }
+
+    [Fact]
+    public async Task TopUp_FailureWebhookAfterSuccess_IsIgnored()
+    {
+        var userId = await SeedPassengerAsync();
+        var txnId = Guid.NewGuid();
+        var paymentIntentId = $"pi_int_{Guid.NewGuid():N}";
+
+        await using (var scope = fixture.Factory.Services.CreateAsyncScope())
+        {
+            var wallet = scope.ServiceProvider.GetRequiredService<IWalletService>();
+            var pending = await wallet.CreatePendingTopUpAsync(txnId, userId, 25m, "EUR", paymentIntentId);
+            Assert.True(pending.IsSuccess);
+
+            var credit = await wallet.CreditTopUpFromWebhookAsync(paymentIntentId, 25m, "ch_1");
+            Assert.True(credit.IsSuccess);
+            Assert.Equal(WalletTopUpCreditStatus.Credited, credit.Value.Status);
+        }
+
+        // A late/out-of-order failure webhook arrives after the success webhook already
+        // credited the wallet — it must not undo the credit.
+        await using (var scope = fixture.Factory.Services.CreateAsyncScope())
+        {
+            var wallet = scope.ServiceProvider.GetRequiredService<IWalletService>();
+            var lateFail = await wallet.FailTopUpFromWebhookAsync(paymentIntentId, "card_declined");
+            Assert.True(lateFail.IsSuccess);
+            Assert.Equal(WalletTopUpFailStatus.AlreadyCommitted, lateFail.Value.Status);
+        }
+
+        await AssertBalanceAndCommittedCountAsync(userId, expectedBalance: 25m, expectedCommitted: 1);
+        await AssertFailedCountAsync(userId, expectedFailed: 0);
+    }
+
     private async Task AssertBalanceAndCommittedCountAsync(Guid userId, decimal expectedBalance, int expectedCommitted)
     {
         await using var scope = fixture.Factory.Services.CreateAsyncScope();
@@ -91,6 +154,18 @@ public class WalletTopUpIntegrationTests(ApiTestFixture fixture)
             .AsNoTracking()
             .CountAsync(t => t.WalletAccountId == account.Id && t.Status == WalletTransactionStatus.Committed);
         Assert.Equal(expectedCommitted, committed);
+    }
+
+    private async Task AssertFailedCountAsync(Guid userId, int expectedFailed)
+    {
+        await using var scope = fixture.Factory.Services.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var account = await context.WalletAccounts.AsNoTracking().FirstAsync(a => a.UserId == userId);
+        var failed = await context.WalletTransactions
+            .AsNoTracking()
+            .CountAsync(t => t.WalletAccountId == account.Id && t.Status == WalletTransactionStatus.Failed);
+        Assert.Equal(expectedFailed, failed);
     }
 
     private async Task<Guid> SeedPassengerAsync()

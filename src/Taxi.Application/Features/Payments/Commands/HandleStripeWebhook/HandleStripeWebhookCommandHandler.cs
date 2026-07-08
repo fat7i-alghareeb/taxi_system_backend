@@ -186,6 +186,24 @@ public class HandleStripeWebhookCommandHandler(
             return PaymentErrors.StripeIntentNotFound;
         }
 
+        // Wallet top-ups have no Payment row — a failed/canceled PaymentIntent must still
+        // resolve the pending ledger entry to Failed so it never gets stuck Pending. Idempotent.
+        var topUpFailResult = await wallet.FailTopUpFromWebhookAsync(evt.PaymentIntentId, reason, ct);
+        if (topUpFailResult.IsFailure)
+        {
+            return topUpFailResult.Error;
+        }
+
+        if (topUpFailResult.Value.Status != WalletTopUpFailStatus.NotAWalletTopUp)
+        {
+            if (topUpFailResult.Value.Status == WalletTopUpFailStatus.Failed)
+            {
+                await NotifyWalletTopUpFailedAsync(topUpFailResult.Value, ct);
+            }
+
+            return Result.Success;
+        }
+
         var payment = await context.Payments
             .FirstOrDefaultAsync(p => p.StripePaymentIntentId == evt.PaymentIntentId, ct);
 
@@ -444,6 +462,35 @@ public class HandleStripeWebhookCommandHandler(
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to send wallet top-up success notification to user {UserId}", outcome.UserId);
+        }
+    }
+
+    private async Task NotifyWalletTopUpFailedAsync(WalletTopUpFailOutcome outcome, CancellationToken ct)
+    {
+        try
+        {
+            var amountText = outcome.Amount.ToString("0.00");
+
+            var data = new Dictionary<string, string>
+            {
+                ["type"] = "wallet_topup_failed",
+                ["amount"] = amountText,
+                ["currency"] = outcome.Currency,
+            };
+
+            object[] bodyArgs = [amountText, outcome.Currency];
+
+            await notificationService.SendPushNotificationAsync(
+                outcome.UserId,
+                LocalizationKeys.Notification.WalletTopUpFailedTitle,
+                LocalizationKeys.Notification.WalletTopUpFailedBody,
+                data,
+                ct,
+                bodyArgs: bodyArgs);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send wallet top-up failure notification to user {UserId}", outcome.UserId);
         }
     }
 

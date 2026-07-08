@@ -317,6 +317,8 @@
   "Wallet.TopUp.AboveMaximum": "Het opwaardeerbedrag ligt boven het maximum van {0} {1}.",
   "Notification.WalletTopUp.Succeeded.Title": "Saldo opgewaardeerd",
   "Notification.WalletTopUp.Succeeded.Body": "Je Fat7i-saldo is opgewaardeerd met {0} {1}. Nieuw saldo: {2} {1}.",
+  "Notification.WalletTopUp.Failed.Title": "Opwaarderen mislukt",
+  "Notification.WalletTopUp.Failed.Body": "Je opwaardering van {0} {1} is niet gelukt. Probeer het opnieuw.",
   "PassengerPaymentMethod.NotReusableCard": "Alleen herbruikbare kaarten kunnen worden opgeslagen voor toekomstige betalingen.",
   "PassengerPaymentMethod.PreferredMethod.Invalid": "De geselecteerde betaalmethode is niet beschikbaar.",
   "Wallet.InsufficientBalance": "Onvoldoende saldo."

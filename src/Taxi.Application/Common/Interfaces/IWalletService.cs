@@ -35,6 +35,18 @@ public interface IWalletService
         CancellationToken ct = default);
 
     /// <summary>
+    /// Marks the wallet top-up ledger entry Failed for a failed/canceled Stripe PaymentIntent.
+    /// Safe to call repeatedly: a duplicate failure webhook, or a failure webhook that arrives
+    /// after the top-up was already credited by a prior success webhook, is a no-op.
+    /// Returns <see cref="WalletTopUpFailStatus.NotAWalletTopUp"/> when the PaymentIntent is not
+    /// a wallet top-up, so the Stripe webhook handler continues to its normal trip-payment path.
+    /// </summary>
+    Task<Result<WalletTopUpFailOutcome>> FailTopUpFromWebhookAsync(
+        string stripePaymentIntentId,
+        string? reason,
+        CancellationToken ct = default);
+
+    /// <summary>
     /// Debits the wallet toward a ride-related fee, up to the available balance (partial debits
     /// are expected — the remainder is charged elsewhere). Returns the amount actually debited
     /// (0 if no account/balance). Idempotent via <paramref name="idempotencyKey"/>: a retry returns
@@ -111,4 +123,25 @@ public sealed record WalletTopUpCreditOutcome(
     Guid UserId,
     decimal Amount,
     decimal NewBalance,
+    string Currency);
+
+public enum WalletTopUpFailStatus
+{
+    /// <summary>The PaymentIntent is not a wallet top-up; the caller should handle it elsewhere.</summary>
+    NotAWalletTopUp,
+
+    /// <summary>The transaction was marked Failed by this call.</summary>
+    Failed,
+
+    /// <summary>The transaction was already Failed by a previous call (idempotent no-op).</summary>
+    AlreadyFailed,
+
+    /// <summary>The transaction was already Committed by a prior success webhook; failure ignored (idempotent no-op).</summary>
+    AlreadyCommitted,
+}
+
+public sealed record WalletTopUpFailOutcome(
+    WalletTopUpFailStatus Status,
+    Guid UserId,
+    decimal Amount,
     string Currency);

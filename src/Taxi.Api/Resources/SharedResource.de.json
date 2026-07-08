@@ -317,6 +317,8 @@
   "Wallet.TopUp.AboveMaximum": "Der Aufladebetrag liegt über dem Maximum von {0} {1}.",
   "Notification.WalletTopUp.Succeeded.Title": "Guthaben aufgeladen",
   "Notification.WalletTopUp.Succeeded.Body": "Dein Fat7i-Guthaben wurde um {0} {1} aufgeladen. Neues Guthaben: {2} {1}.",
+  "Notification.WalletTopUp.Failed.Title": "Aufladen fehlgeschlagen",
+  "Notification.WalletTopUp.Failed.Body": "Deine Aufladung von {0} {1} konnte nicht abgeschlossen werden. Bitte versuche es erneut.",
   "PassengerPaymentMethod.NotReusableCard": "Nur wiederverwendbare Karten können für zukünftige Zahlungen gespeichert werden.",
   "PassengerPaymentMethod.PreferredMethod.Invalid": "Die ausgewählte Zahlungsmethode ist nicht verfügbar.",
   "Wallet.InsufficientBalance": "Unzureichendes Guthaben."

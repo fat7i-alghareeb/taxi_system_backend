@@ -317,6 +317,8 @@
   "Wallet.TopUp.AboveMaximum": "Сума поповнення перевищує максимум {0} {1}.",
   "Notification.WalletTopUp.Succeeded.Title": "Гаманець поповнено",
   "Notification.WalletTopUp.Succeeded.Body": "Ваш баланс Fat7i поповнено на {0} {1}. Новий баланс: {2} {1}.",
+  "Notification.WalletTopUp.Failed.Title": "Поповнення не вдалося",
+  "Notification.WalletTopUp.Failed.Body": "Ваше поповнення на {0} {1} не вдалося виконати. Спробуйте ще раз.",
   "PassengerPaymentMethod.NotReusableCard": "Для майбутніх платежів можна зберігати лише багаторазові картки.",
   "PassengerPaymentMethod.PreferredMethod.Invalid": "Обраний спосіб оплати недоступний.",
   "Wallet.InsufficientBalance": "Недостатньо коштів на балансі."

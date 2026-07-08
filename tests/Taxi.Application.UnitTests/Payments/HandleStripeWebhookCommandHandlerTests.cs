@@ -523,6 +523,154 @@ public class HandleStripeWebhookCommandHandlerTests
             Arg.Any<object[]?>());
     }
 
+    // ── Wallet top-up failure ────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Handle_PaymentIntentFailed_WalletTopUp_MarksFailed_NotifiesAndSucceeds()
+    {
+        _validator.Parse(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(new StripeWebhookEvent("evt_topup_failed", StripeWebhookEventKind.PaymentIntentFailed,
+                "pi_topup", null, null, "eur", "card_declined", "Your card was declined.", null));
+
+        var context = Substitute.For<IAppDbContext>();
+        var handler = CreateHandler(context);
+
+        var userId = Guid.NewGuid();
+        _wallet.FailTopUpFromWebhookAsync("pi_topup", "Your card was declined.", Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<WalletTopUpFailOutcome>>(
+                new WalletTopUpFailOutcome(WalletTopUpFailStatus.Failed, userId, 25m, "EUR")));
+
+        var result = await handler.Handle(new HandleStripeWebhookCommand("json", "sig"), default);
+
+        Assert.True(result.IsSuccess);
+        await _notifications.Received(1).SendPushNotificationAsync(
+            userId,
+            LocalizationKeys.Notification.WalletTopUpFailedTitle,
+            LocalizationKeys.Notification.WalletTopUpFailedBody,
+            Arg.Any<Dictionary<string, string>>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<object[]?>(),
+            Arg.Any<object[]?>());
+        // Never touched the trip-payment path.
+        _ = context.DidNotReceive().Payments;
+    }
+
+    [Fact]
+    public async Task Handle_PaymentIntentFailed_WalletTopUp_AlreadyFailed_DoesNotNotifyAndSucceeds()
+    {
+        _validator.Parse(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(new StripeWebhookEvent("evt_topup_failed_dup", StripeWebhookEventKind.PaymentIntentFailed,
+                "pi_topup", null, null, "eur", "card_declined", "Your card was declined.", null));
+
+        var context = Substitute.For<IAppDbContext>();
+        var handler = CreateHandler(context);
+
+        _wallet.FailTopUpFromWebhookAsync("pi_topup", "Your card was declined.", Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<WalletTopUpFailOutcome>>(
+                new WalletTopUpFailOutcome(WalletTopUpFailStatus.AlreadyFailed, Guid.NewGuid(), 25m, "EUR")));
+
+        var result = await handler.Handle(new HandleStripeWebhookCommand("json", "sig"), default);
+
+        Assert.True(result.IsSuccess);
+        // Duplicate failure webhook: no second notification (idempotent no-op).
+        await _notifications.DidNotReceive().SendPushNotificationAsync(
+            Arg.Any<Guid>(),
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<Dictionary<string, string>>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<object[]?>(),
+            Arg.Any<object[]?>());
+    }
+
+    [Fact]
+    public async Task Handle_PaymentIntentFailed_WalletTopUp_AlreadyCommitted_DoesNotNotifyAndSucceeds()
+    {
+        // A success webhook already credited the top-up; a late/out-of-order failure webhook
+        // must never undo it or re-notify the user.
+        _validator.Parse(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(new StripeWebhookEvent("evt_topup_failed_late", StripeWebhookEventKind.PaymentIntentFailed,
+                "pi_topup", null, null, "eur", "card_declined", "Your card was declined.", null));
+
+        var context = Substitute.For<IAppDbContext>();
+        var handler = CreateHandler(context);
+
+        _wallet.FailTopUpFromWebhookAsync("pi_topup", "Your card was declined.", Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<WalletTopUpFailOutcome>>(
+                new WalletTopUpFailOutcome(WalletTopUpFailStatus.AlreadyCommitted, Guid.NewGuid(), 25m, "EUR")));
+
+        var result = await handler.Handle(new HandleStripeWebhookCommand("json", "sig"), default);
+
+        Assert.True(result.IsSuccess);
+        await _notifications.DidNotReceive().SendPushNotificationAsync(
+            Arg.Any<Guid>(),
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<Dictionary<string, string>>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<object[]?>(),
+            Arg.Any<object[]?>());
+    }
+
+    [Fact]
+    public async Task Handle_PaymentIntentCanceled_WalletTopUp_MarksFailed()
+    {
+        _validator.Parse(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(new StripeWebhookEvent("evt_topup_canceled", StripeWebhookEventKind.PaymentIntentCanceled,
+                "pi_topup", null, null, "eur", "canceled", null, null));
+
+        var context = Substitute.For<IAppDbContext>();
+        var handler = CreateHandler(context);
+
+        var userId = Guid.NewGuid();
+        _wallet.FailTopUpFromWebhookAsync("pi_topup", "canceled", Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<WalletTopUpFailOutcome>>(
+                new WalletTopUpFailOutcome(WalletTopUpFailStatus.Failed, userId, 25m, "EUR")));
+
+        var result = await handler.Handle(new HandleStripeWebhookCommand("json", "sig"), default);
+
+        Assert.True(result.IsSuccess);
+        await _notifications.Received(1).SendPushNotificationAsync(
+            userId,
+            LocalizationKeys.Notification.WalletTopUpFailedTitle,
+            LocalizationKeys.Notification.WalletTopUpFailedBody,
+            Arg.Any<Dictionary<string, string>>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<object[]?>(),
+            Arg.Any<object[]?>());
+        _ = context.DidNotReceive().Payments;
+    }
+
+    [Fact]
+    public async Task Handle_PaymentIntentFailed_NonWalletPaymentIntent_FallsThroughToTripPaymentPath()
+    {
+        // Regression guard: when FailTopUpFromWebhookAsync reports NotAWalletTopUp (the default
+        // CreateHandler stub, exactly as a real trip-fare PaymentIntent would), the existing
+        // trip-payment failure behavior must run completely unaffected by the new wallet branch.
+        var trip = PaymentTestBuilders.CreateAwaitingPaymentTrip(Guid.NewGuid(), Guid.NewGuid());
+        var payment = PaymentTestBuilders.CreatePendingStripePayment(trip.Id, "pi_test_123");
+
+        _validator.Parse(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(new StripeWebhookEvent("evt_2", StripeWebhookEventKind.PaymentIntentFailed,
+                "pi_test_123", null, null, "eur", "card_declined", "Your card was declined.", null));
+
+        var paymentsSet = DbSetMockFactory.Create([payment]);
+        var tripsSet = DbSetMockFactory.Create([trip]);
+        var quotesSet = DbSetMockFactory.Create<PricingQuote>([]);
+        var context = Substitute.For<IAppDbContext>();
+        context.Payments.Returns(paymentsSet);
+        context.Trips.Returns(tripsSet);
+        context.PricingQuotes.Returns(quotesSet);
+        context.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
+        var handler = CreateHandler(context);
+
+        var result = await handler.Handle(new HandleStripeWebhookCommand("json", "sig"), default);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentStatus.Failed, payment.Status);
+        Assert.Equal(TripStatus.PaymentFailed, trip.Status);
+    }
+
     private HandleStripeWebhookCommandHandler CreateHandler(IAppDbContext context)
     {
         // By default the PaymentIntent is not a wallet top-up, so the handler falls through
@@ -531,6 +679,11 @@ public class HandleStripeWebhookCommandHandlerTests
                 Arg.Any<string>(), Arg.Any<decimal?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<WalletTopUpCreditOutcome>>(
                 new WalletTopUpCreditOutcome(WalletTopUpCreditStatus.NotAWalletTopUp, Guid.Empty, 0m, 0m, string.Empty)));
+
+        _wallet.FailTopUpFromWebhookAsync(
+                Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<WalletTopUpFailOutcome>>(
+                new WalletTopUpFailOutcome(WalletTopUpFailStatus.NotAWalletTopUp, Guid.Empty, 0m, string.Empty)));
 
         // No wallet hold by default (card-only trips): commit is a no-op, release is a no-op.
         _wallet.CommitTripHoldAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
