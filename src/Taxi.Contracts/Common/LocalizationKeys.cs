@@ -421,6 +421,9 @@ public static class LocalizationKeys
         public const string NewMessageTitle = "Notification.NewMessage.Title";
         public const string NewMessageBody = "Notification.NewMessage.Body";
         public const string NewPhotoMessageBody = "Notification.NewMessage.PhotoBody";
+
+        public const string NoDriverFoundTitle = "Notification.NoDriverFound.Title";
+        public const string NoDriverFoundBody = "Notification.NoDriverFound.Body";
     }
 }
 

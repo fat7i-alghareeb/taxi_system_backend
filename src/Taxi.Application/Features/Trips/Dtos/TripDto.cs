@@ -44,7 +44,8 @@ public record TripDto(
     int RecordingCount = 0,
     TripRefundDto? Refund = null,
     int PassengerCount = 1,
-    int BagCount = 0);
+    int BagCount = 0,
+    bool NoDriverDecisionRequired = false);
 
 public record TripRouteSegmentDto(
     int DistanceMeters,

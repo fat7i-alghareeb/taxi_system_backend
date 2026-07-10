@@ -184,6 +184,8 @@
   "Notification.TripStarted.Body": "Ihre Fahrt hat begonnen. Gute Fahrt!",
   "Notification.TripCompleted.Title": "Fahrt abgeschlossen",
   "Notification.TripCompleted.Body": "Danke für Ihre Fahrt. Wie war Ihre Erfahrung? ⭐",
+  "Notification.NoDriverFound.Title": "Kein Fahrer verfügbar",
+  "Notification.NoDriverFound.Body": "Wir konnten keinen Fahrer finden. Öffnen Sie die App, um Ihre Fahrt zu verschieben oder zu stornieren.",
   "Notification.TripCancelled.Title": "Fahrt storniert",
   "Notification.TripCancelled.Body": "Ihre Fahrt wurde storniert.",
   "Notification.TripRequested.Title": "Neue Fahrt gebucht",

@@ -184,6 +184,8 @@
   "Notification.TripStarted.Body": "Tu viaje ha comenzado. ¡Disfruta!",
   "Notification.TripCompleted.Title": "Viaje completado",
   "Notification.TripCompleted.Body": "Gracias por tu viaje. ¿Cómo fue tu experiencia? ⭐",
+  "Notification.NoDriverFound.Title": "No hay conductor disponible",
+  "Notification.NoDriverFound.Body": "No pudimos encontrar un conductor. Abre la app para posponer o cancelar tu viaje.",
   "Notification.TripCancelled.Title": "Viaje cancelado",
   "Notification.TripCancelled.Body": "Tu viaje ha sido cancelado.",
   "Notification.TripRequested.Title": "Nuevo viaje reservado",

@@ -184,6 +184,8 @@
   "Notification.TripStarted.Body": "بدأت رحلتك. استمتع بالرحلة!",
   "Notification.TripCompleted.Title": "انتهت الرحلة",
   "Notification.TripCompleted.Body": "شكراً لرحلتك. كيف كانت تجربتك؟ ⭐",
+  "Notification.NoDriverFound.Title": "لا يوجد سائق متاح",
+  "Notification.NoDriverFound.Body": "لم نتمكن من العثور على سائق. افتح التطبيق لتأجيل رحلتك أو إلغائها.",
   "Notification.TripCancelled.Title": "تم إلغاء الرحلة",
   "Notification.TripCancelled.Body": "تم إلغاء رحلتك.",
   "Notification.TripRequested.Title": "رحلة جديدة محجوزة",

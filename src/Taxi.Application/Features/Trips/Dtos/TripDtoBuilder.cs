@@ -126,6 +126,7 @@ public static class TripDtoBuilder
             AttentionState: trip.GetAttentionState(now).ToString(),
             Refund: latestRefund?.ToRefundDto(),
             PassengerCount: trip.PassengerCount,
-            BagCount: trip.BagCount);
+            BagCount: trip.BagCount,
+            NoDriverDecisionRequired: trip.NoDriverDecisionRequired);
     }
 }

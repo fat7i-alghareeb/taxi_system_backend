@@ -184,6 +184,8 @@
   "Notification.TripStarted.Body": "Cursa ta a început. Drum bun!",
   "Notification.TripCompleted.Title": "Cursa finalizată",
   "Notification.TripCompleted.Body": "Mulțumim pentru cursă. Cum a fost experiența ta? ⭐",
+  "Notification.NoDriverFound.Title": "Niciun șofer disponibil",
+  "Notification.NoDriverFound.Body": "Nu am găsit un șofer. Deschide aplicația pentru a amâna sau anula cursa.",
   "Notification.TripCancelled.Title": "Cursa anulată",
   "Notification.TripCancelled.Body": "Cursa ta a fost anulată.",
   "Notification.TripRequested.Title": "Cursă nouă rezervată",

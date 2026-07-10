@@ -184,6 +184,8 @@
   "Notification.TripStarted.Body": "Twój kurs się rozpoczął. Miłej podróży!",
   "Notification.TripCompleted.Title": "Kurs zakończony",
   "Notification.TripCompleted.Body": "Dziękujemy za przejazd. Jak oceniasz swoje doświadczenie? ⭐",
+  "Notification.NoDriverFound.Title": "Brak dostępnego kierowcy",
+  "Notification.NoDriverFound.Body": "Nie znaleźliśmy kierowcy. Otwórz aplikację, aby przełożyć lub anulować przejazd.",
   "Notification.TripCancelled.Title": "Kurs anulowany",
   "Notification.TripCancelled.Body": "Twój kurs został anulowany.",
   "Notification.TripRequested.Title": "Zarezerwowano nowy kurs",

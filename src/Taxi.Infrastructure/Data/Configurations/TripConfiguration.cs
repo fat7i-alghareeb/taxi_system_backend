@@ -112,6 +112,11 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
         builder.Property(t => t.AcceptedReminder30SentAtUtc).IsRequired(false);
         builder.Property(t => t.AcceptedReminder15SentAtUtc).IsRequired(false);
 
+        builder.Property(t => t.NoDriverPromptDueAtUtc).IsRequired(false);
+        builder.Property(t => t.NoDriverDecisionRequired)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(t => t.PassengerCount)
             .IsRequired()
             .HasDefaultValue(1);
@@ -129,6 +134,7 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
 
         builder.HasQueryFilter(t => t.DeletedAtUtc == null);
         builder.HasIndex(t => new { t.Status, t.ScheduledAtUtc });
+        builder.HasIndex(t => new { t.Status, t.NoDriverPromptDueAtUtc });
         builder.HasIndex(t => t.AcceptedByAdminId);
     }
 }

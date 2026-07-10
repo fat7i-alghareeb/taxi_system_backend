@@ -213,6 +213,7 @@ public static class DependencyInjection
         // executes in registration order.
         services.AddHostedService<StorageInitializer>();
         services.AddHostedService<ScheduledTripActivationService>();
+        services.AddHostedService<NoDriverDetectionService>();
         services.AddHostedService<OutboxDispatcherService>();
         services.AddHostedService<TripChatCleanupService>();
         services.AddHostedService<OtpCleanupService>();

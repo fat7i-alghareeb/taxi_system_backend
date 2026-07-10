@@ -184,6 +184,8 @@
   "Notification.TripStarted.Body": "Uw rit is begonnen. Geniet van de rit!",
   "Notification.TripCompleted.Title": "Rit voltooid",
   "Notification.TripCompleted.Body": "Bedankt voor uw rit. Hoe was uw ervaring? ⭐",
+  "Notification.NoDriverFound.Title": "Geen chauffeur beschikbaar",
+  "Notification.NoDriverFound.Body": "We konden geen chauffeur vinden. Open de app om uw rit uit te stellen of te annuleren.",
   "Notification.TripCancelled.Title": "Rit geannuleerd",
   "Notification.TripCancelled.Body": "Uw rit is geannuleerd.",
   "Notification.TripRequested.Title": "Nieuwe rit geboekt",

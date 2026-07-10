@@ -94,6 +94,12 @@ public interface ITripNotifier
     Task NotifyTripStopCompletedAsync(Guid tripId, Guid passengerId, Guid? driverId, int sequence, CancellationToken ct = default, Guid? eventId = null);
 
     /// <summary>
+    /// Sends to the passenger that no driver was found for their pending trip, so
+    /// the app shows the blocking "postpone or cancel" overlay.
+    /// </summary>
+    Task NotifyNoDriverFoundAsync(Guid tripId, Guid passengerId, CancellationToken ct = default, Guid? eventId = null);
+
+    /// <summary>
     /// Pushes a new in-trip chat message to the trip group, the passenger's per-user
     /// group, the driver's per-user group (if assigned), and all admins.
     /// </summary>

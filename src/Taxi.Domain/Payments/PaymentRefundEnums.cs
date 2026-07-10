@@ -20,5 +20,6 @@ public enum PaymentRefundSourceType
     AirportWaitCancellation,
     CompensationClaim,
     ManualIncidentRefund,
-    AdminRetry
+    AdminRetry,
+    NoDriverCancellation
 }

@@ -184,6 +184,8 @@
   "Notification.TripStarted.Body": "Your trip has started. Enjoy the ride!",
   "Notification.TripCompleted.Title": "Trip Completed",
   "Notification.TripCompleted.Body": "Thank you for your ride. How was your experience? ⭐",
+  "Notification.NoDriverFound.Title": "No driver available",
+  "Notification.NoDriverFound.Body": "We couldn't find a driver. Open the app to postpone or cancel your ride.",
   "Notification.TripCancelled.Title": "Trip Cancelled",
   "Notification.TripCancelled.Body": "Your trip has been cancelled.",
   "Notification.TripRequested.Title": "New Trip Booked",

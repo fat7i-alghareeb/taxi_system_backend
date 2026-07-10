@@ -14,6 +14,13 @@ public sealed class Trip : AuditableEntity
     // arrived. Without it, a few seconds of skew rejects "Start" right at the
     // boundary with a confusing "trip time not come yet" error.
     private static readonly TimeSpan ScheduledStartSkew = TimeSpan.FromMinutes(1);
+
+    // How long a trip may sit unaccepted in AwaitingAdminAcceptance before the
+    // customer is prompted that no driver was found, and how long "postpone"
+    // snoozes that prompt before it can fire again.
+    private static readonly TimeSpan NoDriverPromptDelay = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan NoDriverSnoozeDelay = TimeSpan.FromMinutes(40);
+
     private static readonly Regex FlightNumberPattern = new(
         @"^[A-Z0-9](?:[A-Z0-9 -]{0,13}[A-Z0-9])?$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -78,6 +85,22 @@ public sealed class Trip : AuditableEntity
     public DateTimeOffset? UnacceptedOverdueSentAtUtc { get; private set; }
     public DateTimeOffset? AcceptedReminder30SentAtUtc { get; private set; }
     public DateTimeOffset? AcceptedReminder15SentAtUtc { get; private set; }
+
+    /// <summary>
+    /// When the next "no driver found" prompt becomes due while the trip is
+    /// awaiting acceptance. Armed on <see cref="ConfirmPayment"/>, re-armed 40 min
+    /// out by <see cref="PostponeNoDriverSearch"/>, cleared once the trip leaves
+    /// the awaiting-acceptance state. Null means "not armed / never prompt".
+    /// </summary>
+    public DateTimeOffset? NoDriverPromptDueAtUtc { get; private set; }
+
+    /// <summary>
+    /// True once the customer has been prompted that no driver was found and has
+    /// not yet decided (postpone or cancel). Surfaced on the trip DTO so the app
+    /// re-shows the blocking overlay on a cold reopen, and prevents the detection
+    /// job from re-prompting.
+    /// </summary>
+    public bool NoDriverDecisionRequired { get; private set; }
 
     public int PassengerCount { get; private set; } = 1;
     public int BagCount { get; private set; } = 0;
@@ -160,6 +183,7 @@ public sealed class Trip : AuditableEntity
         DriverId = driverId;
         Status = TripStatus.Accepted;
         AssignedAtUtc = DateTimeOffset.UtcNow;
+        ClearNoDriverPrompt();
 
         AddDomainEvent(new DriverAssigned
         {
@@ -181,6 +205,7 @@ public sealed class Trip : AuditableEntity
         AcceptedByAdminId = adminId;
         AcceptedAtUtc = acceptedAtUtc;
         Status = TripStatus.Accepted;
+        ClearNoDriverPrompt();
 
         AddDomainEvent(new AdminAcceptedTrip
         {
@@ -354,6 +379,7 @@ public sealed class Trip : AuditableEntity
         }
 
         Status = TripStatus.Cancelled;
+        ClearNoDriverPrompt();
 
         AddDomainEvent(new TripCancelled
         {
@@ -374,6 +400,11 @@ public sealed class Trip : AuditableEntity
 
         Status = TripStatus.AwaitingAdminAcceptance;
 
+        // Arm the no-driver watchdog: if no admin/driver accepts within the delay,
+        // the detection job prompts the customer to postpone or cancel.
+        NoDriverPromptDueAtUtc = DateTimeOffset.UtcNow + NoDriverPromptDelay;
+        NoDriverDecisionRequired = false;
+
         AddDomainEvent(new PaymentConfirmed
         {
             TripId = Id,
@@ -384,6 +415,59 @@ public sealed class Trip : AuditableEntity
         });
 
         return Result.Success;
+    }
+
+    /// <summary>
+    /// Marks the trip as "no driver found — awaiting the customer's decision".
+    /// Called by the detection background job once the prompt is due. Re-checks the
+    /// state under the <c>Status</c> concurrency token so a racing admin-accept wins.
+    /// </summary>
+    public Result<Success> RaiseNoDriverPrompt()
+    {
+        if (Status != TripStatus.AwaitingAdminAcceptance ||
+            NoDriverDecisionRequired ||
+            NoDriverPromptDueAtUtc is null)
+        {
+            return TripErrors.InvalidStatus(Status);
+        }
+
+        NoDriverDecisionRequired = true;
+
+        AddDomainEvent(new NoDriverPromptRaised
+        {
+            TripId = Id,
+            PassengerId = PassengerId,
+            VehicleTypeId = VehicleTypeId,
+            ReferenceCode = ReferenceCode,
+            ScheduledAtUtc = ScheduledAtUtc,
+        });
+
+        return Result.Success;
+    }
+
+    /// <summary>
+    /// Snoozes the no-driver search: keeps the trip an immediate pending request
+    /// (no reschedule, no refund) and re-arms the prompt 40 minutes out. Only valid
+    /// while the customer is being asked to decide.
+    /// </summary>
+    public Result<Success> PostponeNoDriverSearch()
+    {
+        if (Status != TripStatus.AwaitingAdminAcceptance || !NoDriverDecisionRequired)
+        {
+            return TripErrors.InvalidStatus(Status);
+        }
+
+        NoDriverDecisionRequired = false;
+        NoDriverPromptDueAtUtc = DateTimeOffset.UtcNow + NoDriverSnoozeDelay;
+
+        return Result.Success;
+    }
+
+    /// <summary>Clears the no-driver watchdog once the trip leaves awaiting-acceptance.</summary>
+    private void ClearNoDriverPrompt()
+    {
+        NoDriverPromptDueAtUtc = null;
+        NoDriverDecisionRequired = false;
     }
 
     public Result<Success> MarkPaymentFailed(string reason)

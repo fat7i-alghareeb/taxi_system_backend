@@ -184,6 +184,8 @@
   "Notification.TripStarted.Body": "Ваша поїздка розпочалася. Гарної подорожі!",
   "Notification.TripCompleted.Title": "Поїздку завершено",
   "Notification.TripCompleted.Body": "Дякуємо за поїздку. Якою була ваша поїздка? ⭐",
+  "Notification.NoDriverFound.Title": "Немає доступного водія",
+  "Notification.NoDriverFound.Body": "Не вдалося знайти водія. Відкрийте застосунок, щоб відкласти або скасувати поїздку.",
   "Notification.TripCancelled.Title": "Поїздку скасовано",
   "Notification.TripCancelled.Body": "Вашу поїздку скасовано.",
   "Notification.TripRequested.Title": "Заброньовано нову поїздку",

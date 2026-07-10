@@ -102,3 +102,8 @@ public sealed record TripStopCompletedNotification(
     Guid? DriverId,
     int Sequence,
     Guid EventId = default);
+
+public sealed record NoDriverFoundNotification(
+    Guid TripId,
+    Guid PassengerId,
+    Guid EventId = default);

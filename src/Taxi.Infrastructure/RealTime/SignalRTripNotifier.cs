@@ -116,6 +116,9 @@ public sealed class SignalRTripNotifier(IHubContext<TripHub> hubContext, ILogger
     public Task NotifyTripCancelledAsync(Guid tripId, Guid passengerId, CancellationToken ct = default, Guid? eventId = null) =>
         SendToPassengerAsync("TripCancelled", tripId, passengerId, new TripCancelledNotification(tripId, passengerId, ResolveEventId(eventId)), ct);
 
+    public Task NotifyNoDriverFoundAsync(Guid tripId, Guid passengerId, CancellationToken ct = default, Guid? eventId = null) =>
+        SendToPassengerAsync("NoDriverFound", tripId, passengerId, new NoDriverFoundNotification(tripId, passengerId, ResolveEventId(eventId)), ct);
+
     public Task NotifyTripCancelledToDriverAsync(Guid tripId, Guid driverUserId, Guid passengerId, CancellationToken ct = default, Guid? eventId = null)
     {
         _logger.LogInformation(

@@ -184,6 +184,8 @@
   "Notification.TripStarted.Body": "Votre course a commencé. Bon voyage !",
   "Notification.TripCompleted.Title": "Course terminée",
   "Notification.TripCompleted.Body": "Merci pour votre course. Comment s'est passée votre expérience ? ⭐",
+  "Notification.NoDriverFound.Title": "Aucun chauffeur disponible",
+  "Notification.NoDriverFound.Body": "Nous n'avons pas trouvé de chauffeur. Ouvrez l'application pour reporter ou annuler votre course.",
   "Notification.TripCancelled.Title": "Course annulée",
   "Notification.TripCancelled.Body": "Votre course a été annulée.",
   "Notification.TripRequested.Title": "Nouvelle course réservée",

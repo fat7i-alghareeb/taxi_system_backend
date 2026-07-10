@@ -17,6 +17,8 @@ using Taxi.Application.Features.Trips.Commands.CompleteTrip;
 using Taxi.Application.Features.Trips.Commands.DriverCancelTrip;
 using Taxi.Application.Features.Trips.Commands.EnRouteTrip;
 using Taxi.Application.Features.Trips.Commands.GetPricingQuotes;
+using Taxi.Application.Features.Trips.Commands.NoDriverCancelTrip;
+using Taxi.Application.Features.Trips.Commands.PostponeNoDriverSearch;
 using Taxi.Application.Features.Trips.Commands.RateTrip;
 using Taxi.Application.Features.Trips.Commands.RequestTrip;
 using Taxi.Application.Features.Trips.Commands.ResendArrivedNotification;
@@ -269,6 +271,34 @@ public class TripsController(ISender sender) : ApiController
     public async Task<IActionResult> DriverCancelTrip(Guid id, [FromBody] DriverCancelTripRequest request, CancellationToken ct)
     {
         var result = await sender.Send(new DriverCancelTripCommand(id, request.Reason, request.Note), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpPost("{id:guid}/no-driver/postpone")]
+    [Authorize(Roles = "Passenger")]
+    [ProducesResponseType(typeof(TripDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Snoozes the 'no driver found' prompt for 40 minutes, keeping the trip pending.")]
+    [EndpointName("PostponeNoDriverSearch")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> PostponeNoDriverSearch(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new PostponeNoDriverSearchCommand(id), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpPost("{id:guid}/no-driver/cancel")]
+    [Authorize(Roles = "Passenger")]
+    [ProducesResponseType(typeof(TripDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Cancels a pending trip from the 'no driver found' prompt with a full 100% refund.")]
+    [EndpointName("NoDriverCancelTrip")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> NoDriverCancelTrip(Guid id, [FromBody] CancelTripRequest? request, CancellationToken ct)
+    {
+        var result = await sender.Send(new NoDriverCancelTripCommand(id, request?.Note), ct);
         return result.Match(Ok, Problem);
     }
 

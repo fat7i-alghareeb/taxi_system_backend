@@ -36,4 +36,11 @@ public enum CancellationReason
     /// <see cref="CancellationPolicy.AfterWindowRefundPercent"/>% of the fare is refunded.
     /// </summary>
     PassengerAfterFiveMinutes = 10,
+
+    /// <summary>
+    /// The trip sat in <see cref="TripStatus.AwaitingAdminAcceptance"/> without being
+    /// accepted, and the passenger cancelled from the "no driver found" prompt. The
+    /// company could not provide a driver, so a full 100% refund applies.
+    /// </summary>
+    NoDriverAvailable = 11,
 }
