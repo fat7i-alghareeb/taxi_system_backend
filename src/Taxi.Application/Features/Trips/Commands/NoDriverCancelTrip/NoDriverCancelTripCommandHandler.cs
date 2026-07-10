@@ -15,7 +15,6 @@ namespace Taxi.Application.Features.Trips.Commands.NoDriverCancelTrip;
 public class NoDriverCancelTripCommandHandler(
     IAppDbContext context,
     IUser currentUser,
-    IClientConfigProvider clientConfig,
     IRefundLifecycleService refundLifecycle,
     TimeProvider timeProvider,
     ILogger<NoDriverCancelTripCommandHandler> logger)
@@ -82,10 +81,13 @@ public class NoDriverCancelTripCommandHandler(
 
         PaymentRefund? trackedRefund = null;
 
+        // No StripeEnabled gate: RequestRefundAsync reverses wallet payments via the
+        // wallet ledger (no Stripe needed) and card payments via Stripe — identical
+        // to the normal CancelTripCommandHandler. Gating on StripeEnabled would skip
+        // wallet refunds when Stripe is disabled.
         if (payment is not null &&
             payment.Status == PaymentStatus.Completed &&
-            refundAmount > 0 &&
-            clientConfig.GetClientConfig().StripeEnabled)
+            refundAmount > 0)
         {
             var refundResult = await refundLifecycle.RequestRefundAsync(
                 new RefundRequest(

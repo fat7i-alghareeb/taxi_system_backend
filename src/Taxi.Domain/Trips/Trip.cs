@@ -401,8 +401,12 @@ public sealed class Trip : AuditableEntity
         Status = TripStatus.AwaitingAdminAcceptance;
 
         // Arm the no-driver watchdog: if no admin/driver accepts within the delay,
-        // the detection job prompts the customer to postpone or cancel.
-        NoDriverPromptDueAtUtc = DateTimeOffset.UtcNow + NoDriverPromptDelay;
+        // the detection job prompts the customer to postpone or cancel. For a
+        // scheduled trip the clock starts when the dispatch window opens (~15 min
+        // before pickup), NOT at booking — otherwise a trip booked days ahead would
+        // be prompted 10 minutes after booking.
+        NoDriverPromptDueAtUtc =
+            (DispatchWindowOpensAtUtc ?? DateTimeOffset.UtcNow) + NoDriverPromptDelay;
         NoDriverDecisionRequired = false;
 
         AddDomainEvent(new PaymentConfirmed
