@@ -17,7 +17,7 @@ public class CancelTripCommandHandler(
     IUser currentUser,
     IClientConfigProvider clientConfig,
     IStripePaymentService stripe,
-    IRefundLifecycleService refundLifecycle,
+    ITripRefundSplitter refundSplitter,
     TimeProvider timeProvider,
     ILogger<CancelTripCommandHandler> logger) : IRequestHandler<CancelTripCommand, Result<TripDto>>
 {
@@ -162,39 +162,29 @@ public class CancelTripCommandHandler(
                 var sourceType = actor == CancellationActor.Admin
                     ? PaymentRefundSourceType.AdminCancellation
                     : PaymentRefundSourceType.PassengerCancellation;
-                var refundResult = await refundLifecycle.RequestRefundAsync(
-                    new RefundRequest(
-                        payment.Id,
+
+                // Split across all captured fare payments (wallet-first, then card) so mixed
+                // trips are fully refunded rather than refunding one source or failing.
+                var splitResult = await refundSplitter.RefundAsync(
+                    new TripRefundSplitRequest(
+                        trip.Id,
                         refundAmount,
                         sourceType,
-                        refundPercent,
-                        refundAmount >= payment.Amount,
-                        trip.Id,
-                        cancellationResult.Value.Id,
-                        RequestedByAdminId: actor == CancellationActor.Admin ? passengerId : null,
-                        PassengerId: trip.PassengerId),
+                        PassengerId: trip.PassengerId,
+                        RefundPercent: refundPercent,
+                        TripCancellationId: cancellationResult.Value.Id,
+                        RequestedByAdminId: actor == CancellationActor.Admin ? passengerId : null),
                     ct);
 
-                if (refundResult.IsFailure)
+                trackedRefund = splitResult.Primary;
+                if (!splitResult.AnyCreated || splitResult.AnyFailed)
                 {
                     logger.LogWarning(
-                        "Failed to request tracked refund for PaymentIntent {PaymentIntentId} on trip {TripId}: {ErrorCode}",
-                        payment.StripePaymentIntentId,
+                        "Cancellation refund incomplete for trip {TripId}: created={AnyCreated} anyFailed={AnyFailed} refunded={Refunded}",
                         trip.Id,
-                        refundResult.Error.Code);
-                }
-                else
-                {
-                    trackedRefund = refundResult.Value;
-
-                    if (refundResult.Value.Status == PaymentRefundStatus.Failed)
-                    {
-                        logger.LogWarning(
-                            "Tracked cancellation refund {RefundId} failed immediately for PaymentIntent {PaymentIntentId} on trip {TripId}",
-                            refundResult.Value.Id,
-                            payment.StripePaymentIntentId,
-                            trip.Id);
-                    }
+                        splitResult.AnyCreated,
+                        splitResult.AnyFailed,
+                        splitResult.TotalRefunded);
                 }
             }
         }

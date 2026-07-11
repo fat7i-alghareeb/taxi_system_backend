@@ -115,7 +115,7 @@ public class CancelTripCommandHandlerTests
             BuildPassengerUser(),
             clientConfig,
             stripe,
-            Substitute.For<IRefundLifecycleService>(),
+            Substitute.For<ITripRefundSplitter>(),
             new FakeTimeProvider(now),
             Substitute.For<ILogger<CancelTripCommandHandler>>());
 
@@ -153,28 +153,27 @@ public class CancelTripCommandHandlerTests
         var (trip, quote, payment) = BuildAcceptedTripWithOfflinePayment(now.AddMinutes(-3), Fare);
         var clientConfig = Substitute.For<IClientConfigProvider>();
         clientConfig.GetClientConfig().Returns(new ClientConfig(false, "pk_test", false));
-        var refundLifecycle = Substitute.For<IRefundLifecycleService>();
-        refundLifecycle
-            .RequestRefundAsync(Arg.Any<RefundRequest>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(Result.Failure<PaymentRefund>(PaymentErrors.RefundUnavailable)));
+        var refundSplitter = Substitute.For<ITripRefundSplitter>();
+        refundSplitter
+            .RefundAsync(Arg.Any<TripRefundSplitRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(TripRefundSplitResult.Empty));
 
         var handler = new CancelTripCommandHandler(
             BuildContext(trip, quote, payment),
             BuildPassengerUser(),
             clientConfig,
             Substitute.For<IStripePaymentService>(),
-            refundLifecycle,
+            refundSplitter,
             new FakeTimeProvider(now),
             Substitute.For<ILogger<CancelTripCommandHandler>>());
 
         var result = await handler.Handle(new CancelTripCommand(trip.Id), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        await refundLifecycle.Received(1).RequestRefundAsync(
-            Arg.Is<RefundRequest>(request =>
-                request.PaymentId == payment.Id &&
+        await refundSplitter.Received(1).RefundAsync(
+            Arg.Is<TripRefundSplitRequest>(request =>
                 request.TripId == trip.Id &&
-                request.Amount == Fare &&
+                request.TotalAmount == Fare &&
                 request.SourceType == PaymentRefundSourceType.PassengerCancellation),
             Arg.Any<CancellationToken>());
     }
@@ -187,17 +186,17 @@ public class CancelTripCommandHandlerTests
         var trackedRefund = CreateFailedRefund(payment, trip.Id, Fare);
         var clientConfig = Substitute.For<IClientConfigProvider>();
         clientConfig.GetClientConfig().Returns(new ClientConfig(false, "pk_test", false));
-        var refundLifecycle = Substitute.For<IRefundLifecycleService>();
-        refundLifecycle
-            .RequestRefundAsync(Arg.Any<RefundRequest>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<Result<PaymentRefund>>(trackedRefund));
+        var refundSplitter = Substitute.For<ITripRefundSplitter>();
+        refundSplitter
+            .RefundAsync(Arg.Any<TripRefundSplitRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new TripRefundSplitResult([trackedRefund], 0m)));
 
         var handler = new CancelTripCommandHandler(
             BuildContext(trip, quote, payment),
             BuildPassengerUser(),
             clientConfig,
             Substitute.For<IStripePaymentService>(),
-            refundLifecycle,
+            refundSplitter,
             new FakeTimeProvider(now),
             Substitute.For<ILogger<CancelTripCommandHandler>>());
 
@@ -330,17 +329,17 @@ public class CancelTripCommandHandlerTests
         var clientConfig = Substitute.For<IClientConfigProvider>();
         clientConfig.GetClientConfig().Returns(new ClientConfig(StripeEnabled: true, StripePublishableKey: "pk_test", SignalREnabled: false));
 
-        var refundLifecycle = Substitute.For<IRefundLifecycleService>();
-        refundLifecycle
-            .RequestRefundAsync(Arg.Any<RefundRequest>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(Result.Failure<PaymentRefund>(Error.Unexpected("Test.Refund", "test refund mock"))));
+        var refundSplitter = Substitute.For<ITripRefundSplitter>();
+        refundSplitter
+            .RefundAsync(Arg.Any<TripRefundSplitRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(TripRefundSplitResult.Empty));
 
         return new CancelTripCommandHandler(
             BuildContext(trip, quote, payment),
             user ?? BuildPassengerUser(),
             clientConfig,
             Substitute.For<IStripePaymentService>(),
-            refundLifecycle,
+            refundSplitter,
             new FakeTimeProvider(fakeNow),
             Substitute.For<ILogger<CancelTripCommandHandler>>());
     }

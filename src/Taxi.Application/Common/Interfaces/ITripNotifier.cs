@@ -100,6 +100,21 @@ public interface ITripNotifier
     Task NotifyNoDriverFoundAsync(Guid tripId, Guid passengerId, CancellationToken ct = default, Guid? eventId = null);
 
     /// <summary>
+    /// Notifies the assigned driver's per-user group (so the nav/map re-routes), plus the trip group,
+    /// the passenger and all admins, that the trip's drop-off changed mid-trip.
+    /// </summary>
+    Task NotifyTripDestinationChangedAsync(
+        Guid tripId,
+        Guid passengerId,
+        Guid? driverUserId,
+        Guid? driverId,
+        decimal newDropoffLatitude,
+        decimal newDropoffLongitude,
+        string? newDropoffLabel,
+        CancellationToken ct = default,
+        Guid? eventId = null);
+
+    /// <summary>
     /// Pushes a new in-trip chat message to the trip group, the passenger's per-user
     /// group, the driver's per-user group (if assigned), and all admins.
     /// </summary>

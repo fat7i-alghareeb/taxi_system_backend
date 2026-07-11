@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Features.Trips.Common;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
@@ -23,11 +24,22 @@ public sealed class StopTripWaitingCommandHandler(IAppDbContext context, IUser c
             return Error.Forbidden(LocalizationKeys.Auth.Unauthorized, "Only admins can operate trips.");
         }
 
+        var trip = await context.Trips.FirstOrDefaultAsync(t => t.Id == request.TripId, ct);
+        if (trip is null)
+        {
+            return TripErrors.NotFound;
+        }
+
+        // Authorize by the operating admin, not by the session's DriverId: when a real driver is
+        // assigned, the session's DriverId is the driver's id (set on auto-start at arrival), not
+        // the admin's user id — matching on it would miss the open session and 404.
+        if (trip.AcceptedByAdminId != driverUserId)
+        {
+            return await TripOwnershipHelper.NotOwnedByCurrentAdminAsync(context, trip.AcceptedByAdminId, ct);
+        }
+
         var session = await context.TripWaitingSessions.FirstOrDefaultAsync(
-            s =>
-                s.TripId == request.TripId &&
-                s.DriverId == driverUserId &&
-                s.StoppedAtUtc == null,
+            s => s.TripId == request.TripId && s.StoppedAtUtc == null,
             ct);
         if (session is null)
         {

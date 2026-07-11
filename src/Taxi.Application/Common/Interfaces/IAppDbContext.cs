@@ -38,6 +38,7 @@ public interface IAppDbContext
     public DbSet<TripRoute> TripRoutes { get; }
     public DbSet<PricingQuote> PricingQuotes { get; }
     public DbSet<TripCancellation> TripCancellations { get; }
+    public DbSet<PendingTripEdit> PendingTripEdits { get; }
     public DbSet<TripCompensationClaim> TripCompensationClaims { get; }
     public DbSet<TripWaitingSession> TripWaitingSessions { get; }
     public DbSet<Invoice> Invoices { get; }

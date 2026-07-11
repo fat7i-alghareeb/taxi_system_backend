@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -16,6 +18,8 @@ public class HandleStripeWebhookCommandHandler(
     IStripeWebhookValidator validator,
     IStripePaymentService stripe,
     IWalletService wallet,
+    ITripEditApplier editApplier,
+    IRefundLifecycleService refundService,
     INotificationService notificationService,
     ITripNotifier tripNotifier,
     ILogger<HandleStripeWebhookCommandHandler> logger)
@@ -124,6 +128,20 @@ public class HandleStripeWebhookCommandHandler(
             return completeResult.Error;
         }
 
+        // Mid-trip fare increase settled via PaymentSheet → apply the held edit now. The trip was
+        // never mutated at apply time, so this is the moment the destination / passenger change lands.
+        if (payment.Kind == PaymentKind.FareAdjustment)
+        {
+            var applyResult = await ApplyPendingEditFromWebhookAsync(trip, payment, ct);
+            if (applyResult.IsFailure)
+            {
+                return applyResult.Error;
+            }
+
+            await context.SaveChangesAsync(ct);
+            return Result.Success;
+        }
+
         // Payment is the boundary that makes the trip visible for admin
         // acceptance. Notifications are emitted from the committed outbox.
         if (trip.Status == TripStatus.AwaitingPayment)
@@ -179,6 +197,88 @@ public class HandleStripeWebhookCommandHandler(
         context.Payments.Add(walletPayment);
     }
 
+    private async Task<Result<Success>> ApplyPendingEditFromWebhookAsync(
+        Trip trip,
+        Payment payment,
+        CancellationToken ct)
+    {
+        var pending = await context.PendingTripEdits
+            .FirstOrDefaultAsync(p => p.StripePaymentIntentId == payment.StripePaymentIntentId, ct);
+
+        // No held edit, or it was already applied/cancelled → idempotent no-op.
+        if (pending is null || pending.Status != PendingTripEditStatus.Pending)
+        {
+            return Result.Success;
+        }
+
+        var quote = await context.PricingQuotes.FirstOrDefaultAsync(q => q.Id == pending.NewQuoteId, ct);
+        if (quote is null)
+        {
+            return TripErrors.NotFound;
+        }
+
+        IReadOnlyList<TripStop>? newStops = null;
+        if (!string.IsNullOrWhiteSpace(pending.ProposedStopsJson))
+        {
+            var proposed = JsonSerializer.Deserialize<List<TripEditStop>>(pending.ProposedStopsJson);
+            if (proposed is { Count: > 0 })
+            {
+                var built = new List<TripStop>(proposed.Count);
+                for (var i = 0; i < proposed.Count; i++)
+                {
+                    var stopResult = TripStop.Create(
+                        new Domain.Trips.Coordinate(proposed[i].Latitude, proposed[i].Longitude), i, proposed[i].Label);
+                    if (stopResult.IsFailure)
+                    {
+                        return stopResult.Error;
+                    }
+
+                    built.Add(stopResult.Value);
+                }
+
+                newStops = built;
+            }
+        }
+
+        var applyResult = await editApplier.ApplyAsync(
+            trip, quote, newStops, pending.ProposedPassengerCount, pending.NewVehicleTypeId, ct);
+        if (applyResult.IsFailure)
+        {
+            return applyResult.Errors;
+        }
+
+        pending.MarkApplied();
+        return Result.Success;
+    }
+
+    private async Task RevertPendingEditFromWebhookAsync(Payment payment, CancellationToken ct)
+    {
+        var pending = await context.PendingTripEdits
+            .FirstOrDefaultAsync(p => p.StripePaymentIntentId == payment.StripePaymentIntentId, ct);
+        if (pending is null || pending.Status != PendingTripEditStatus.Pending)
+        {
+            return;
+        }
+
+        var quote = await context.PricingQuotes.FirstOrDefaultAsync(q => q.Id == pending.NewQuoteId, ct);
+        quote?.MarkAsUnused();
+
+        // Reverse any wallet portion already collected toward this delta (card portion never
+        // succeeded on the sheet path, so only the wallet may need reversing).
+        if (pending.WalletPaymentId is Guid walletPaymentId && pending.WalletDebitedAmount > 0m)
+        {
+            var refundRequest = new RefundRequest(
+                walletPaymentId,
+                pending.WalletDebitedAmount,
+                PaymentRefundSourceType.FareAdjustment,
+                TripId: pending.TripId,
+                PassengerId: pending.PassengerId);
+            await refundService.RequestRefundAsync(refundRequest, ct);
+        }
+
+        pending.MarkCancelled();
+    }
+
     private async Task<Result<Success>> HandleFailedAsync(StripeWebhookEvent evt, string reason, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(evt.PaymentIntentId))
@@ -228,6 +328,15 @@ public class HandleStripeWebhookCommandHandler(
         if (failedResult.IsFailure)
         {
             return failedResult.Error;
+        }
+
+        // Mid-trip fare increase PaymentSheet failed / was canceled → revert the held edit: release
+        // the orphan quote and reverse any wallet portion. The trip was never mutated, so it stays as-is.
+        if (payment.Kind == PaymentKind.FareAdjustment)
+        {
+            await RevertPendingEditFromWebhookAsync(payment, ct);
+            await context.SaveChangesAsync(ct);
+            return Result.Success;
         }
 
         if (trip.Status == TripStatus.AwaitingPayment)

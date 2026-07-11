@@ -11,7 +11,7 @@ namespace Taxi.Application.Features.Trips.Commands.ReviewCompensationClaim;
 
 public sealed class ReviewCompensationClaimCommandHandler(
     IAppDbContext context,
-    IRefundLifecycleService refundLifecycle,
+    ITripRefundSplitter refundSplitter,
     ILogger<ReviewCompensationClaimCommandHandler> logger)
     : IRequestHandler<ReviewCompensationClaimCommand, Result<CompensationClaimDto>>
 {
@@ -29,45 +29,28 @@ public sealed class ReviewCompensationClaimCommandHandler(
             return reviewResult.Errors;
         }
 
-        if (request.Approved)
+        if (request.Approved && claim.RequestedAmount > 0)
         {
-            var payment = await context.Payments.FirstOrDefaultAsync(
-                p => p.TripId == claim.TripId && p.Kind == PaymentKind.Fare, ct);
-            if (payment?.Status == PaymentStatus.Completed &&
-                !string.IsNullOrWhiteSpace(payment.StripePaymentIntentId) &&
-                claim.RequestedAmount > 0)
-            {
-                var refundPercent = payment.Amount > 0
-                    ? Math.Round(claim.RequestedAmount / payment.Amount * 100m, 2, MidpointRounding.AwayFromZero)
-                    : (decimal?)null;
-                var refundResult = await refundLifecycle.RequestRefundAsync(
-                    new RefundRequest(
-                        payment.Id,
-                        claim.RequestedAmount,
-                        PaymentRefundSourceType.CompensationClaim,
-                        refundPercent,
-                        claim.RequestedAmount >= payment.Amount,
-                        claim.TripId,
-                        TripCompensationClaimId: claim.Id,
-                        PassengerId: claim.PassengerId),
-                    ct);
+            // Split the approved amount across all captured fare payments (wallet-first, then
+            // card) so mixed / wallet-only trips are compensated correctly.
+            var splitResult = await refundSplitter.RefundAsync(
+                new TripRefundSplitRequest(
+                    claim.TripId,
+                    claim.RequestedAmount,
+                    PaymentRefundSourceType.CompensationClaim,
+                    PassengerId: claim.PassengerId,
+                    TripCompensationClaimId: claim.Id),
+                ct);
 
-                if (refundResult.IsFailure)
-                {
-                    logger.LogWarning(
-                        "Failed to request tracked compensation refund for PaymentIntent {PaymentIntentId} on claim {ClaimId}: {ErrorCode}",
-                        payment.StripePaymentIntentId,
-                        claim.Id,
-                        refundResult.Error.Code);
-                }
-                else if (refundResult.Value.Status == PaymentRefundStatus.Failed)
-                {
-                    logger.LogWarning(
-                        "Tracked compensation refund {RefundId} failed immediately for PaymentIntent {PaymentIntentId} on claim {ClaimId}",
-                        refundResult.Value.Id,
-                        payment.StripePaymentIntentId,
-                        claim.Id);
-                }
+            if (!splitResult.AnyCreated || splitResult.AnyFailed)
+            {
+                logger.LogWarning(
+                    "Compensation refund incomplete for claim {ClaimId} (trip {TripId}): created={AnyCreated} anyFailed={AnyFailed} refunded={Refunded}",
+                    claim.Id,
+                    claim.TripId,
+                    splitResult.AnyCreated,
+                    splitResult.AnyFailed,
+                    splitResult.TotalRefunded);
             }
         }
 

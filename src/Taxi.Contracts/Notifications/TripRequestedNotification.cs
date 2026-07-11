@@ -107,3 +107,12 @@ public sealed record NoDriverFoundNotification(
     Guid TripId,
     Guid PassengerId,
     Guid EventId = default);
+
+public sealed record TripDestinationChangedNotification(
+    Guid TripId,
+    Guid PassengerId,
+    Guid? DriverId,
+    decimal NewDropoffLatitude,
+    decimal NewDropoffLongitude,
+    string? NewDropoffLabel,
+    Guid EventId = default);

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Features.Trips.Common;
 using Taxi.Application.Features.Payments.Commands.HandleStripeWebhook;
 using Taxi.Application.UnitTests.Infrastructure;
 using Taxi.Contracts.Common;
@@ -691,7 +692,16 @@ public class HandleStripeWebhookCommandHandlerTests
         _wallet.ReleaseTripHoldAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<Success>>(Result.Success));
 
-        return new(context, _validator, _stripe, _wallet, _notifications, Substitute.For<ITripNotifier>(), _logger);
+        return new(
+            context,
+            _validator,
+            _stripe,
+            _wallet,
+            Substitute.For<ITripEditApplier>(),
+            Substitute.For<IRefundLifecycleService>(),
+            _notifications,
+            Substitute.For<ITripNotifier>(),
+            _logger);
     }
 
     private static Trip CreateCompletedTrip()

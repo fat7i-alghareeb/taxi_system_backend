@@ -21,6 +21,13 @@ public enum PaymentKind
     Fare,
 
     /// <summary>An off-session waiting-fee surcharge charged after the trip completes.</summary>
-    WaitingFee
+    WaitingFee,
+
+    /// <summary>
+    /// An extra charge for a fare increase after a mid-trip edit (new destination /
+    /// bigger vehicle). Settled wallet-first → default saved card off-session →
+    /// PaymentSheet fallback, like a waiting-fee surcharge.
+    /// </summary>
+    FareAdjustment
 }
 

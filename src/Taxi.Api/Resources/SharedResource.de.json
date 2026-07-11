@@ -323,5 +323,12 @@
   "Notification.WalletTopUp.Failed.Body": "Deine Aufladung von {0} {1} konnte nicht abgeschlossen werden. Bitte versuche es erneut.",
   "PassengerPaymentMethod.NotReusableCard": "Nur wiederverwendbare Karten können für zukünftige Zahlungen gespeichert werden.",
   "PassengerPaymentMethod.PreferredMethod.Invalid": "Die ausgewählte Zahlungsmethode ist nicht verfügbar.",
-  "Wallet.InsufficientBalance": "Unzureichendes Guthaben."
+  "Wallet.InsufficientBalance": "Unzureichendes Guthaben.",
+  "Notification.TripDestinationChanged.Title": "Ziel geändert",
+  "Notification.TripDestinationChanged.Body": "Das Fahrtziel wurde in {0} geändert. Bitte folgen Sie der aktualisierten Route.",
+  "Trip.Edit.DeltaChanged": "Der Fahrpreis hat sich geändert. Bitte prüfen Sie die neue Differenz.",
+  "Trip.EditWindow.Expired": "Diese Fahrt kann nicht mehr geändert werden.",
+  "Trip.PassengerCount.Invalid": "Ungültige Anzahl an Passagieren.",
+  "Trip.BagCount.Invalid": "Ungültige Anzahl an Gepäckstücken.",
+  "Trip.VehicleType.NoSuitableForPassengerCount": "Für diese Anzahl an Passagieren ist kein Fahrzeug verfügbar."
 }

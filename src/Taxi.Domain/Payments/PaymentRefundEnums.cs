@@ -21,5 +21,12 @@ public enum PaymentRefundSourceType
     CompensationClaim,
     ManualIncidentRefund,
     AdminRetry,
-    NoDriverCancellation
+    NoDriverCancellation,
+
+    /// <summary>
+    /// A partial refund of the fare after a mid-trip edit lowered the price
+    /// (shorter destination / smaller vehicle). Nets against the fare, not a
+    /// cancellation refund.
+    /// </summary>
+    FareAdjustment
 }

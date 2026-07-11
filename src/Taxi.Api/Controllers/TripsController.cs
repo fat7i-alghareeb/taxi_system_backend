@@ -19,6 +19,9 @@ using Taxi.Application.Features.Trips.Commands.EnRouteTrip;
 using Taxi.Application.Features.Trips.Commands.GetPricingQuotes;
 using Taxi.Application.Features.Trips.Commands.NoDriverCancelTrip;
 using Taxi.Application.Features.Trips.Commands.PostponeNoDriverSearch;
+using Taxi.Application.Features.Trips.Commands.ApplyTripEdit;
+using Taxi.Application.Features.Trips.Commands.PreviewTripEdit;
+using Taxi.Application.Features.Trips.Common;
 using Taxi.Application.Features.Trips.Commands.RateTrip;
 using Taxi.Application.Features.Trips.Commands.RequestTrip;
 using Taxi.Application.Features.Trips.Commands.ResendArrivedNotification;
@@ -244,6 +247,41 @@ public class TripsController(ISender sender) : ApiController
     {
         var result = await sender.Send(new UpdateTripBagCountCommand(id, request.BagCount), ct);
         return result.Match(_ => NoContent(), Problem);
+    }
+
+    [HttpPost("{id:guid}/edit/preview")]
+    [Authorize(Roles = "Passenger")]
+    [ProducesResponseType(typeof(TripEditPreviewDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Previews the fare difference for a proposed destination / passenger change (no mutation). Allowed until the ride is in progress.")]
+    [EndpointName("PreviewTripEdit")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> PreviewTripEdit(Guid id, [FromBody] PreviewTripEditRequest request, CancellationToken ct)
+    {
+        var stops = request.Stops?
+            .Select(s => new TripEditStop(s.Latitude, s.Longitude, s.Label))
+            .ToList();
+        var result = await sender.Send(new PreviewTripEditCommand(id, stops, request.PassengerCount), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpPost("{id:guid}/edit/apply")]
+    [Authorize(Roles = "Passenger")]
+    [ProducesResponseType(typeof(TripEditApplyResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Applies a previewed destination / passenger change and settles the fare difference. A higher fare is charged (wallet → saved card → PaymentSheet); a lower fare is refunded.")]
+    [EndpointName("ApplyTripEdit")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> ApplyTripEdit(Guid id, [FromBody] ApplyTripEditRequest request, CancellationToken ct)
+    {
+        var stops = request.Stops?
+            .Select(s => new TripEditStop(s.Latitude, s.Longitude, s.Label))
+            .ToList();
+        var result = await sender.Send(
+            new ApplyTripEditCommand(id, stops, request.PassengerCount, request.ExpectedDelta), ct);
+        return result.Match(Ok, Problem);
     }
 
     [HttpPost("{id:guid}/cancellations")]

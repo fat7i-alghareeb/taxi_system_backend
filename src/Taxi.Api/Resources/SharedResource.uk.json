@@ -323,5 +323,12 @@
   "Notification.WalletTopUp.Failed.Body": "Ваше поповнення на {0} {1} не вдалося виконати. Спробуйте ще раз.",
   "PassengerPaymentMethod.NotReusableCard": "Для майбутніх платежів можна зберігати лише багаторазові картки.",
   "PassengerPaymentMethod.PreferredMethod.Invalid": "Обраний спосіб оплати недоступний.",
-  "Wallet.InsufficientBalance": "Недостатньо коштів на балансі."
+  "Wallet.InsufficientBalance": "Недостатньо коштів на балансі.",
+  "Notification.TripDestinationChanged.Title": "Пункт призначення змінено",
+  "Notification.TripDestinationChanged.Body": "Місце висадки для цієї поїздки змінено на {0}. Дотримуйтесь оновленого маршруту.",
+  "Trip.Edit.DeltaChanged": "Вартість змінилася. Перегляньте нову різницю.",
+  "Trip.EditWindow.Expired": "Цю поїздку більше не можна редагувати.",
+  "Trip.PassengerCount.Invalid": "Недійсна кількість пасажирів.",
+  "Trip.BagCount.Invalid": "Недійсна кількість багажу.",
+  "Trip.VehicleType.NoSuitableForPassengerCount": "Немає доступного автомобіля для такої кількості пасажирів."
 }

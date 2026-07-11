@@ -6,6 +6,7 @@ using Taxi.Application.Common.Behaviours;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Auth.Services;
 using Taxi.Application.Features.Payments.Services;
+using Taxi.Application.Features.Trips.Common;
 
 public static class DependencyInjection
 {
@@ -13,7 +14,11 @@ public static class DependencyInjection
     {
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         services.AddScoped<IRefundLifecycleService, RefundLifecycleService>();
+        services.AddScoped<ITripRefundSplitter, TripRefundSplitter>();
         services.AddScoped<IFeeSettlementService, FeeSettlementService>();
+        services.AddScoped<IFareAdjustmentSettlementService, FareAdjustmentSettlementService>();
+        services.AddScoped<ITripRequoteService, TripRequoteService>();
+        services.AddScoped<ITripEditApplier, TripEditApplier>();
         services.AddScoped<IAuthSessionFactory, AuthSessionFactory>();
 
         services.AddMediatR(cfg =>

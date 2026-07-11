@@ -323,5 +323,12 @@
   "Notification.WalletTopUp.Failed.Body": "تعذر إتمام شحن رصيدك بمبلغ {0} {1}. يرجى المحاولة مرة أخرى.",
   "PassengerPaymentMethod.NotReusableCard": "يمكن حفظ البطاقات القابلة لإعادة الاستخدام فقط للرسوم المستقبلية.",
   "PassengerPaymentMethod.PreferredMethod.Invalid": "طريقة الدفع المحددة غير متاحة.",
-  "Wallet.InsufficientBalance": "رصيد المحفظة غير كافٍ."
+  "Wallet.InsufficientBalance": "رصيد المحفظة غير كافٍ.",
+  "Notification.TripDestinationChanged.Title": "تم تغيير الوجهة",
+  "Notification.TripDestinationChanged.Body": "تم تغيير وجهة هذه الرحلة إلى {0}. يرجى اتباع المسار المحدث.",
+  "Trip.Edit.DeltaChanged": "تغيّرت الأجرة. يرجى مراجعة الفرق الجديد.",
+  "Trip.EditWindow.Expired": "لم يعد بالإمكان تعديل هذه الرحلة.",
+  "Trip.PassengerCount.Invalid": "عدد الركاب غير صالح.",
+  "Trip.BagCount.Invalid": "عدد الحقائب غير صالح.",
+  "Trip.VehicleType.NoSuitableForPassengerCount": "لا تتوفر مركبة لهذا العدد من الركاب."
 }

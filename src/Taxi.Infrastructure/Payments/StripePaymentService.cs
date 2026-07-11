@@ -221,6 +221,92 @@ public sealed class StripePaymentService : IStripePaymentService
         }
     }
 
+    public async Task<Result<StripePaymentIntentResult>> CreateFareAdjustmentPaymentIntentAsync(
+        decimal amount,
+        string currency,
+        Guid tripId,
+        Guid passengerId,
+        Guid pendingEditId,
+        string idempotencyKey,
+        string? existingStripeCustomerId,
+        string? passengerEmail,
+        string? passengerPhone,
+        string passengerName,
+        CancellationToken ct = default)
+    {
+        if (amount <= 0)
+        {
+            return PaymentErrors.InvalidAmount;
+        }
+
+        try
+        {
+            var customerService = new CustomerService();
+            string customerId;
+
+            if (!string.IsNullOrWhiteSpace(existingStripeCustomerId))
+            {
+                customerId = existingStripeCustomerId;
+            }
+            else
+            {
+                var customer = await customerService.CreateAsync(
+                    new CustomerCreateOptions
+                    {
+                        Name = passengerName,
+                        Email = passengerEmail,
+                        Phone = passengerPhone,
+                        Metadata = new Dictionary<string, string>
+                        {
+                            ["passengerId"] = passengerId.ToString(),
+                        },
+                    },
+                    cancellationToken: ct);
+                customerId = customer.Id;
+            }
+
+            var ekService = new EphemeralKeyService();
+            var ephemeralKey = await ekService.CreateAsync(
+                new EphemeralKeyCreateOptions { Customer = customerId },
+                cancellationToken: ct);
+
+            var intentService = new PaymentIntentService();
+            var options = new PaymentIntentCreateOptions
+            {
+                Amount = ToMinorUnits(amount),
+                Currency = currency.ToLowerInvariant(),
+                CaptureMethod = "automatic",
+                Customer = customerId,
+                // Keep the card reusable for later off-session ride-related charges.
+                SetupFutureUsage = "off_session",
+                AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions { Enabled = true },
+                Metadata = new Dictionary<string, string>
+                {
+                    ["tripId"] = tripId.ToString(),
+                    ["passengerId"] = passengerId.ToString(),
+                    ["kind"] = "fare_adjustment",
+                    ["pendingEditId"] = pendingEditId.ToString(),
+                },
+            };
+
+            // Idempotent per edit: a retried apply reuses the same intent/client secret.
+            var requestOptions = new RequestOptions { IdempotencyKey = idempotencyKey };
+
+            var intent = await intentService.CreateAsync(options, requestOptions, ct);
+            return new StripePaymentIntentResult(
+                intent.Id,
+                intent.ClientSecret,
+                this.settings.PublishableKey,
+                customerId,
+                ephemeralKey.Secret);
+        }
+        catch (StripeException ex)
+        {
+            this.logger.LogError(ex, "Stripe fare-adjustment PaymentIntent creation failed for trip {TripId}", tripId);
+            return PaymentErrors.StripeInitiationFailed;
+        }
+    }
+
     public async Task<Result<StripePaymentIntentResult>> CreateTopUpPaymentIntentAsync(
         Guid walletTransactionId,
         decimal amount,

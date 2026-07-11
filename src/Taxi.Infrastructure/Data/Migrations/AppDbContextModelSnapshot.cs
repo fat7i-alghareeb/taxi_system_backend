@@ -1222,6 +1222,87 @@ namespace Taxi.Infrastructure.Data.Migrations
                     b.ToTable("RefundIssues");
                 });
 
+            modelBuilder.Entity("Taxi.Domain.Trips.PendingTripEdit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<decimal>("DeltaAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTimeOffset>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastModifiedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("NewQuoteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("NewVehicleTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PassengerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("ProposedPassengerCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ProposedStopsJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("StripePaymentIntentId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<Guid>("TripId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("WalletDebitedAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid?>("WalletPaymentId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("StripePaymentIntentId");
+
+                    b.HasIndex("TripId");
+
+                    b.ToTable("PendingTripEdits");
+                });
+
             modelBuilder.Entity("Taxi.Domain.Trips.PricingQuote", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2310,6 +2391,15 @@ namespace Taxi.Infrastructure.Data.Migrations
                         .HasForeignKey("TripCancellationId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("Taxi.Domain.Trips.Trip", null)
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Taxi.Domain.Trips.PendingTripEdit", b =>
+                {
                     b.HasOne("Taxi.Domain.Trips.Trip", null)
                         .WithMany()
                         .HasForeignKey("TripId")

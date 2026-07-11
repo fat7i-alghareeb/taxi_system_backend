@@ -142,6 +142,10 @@ public static class TripErrors
         code: LocalizationKeys.Trip.EditWindowExpired,
         description: "Editing is only allowed within 1 hour of booking creation.");
 
+    public static readonly Error EditDeltaChanged = Error.Validation(
+        code: LocalizationKeys.Trip.EditDeltaChanged,
+        description: "The fare difference changed since it was previewed. Please review the new amount and try again.");
+
     public static readonly Error InvalidPassengerCount = Error.Validation(
         code: LocalizationKeys.Trip.InvalidPassengerCount,
         description: "Passenger count must be at least 1.");

@@ -15,7 +15,7 @@ namespace Taxi.Application.Features.Trips.Commands.NoDriverCancelTrip;
 public class NoDriverCancelTripCommandHandler(
     IAppDbContext context,
     IUser currentUser,
-    IRefundLifecycleService refundLifecycle,
+    ITripRefundSplitter refundSplitter,
     TimeProvider timeProvider,
     ILogger<NoDriverCancelTripCommandHandler> logger)
     : IRequestHandler<NoDriverCancelTripCommand, Result<TripDto>>
@@ -53,9 +53,6 @@ public class NoDriverCancelTripCommandHandler(
         const decimal refundPercent = 100m;
         var refundAmount = Math.Round(fare * refundPercent / 100m, 2, MidpointRounding.AwayFromZero);
 
-        var payment = await context.Payments
-            .FirstOrDefaultAsync(p => p.TripId == trip.Id && p.Kind == PaymentKind.Fare, ct);
-
         var cancelResult = trip.Cancel();
         if (cancelResult.IsError)
         {
@@ -81,36 +78,30 @@ public class NoDriverCancelTripCommandHandler(
 
         PaymentRefund? trackedRefund = null;
 
-        // No StripeEnabled gate: RequestRefundAsync reverses wallet payments via the
-        // wallet ledger (no Stripe needed) and card payments via Stripe — identical
-        // to the normal CancelTripCommandHandler. Gating on StripeEnabled would skip
-        // wallet refunds when Stripe is disabled.
-        if (payment is not null &&
-            payment.Status == PaymentStatus.Completed &&
-            refundAmount > 0)
+        // Split the full refund across all captured fare payments (wallet-first, then card) so
+        // mixed trips are fully refunded. No StripeEnabled gate: wallet portions reverse via the
+        // wallet ledger and card portions via Stripe.
+        if (refundAmount > 0)
         {
-            var refundResult = await refundLifecycle.RequestRefundAsync(
-                new RefundRequest(
-                    payment.Id,
+            var splitResult = await refundSplitter.RefundAsync(
+                new TripRefundSplitRequest(
+                    trip.Id,
                     refundAmount,
                     PaymentRefundSourceType.NoDriverCancellation,
-                    refundPercent,
-                    IsFullRefund: true,
-                    trip.Id,
-                    cancellationResult.Value.Id,
-                    PassengerId: trip.PassengerId),
+                    PassengerId: trip.PassengerId,
+                    RefundPercent: refundPercent,
+                    TripCancellationId: cancellationResult.Value.Id),
                 ct);
 
-            if (refundResult.IsFailure)
+            trackedRefund = splitResult.Primary;
+            if (!splitResult.AnyCreated || splitResult.AnyFailed)
             {
                 logger.LogWarning(
-                    "Failed to request no-driver full refund for trip {TripId}: {ErrorCode}",
+                    "No-driver refund incomplete for trip {TripId}: created={AnyCreated} anyFailed={AnyFailed} refunded={Refunded}",
                     trip.Id,
-                    refundResult.Error.Code);
-            }
-            else
-            {
-                trackedRefund = refundResult.Value;
+                    splitResult.AnyCreated,
+                    splitResult.AnyFailed,
+                    splitResult.TotalRefunded);
             }
         }
 

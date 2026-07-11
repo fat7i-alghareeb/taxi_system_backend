@@ -87,7 +87,12 @@ public sealed class InvoiceIssuanceService(
         var passenger = await db.DomainUsers
             .FirstOrDefaultAsync(u => u.Id == trip.PassengerId, ct);
 
-        var fareAmount = RoundMoney(capturedFarePayment?.Amount ?? quote?.FinalFare ?? farePayment?.Amount ?? 0m);
+        // Prefer the LIVE quote's final fare: after a mid-trip edit the trip re-points to the
+        // adjusted quote, so this is the true (re-priced) fare. The captured fare payment reflects
+        // only the ORIGINAL charge — the delta is settled/refunded separately (FareAdjustment
+        // payments/refunds) and is reflected via totalPaid/refunded, not by re-inflating the fare.
+        // VAT is backed out once from this adjusted gross. Cash / quote-less trips fall back.
+        var fareAmount = RoundMoney(quote?.FinalFare ?? capturedFarePayment?.Amount ?? farePayment?.Amount ?? 0m);
         var discountAmount = RoundMoney(Math.Max(0m, (quote?.OriginalFare ?? fareAmount) - (quote?.FinalFare ?? fareAmount)));
         var currency = capturedFarePayment?.Currency ?? farePayment?.Currency ?? quote?.CurrencyCode ?? "EUR";
 

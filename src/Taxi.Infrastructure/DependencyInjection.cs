@@ -214,6 +214,7 @@ public static class DependencyInjection
         services.AddHostedService<StorageInitializer>();
         services.AddHostedService<ScheduledTripActivationService>();
         services.AddHostedService<NoDriverDetectionService>();
+        services.AddHostedService<PendingTripEditExpiryService>();
         services.AddHostedService<OutboxDispatcherService>();
         services.AddHostedService<TripChatCleanupService>();
         services.AddHostedService<OtpCleanupService>();

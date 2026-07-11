@@ -55,6 +55,23 @@ public interface IStripePaymentService
         string passengerName,
         CancellationToken ct = default);
 
+    // Creates an on-session PaymentIntent (payment-sheet client secret) so the passenger can settle
+    // the difference of a mid-trip fare INCREASE when it couldn't be charged silently (no usable
+    // saved card / SCA). Keeps SetupFutureUsage=off_session so the card is reusable afterwards, and
+    // carries metadata {kind:fare_adjustment, pendingEditId} so the webhook applies the held edit.
+    Task<Result<StripePaymentIntentResult>> CreateFareAdjustmentPaymentIntentAsync(
+        decimal amount,
+        string currency,
+        Guid tripId,
+        Guid passengerId,
+        Guid pendingEditId,
+        string idempotencyKey,
+        string? existingStripeCustomerId,
+        string? passengerEmail,
+        string? passengerPhone,
+        string passengerName,
+        CancellationToken ct = default);
+
     // Creates a SetupIntent so the customer can save a reusable payment method (usually a card)
     // for future off-session ride-related charges. Returns the payment-sheet (setup mode) details.
     Task<Result<StripeSetupIntentResult>> CreateSetupIntentAsync(

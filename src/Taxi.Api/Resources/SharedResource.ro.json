@@ -323,5 +323,12 @@
   "Notification.WalletTopUp.Failed.Body": "Reîncărcarea ta de {0} {1} nu a putut fi finalizată. Te rugăm să încerci din nou.",
   "PassengerPaymentMethod.NotReusableCard": "Doar cardurile reutilizabile pot fi salvate pentru plăți viitoare.",
   "PassengerPaymentMethod.PreferredMethod.Invalid": "Metoda de plată selectată nu este disponibilă.",
-  "Wallet.InsufficientBalance": "Sold insuficient."
+  "Wallet.InsufficientBalance": "Sold insuficient.",
+  "Notification.TripDestinationChanged.Title": "Destinație schimbată",
+  "Notification.TripDestinationChanged.Body": "Destinația acestei curse s-a schimbat în {0}. Urmează ruta actualizată.",
+  "Trip.Edit.DeltaChanged": "Tariful s-a schimbat. Verifică noua diferență.",
+  "Trip.EditWindow.Expired": "Această cursă nu mai poate fi modificată.",
+  "Trip.PassengerCount.Invalid": "Număr de pasageri nevalid.",
+  "Trip.BagCount.Invalid": "Număr de bagaje nevalid.",
+  "Trip.VehicleType.NoSuitableForPassengerCount": "Niciun vehicul disponibil pentru acest număr de pasageri."
 }

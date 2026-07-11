@@ -323,5 +323,12 @@
   "Notification.WalletTopUp.Failed.Body": "Twoje doładowanie kwotą {0} {1} nie powiodło się. Spróbuj ponownie.",
   "PassengerPaymentMethod.NotReusableCard": "Do przyszłych płatności można zapisać tylko karty wielokrotnego użytku.",
   "PassengerPaymentMethod.PreferredMethod.Invalid": "Wybrana metoda płatności jest niedostępna.",
-  "Wallet.InsufficientBalance": "Niewystarczające saldo."
+  "Wallet.InsufficientBalance": "Niewystarczające saldo.",
+  "Notification.TripDestinationChanged.Title": "Zmieniono cel podróży",
+  "Notification.TripDestinationChanged.Body": "Miejsce docelowe tego przejazdu zmieniono na {0}. Postępuj zgodnie ze zaktualizowaną trasą.",
+  "Trip.Edit.DeltaChanged": "Opłata się zmieniła. Sprawdź nową różnicę.",
+  "Trip.EditWindow.Expired": "Tego przejazdu nie można już edytować.",
+  "Trip.PassengerCount.Invalid": "Nieprawidłowa liczba pasażerów.",
+  "Trip.BagCount.Invalid": "Nieprawidłowa liczba bagaży.",
+  "Trip.VehicleType.NoSuitableForPassengerCount": "Brak pojazdu dostępnego dla tej liczby pasażerów."
 }

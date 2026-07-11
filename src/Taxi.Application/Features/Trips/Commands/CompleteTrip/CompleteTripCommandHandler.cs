@@ -47,13 +47,18 @@ public class CompleteTripCommandHandler(
             return await TripOwnershipHelper.NotOwnedByCurrentAdminAsync(_context, trip.AcceptedByAdminId, ct);
         }
 
-        // Settle any open waiting meter first so its accrued fee is computed and
-        // visible (via the tracked entity) to the invoice that the TripCompleted
-        // domain-event handler issues during SaveChangesAsync.
+        // Stop any open waiting meter so its accrued fee is finalized.
         var now = timeProvider.GetUtcNow();
         var activeWaiting = await _context.TripWaitingSessions
             .FirstOrDefaultAsync(s => s.TripId == trip.Id && s.StoppedAtUtc == null, ct);
         activeWaiting?.Stop(now);
+
+        // Settle the waiting-fee surcharge BEFORE completing. The invoice is issued asynchronously
+        // by the TripCompleted domain-event handler; settling first guarantees the WaitingFee
+        // payment row is committed before that event, so the invoice's paid/remaining totals
+        // reflect the collected fee instead of snapshotting it as outstanding. Best-effort — a
+        // settlement hiccup must never block completion.
+        await TrySettleWaitingFeeAsync(trip, activeWaiting?.EstimatedFee ?? 0m, ct);
 
         var transitionResult = trip.Complete(now);
         if (transitionResult.IsFailure)
@@ -62,10 +67,6 @@ public class CompleteTripCommandHandler(
         }
 
         await _context.SaveChangesAsync(ct);
-
-        // The trip is now committed; collecting the waiting-fee surcharge is a
-        // best-effort side effect that must never fail the completion itself.
-        await TrySettleWaitingFeeAsync(trip, activeWaiting?.EstimatedFee ?? 0m, ct);
 
         return Result.Success;
     }

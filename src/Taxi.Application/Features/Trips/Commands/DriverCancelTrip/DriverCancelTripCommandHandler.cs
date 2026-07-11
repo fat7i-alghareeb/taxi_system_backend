@@ -14,7 +14,7 @@ namespace Taxi.Application.Features.Trips.Commands.DriverCancelTrip;
 public sealed class DriverCancelTripCommandHandler(
     IAppDbContext context,
     IUser currentUser,
-    IRefundLifecycleService refundLifecycle,
+    ITripRefundSplitter refundSplitter,
     TimeProvider timeProvider,
     ILogger<DriverCancelTripCommandHandler> logger) : IRequestHandler<DriverCancelTripCommand, Result<TripDto>>
 {
@@ -94,43 +94,33 @@ public sealed class DriverCancelTripCommandHandler(
 
         context.TripCancellations.Add(cancellationResult.Value);
 
-        var payment = await context.Payments.FirstOrDefaultAsync(
-            p => p.TripId == trip.Id && p.Kind == PaymentKind.Fare, ct);
-        if (payment?.Status == PaymentStatus.Completed &&
-            !string.IsNullOrWhiteSpace(payment.StripePaymentIntentId) &&
-            refundAmount > 0)
+        if (refundAmount > 0)
         {
             var sourceType = reason == CancellationReason.AirportWaitDeclined
                 ? PaymentRefundSourceType.AirportWaitCancellation
                 : PaymentRefundSourceType.DriverCancellation;
-            var refundResult = await refundLifecycle.RequestRefundAsync(
-                new RefundRequest(
-                    payment.Id,
+
+            // Split across all captured fare payments (wallet-first, then card). Also refunds
+            // wallet-only trips, which the old single-payment + Stripe-intent guard skipped.
+            var splitResult = await refundSplitter.RefundAsync(
+                new TripRefundSplitRequest(
+                    trip.Id,
                     refundAmount,
                     sourceType,
-                    CancellationPolicy.DriverCancelRefundPercent,
-                    refundAmount >= payment.Amount,
-                    trip.Id,
-                    cancellationResult.Value.Id,
-                    RequestedByAdminId: adminId,
-                    PassengerId: trip.PassengerId),
+                    PassengerId: trip.PassengerId,
+                    RefundPercent: CancellationPolicy.DriverCancelRefundPercent,
+                    TripCancellationId: cancellationResult.Value.Id,
+                    RequestedByAdminId: adminId),
                 ct);
 
-            if (refundResult.IsFailure)
+            if (!splitResult.AnyCreated || splitResult.AnyFailed)
             {
                 logger.LogWarning(
-                    "Failed to request tracked driver cancellation refund for PaymentIntent {PaymentIntentId} on trip {TripId}: {ErrorCode}",
-                    payment.StripePaymentIntentId,
+                    "Driver cancellation refund incomplete for trip {TripId}: created={AnyCreated} anyFailed={AnyFailed} refunded={Refunded}",
                     trip.Id,
-                    refundResult.Error.Code);
-            }
-            else if (refundResult.Value.Status == PaymentRefundStatus.Failed)
-            {
-                logger.LogWarning(
-                    "Tracked driver cancellation refund {RefundId} failed immediately for PaymentIntent {PaymentIntentId} on trip {TripId}",
-                    refundResult.Value.Id,
-                    payment.StripePaymentIntentId,
-                    trip.Id);
+                    splitResult.AnyCreated,
+                    splitResult.AnyFailed,
+                    splitResult.TotalRefunded);
             }
         }
 

@@ -14,7 +14,7 @@ namespace Taxi.Application.Features.CustomerIncidents.Commands.RefundIncident;
 public sealed class RefundIncidentCommandHandler(
     IAppDbContext context,
     IUser currentUser,
-    IRefundLifecycleService refundLifecycle,
+    ITripRefundSplitter refundSplitter,
     ILogger<RefundIncidentCommandHandler> logger)
     : IRequestHandler<RefundIncidentCommand, Result<CustomerIncidentDto>>
 {
@@ -36,53 +36,58 @@ public sealed class RefundIncidentCommandHandler(
             return CustomerIncidentErrors.NoRefundablePayment;
         }
 
-        var payment = await context.Payments.FirstOrDefaultAsync(
-            p => p.TripId == tripId && p.Kind == PaymentKind.Fare, ct);
-
-        if (payment?.Status != PaymentStatus.Completed ||
-            string.IsNullOrWhiteSpace(payment.StripePaymentIntentId))
+        // All captured fare money (wallet + card). Used to size a full refund and the % for records.
+        var farePayments = await context.Payments
+            .Where(p => p.TripId == tripId
+                && p.Status == PaymentStatus.Completed
+                && (p.Kind == PaymentKind.Fare || p.Kind == PaymentKind.FareAdjustment))
+            .ToListAsync(ct);
+        if (farePayments.Count == 0)
         {
             return CustomerIncidentErrors.NoRefundablePayment;
         }
 
-        var refundPercent = request.Amount.HasValue && payment.Amount > 0
-            ? Math.Round(request.Amount.Value / payment.Amount * 100m, 2, MidpointRounding.AwayFromZero)
+        var totalFare = farePayments.Sum(p => p.Amount);
+        var currency = farePayments[0].Currency;
+        var amount = request.Amount ?? totalFare;
+        var refundPercent = totalFare > 0
+            ? Math.Round(amount / totalFare * 100m, 2, MidpointRounding.AwayFromZero)
             : (decimal?)null;
-        var refundResult = await refundLifecycle.RequestRefundAsync(
-            new RefundRequest(
-                payment.Id,
-                request.Amount,
-                PaymentRefundSourceType.ManualIncidentRefund,
-                refundPercent,
-                !request.Amount.HasValue || request.Amount.Value >= payment.Amount,
+
+        // Split across wallet-first then card so mixed / wallet-only trips refund correctly.
+        var splitResult = await refundSplitter.RefundAsync(
+            new TripRefundSplitRequest(
                 tripId,
+                amount,
+                PaymentRefundSourceType.ManualIncidentRefund,
+                PassengerId: incident.PassengerId,
+                RefundPercent: refundPercent,
                 CustomerIncidentId: incident.Id,
-                RequestedByAdminId: adminId,
-                PassengerId: incident.PassengerId),
+                RequestedByAdminId: adminId),
             ct);
 
-        if (refundResult.IsFailure)
+        if (!splitResult.AnyCreated)
         {
             logger.LogWarning(
-                "Failed to request tracked incident refund for PaymentIntent {PaymentIntentId} on incident {IncidentId}: {ErrorCode}",
-                payment.StripePaymentIntentId,
+                "Incident refund could not be recorded for incident {IncidentId} (trip {TripId}).",
                 incident.Id,
-                refundResult.Error.Code);
-            return refundResult.Errors;
+                tripId);
+            return CustomerIncidentErrors.NoRefundablePayment;
         }
 
-        if (refundResult.Value.Status == PaymentRefundStatus.Failed)
+        if (splitResult.AnyFailed)
         {
             logger.LogWarning(
-                "Tracked incident refund {RefundId} failed immediately for PaymentIntent {PaymentIntentId} on incident {IncidentId}",
-                refundResult.Value.Id,
-                payment.StripePaymentIntentId,
-                incident.Id);
+                "Incident refund failed for incident {IncidentId} (trip {TripId}); refunded={Refunded}.",
+                incident.Id,
+                tripId,
+                splitResult.TotalRefunded);
             return CustomerIncidentErrors.RefundFailed;
         }
 
-        var refund = refundResult.Value;
-        incident.AddNote(adminId, $"Refund requested: {refund.Amount} {refund.Currency} (refundId={refund.Id}, stripeRefundId={refund.StripeRefundId}).");
+        incident.AddNote(
+            adminId,
+            $"Refund requested: {splitResult.TotalRefunded} {currency} across {splitResult.Refunds.Count} source(s).");
         await context.SaveChangesAsync(ct);
 
         var passengerName = await context.DomainUsers

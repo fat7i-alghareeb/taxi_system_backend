@@ -323,5 +323,12 @@
   "Notification.WalletTopUp.Failed.Body": "Je opwaardering van {0} {1} is niet gelukt. Probeer het opnieuw.",
   "PassengerPaymentMethod.NotReusableCard": "Alleen herbruikbare kaarten kunnen worden opgeslagen voor toekomstige betalingen.",
   "PassengerPaymentMethod.PreferredMethod.Invalid": "De geselecteerde betaalmethode is niet beschikbaar.",
-  "Wallet.InsufficientBalance": "Onvoldoende saldo."
+  "Wallet.InsufficientBalance": "Onvoldoende saldo.",
+  "Notification.TripDestinationChanged.Title": "Bestemming gewijzigd",
+  "Notification.TripDestinationChanged.Body": "De afzetlocatie voor deze rit is gewijzigd naar {0}. Volg de bijgewerkte route.",
+  "Trip.Edit.DeltaChanged": "De ritprijs is gewijzigd. Bekijk het nieuwe verschil.",
+  "Trip.EditWindow.Expired": "Deze rit kan niet meer worden gewijzigd.",
+  "Trip.PassengerCount.Invalid": "Ongeldig aantal passagiers.",
+  "Trip.BagCount.Invalid": "Ongeldig aantal koffers.",
+  "Trip.VehicleType.NoSuitableForPassengerCount": "Er is geen voertuig beschikbaar voor dit aantal passagiers."
 }

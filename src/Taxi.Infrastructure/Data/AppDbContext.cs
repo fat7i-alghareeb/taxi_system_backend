@@ -43,6 +43,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<TripRoute> TripRoutes => this.Set<TripRoute>();
     public DbSet<PricingQuote> PricingQuotes => this.Set<PricingQuote>();
     public DbSet<TripCancellation> TripCancellations => this.Set<TripCancellation>();
+    public DbSet<PendingTripEdit> PendingTripEdits => this.Set<PendingTripEdit>();
     public DbSet<TripCompensationClaim> TripCompensationClaims => this.Set<TripCompensationClaim>();
     public DbSet<TripWaitingSession> TripWaitingSessions => this.Set<TripWaitingSession>();
     public DbSet<Invoice> Invoices => this.Set<Invoice>();

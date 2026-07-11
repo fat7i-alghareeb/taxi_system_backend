@@ -636,14 +636,20 @@ public sealed class Trip : AuditableEntity
         return Result.Success;
     }
 
+    /// <summary>
+    /// Statuses in which the customer may still change destination / passengers
+    /// (and be charged/refunded the fare difference). No time window — gated purely
+    /// by status through arrival, but never once the ride is in progress or terminal.
+    /// </summary>
+    private bool IsEditableForRepricing =>
+        Status is TripStatus.AwaitingAdminAcceptance
+            or TripStatus.Accepted
+            or TripStatus.EnRoute
+            or TripStatus.Arrived;
+
     public Result<Success> UpdateStops(IReadOnlyList<TripStop> newStops)
     {
-        if (!IsWithinEditWindow)
-        {
-            return TripErrors.EditWindowExpired;
-        }
-
-        if (Status is not (TripStatus.AwaitingAdminAcceptance or TripStatus.Accepted))
+        if (!IsEditableForRepricing)
         {
             return TripErrors.InvalidStatus(Status);
         }
@@ -660,12 +666,7 @@ public sealed class Trip : AuditableEntity
 
     public Result<Success> UpdatePassengerCount(int count, Guid? newVehicleTypeId = null)
     {
-        if (!IsWithinEditWindow)
-        {
-            return TripErrors.EditWindowExpired;
-        }
-
-        if (Status is not (TripStatus.AwaitingAdminAcceptance or TripStatus.Accepted))
+        if (!IsEditableForRepricing)
         {
             return TripErrors.InvalidStatus(Status);
         }
@@ -713,6 +714,30 @@ public sealed class Trip : AuditableEntity
         {
             VehicleTypeId = newVehicleTypeId.Value;
         }
+    }
+
+    /// <summary>Final (drop-off) stop, or null if none.</summary>
+    public TripStop? DropoffStop => _stops.OrderBy(s => s.Sequence).LastOrDefault();
+
+    /// <summary>
+    /// Emits <see cref="TripDestinationChanged"/> for the current drop-off so the assigned driver
+    /// (and passenger / admins) are notified to re-route. Callers raise this only after a mid-trip
+    /// stops edit that actually moved the drop-off while a driver is assigned.
+    /// </summary>
+    public void RaiseDestinationChanged()
+    {
+        var dropoff = DropoffStop;
+
+        AddDomainEvent(new TripDestinationChanged
+        {
+            TripId = Id,
+            PassengerId = PassengerId,
+            DriverId = DriverId,
+            ReferenceCode = ReferenceCode,
+            NewDropoffLatitude = dropoff?.Coordinate.Latitude ?? 0m,
+            NewDropoffLongitude = dropoff?.Coordinate.Longitude ?? 0m,
+            NewDropoffLabel = dropoff?.AddressLabel,
+        });
     }
 
     private static string? NormalizePassengerNote(string? passengerNote)

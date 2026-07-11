@@ -119,6 +119,48 @@ public sealed class SignalRTripNotifier(IHubContext<TripHub> hubContext, ILogger
     public Task NotifyNoDriverFoundAsync(Guid tripId, Guid passengerId, CancellationToken ct = default, Guid? eventId = null) =>
         SendToPassengerAsync("NoDriverFound", tripId, passengerId, new NoDriverFoundNotification(tripId, passengerId, ResolveEventId(eventId)), ct);
 
+    public Task NotifyTripDestinationChangedAsync(
+        Guid tripId,
+        Guid passengerId,
+        Guid? driverUserId,
+        Guid? driverId,
+        decimal newDropoffLatitude,
+        decimal newDropoffLongitude,
+        string? newDropoffLabel,
+        CancellationToken ct = default,
+        Guid? eventId = null)
+    {
+        var payload = new TripDestinationChangedNotification(
+            tripId,
+            passengerId,
+            driverId,
+            newDropoffLatitude,
+            newDropoffLongitude,
+            newDropoffLabel,
+            ResolveEventId(eventId));
+
+        _logger.LogInformation(
+            "[SignalRTripNotifier] => TripDestinationChanged groups=Trip_{TripId},User_{PassengerId},User_{DriverUserId},Admins tripId={TripId}",
+            tripId,
+            passengerId,
+            driverUserId?.ToString() ?? "(none)",
+            tripId);
+
+        var sends = new List<Task>
+        {
+            _hubContext.Clients.Group($"Trip_{tripId}").SendAsync("TripDestinationChanged", payload, ct),
+            _hubContext.Clients.Group($"User_{passengerId}").SendAsync("TripDestinationChanged", payload, ct),
+            _hubContext.Clients.Group(TripHub.AdminsGroup).SendAsync("TripDestinationChanged", payload, ct),
+        };
+
+        if (driverUserId is { } driver)
+        {
+            sends.Add(_hubContext.Clients.Group($"User_{driver}").SendAsync("TripDestinationChanged", payload, ct));
+        }
+
+        return Task.WhenAll(sends);
+    }
+
     public Task NotifyTripCancelledToDriverAsync(Guid tripId, Guid driverUserId, Guid passengerId, CancellationToken ct = default, Guid? eventId = null)
     {
         _logger.LogInformation(

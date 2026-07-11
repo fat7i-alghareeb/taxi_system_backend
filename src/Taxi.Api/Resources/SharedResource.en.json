@@ -323,5 +323,12 @@
   "Notification.WalletTopUp.Failed.Body": "Your top-up of {0} {1} could not be completed. Please try again.",
   "PassengerPaymentMethod.NotReusableCard": "Only reusable cards can be saved for future charges.",
   "PassengerPaymentMethod.PreferredMethod.Invalid": "The selected payment method is not available.",
-  "Wallet.InsufficientBalance": "Insufficient wallet balance."
+  "Wallet.InsufficientBalance": "Insufficient wallet balance.",
+  "Notification.TripDestinationChanged.Title": "Destination changed",
+  "Notification.TripDestinationChanged.Body": "The drop-off for this trip changed to {0}. Please follow the updated route.",
+  "Trip.Edit.DeltaChanged": "The fare changed. Please review the new difference.",
+  "Trip.EditWindow.Expired": "This trip can no longer be edited.",
+  "Trip.PassengerCount.Invalid": "Invalid number of passengers.",
+  "Trip.BagCount.Invalid": "Invalid number of bags.",
+  "Trip.VehicleType.NoSuitableForPassengerCount": "No vehicle is available for this number of passengers."
 }

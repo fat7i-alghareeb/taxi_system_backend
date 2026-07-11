@@ -159,6 +159,54 @@ public sealed class Payment : AuditableEntity
         return payment;
     }
 
+    // Records the wallet-funded portion of a mid-trip fare increase (destination /
+    // vehicle change). No Stripe intent — money moves through the wallet ledger.
+    public static Result<Payment> CreateFareAdjustmentWalletPayment(
+        Guid id,
+        Guid tripId,
+        decimal amount,
+        string currency,
+        string? walletTransactionReference = null)
+    {
+        if (amount <= 0)
+        {
+            return PaymentErrors.InvalidAmount;
+        }
+
+        var payment = new Payment(id, tripId, amount, currency, PaymentMethod.Wallet)
+        {
+            Kind = PaymentKind.FareAdjustment,
+            TransactionReference = walletTransactionReference,
+        };
+
+        return payment;
+    }
+
+    // Records a card fare-adjustment surcharge for a mid-trip fare increase — either
+    // an off-session charge (confirmed server-side) or an interactive PaymentSheet
+    // intent (confirmed via webhook). The caller marks it completed/failed.
+    public static Result<Payment> CreateFareAdjustmentSurcharge(
+        Guid id,
+        Guid tripId,
+        decimal amount,
+        string currency,
+        string paymentIntentId)
+    {
+        if (amount <= 0)
+        {
+            return PaymentErrors.InvalidAmount;
+        }
+
+        var payment = new Payment(id, tripId, amount, currency, PaymentMethod.CreditCard)
+        {
+            Kind = PaymentKind.FareAdjustment,
+            StripePaymentIntentId = paymentIntentId,
+            TransactionReference = paymentIntentId,
+        };
+
+        return payment;
+    }
+
     public Result<Success> MarkAsCompleted(string? chargeId = null, string? stripePaymentMethodType = null)
     {
         if (Status == PaymentStatus.Completed)
