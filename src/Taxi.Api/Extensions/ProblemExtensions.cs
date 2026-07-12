@@ -43,7 +43,17 @@ public static class ProblemExtensions
     {
         var statusCode = MapStatus(error.Type);
         var title = Translate(error.Code, error.Args, error.Description, localizer, logger, env);
-        return controller.Problem(statusCode: statusCode, title: title);
+        var result = (ObjectResult)controller.Problem(statusCode: statusCode, title: title);
+
+        // Raw, non-localized code so clients can match on it precisely instead of
+        // parsing the translated title (e.g. to distinguish "refresh token really
+        // is invalid" from a transient/unrelated error before deciding to log out).
+        if (result.Value is ProblemDetails problemDetails)
+        {
+            problemDetails.Extensions["errorCode"] = error.Code;
+        }
+
+        return result;
     }
 
     private static IActionResult BuildValidationProblem(

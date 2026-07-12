@@ -66,7 +66,7 @@ public class RefreshTokenQueryHandler(
             return ApplicationErrors.RefreshTokenExpired;
         }
 
-        var generateTokenResult = await this.tokenProvider.GenerateJwtTokenAsync(getUserResult.Value, ct);
+        var generateTokenResult = await this.tokenProvider.RotateAsync(refreshToken, getUserResult.Value, ct);
 
         if (generateTokenResult.IsError)
         {

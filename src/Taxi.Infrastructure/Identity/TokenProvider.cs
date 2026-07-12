@@ -6,17 +6,24 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Taxi.Application.Common.Errors;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Identity.Dtos;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Identity;
+using Taxi.Infrastructure.Data;
 
 namespace Taxi.Infrastructure.Identity;
 
-public class TokenProvider(IConfiguration configuration, IAppDbContext context, UserManager<AppUser> userManager) : ITokenProvider
+public class TokenProvider(IConfiguration configuration, AppDbContext context, UserManager<AppUser> userManager) : ITokenProvider
 {
+    // If a client retries a refresh with a token we already rotated (its first
+    // response was lost, e.g. right as the device woke from idle and reconnected),
+    // replay the pair we already issued instead of failing a legitimate session.
+    private static readonly TimeSpan RotationGraceWindow = TimeSpan.FromSeconds(60);
+
     private readonly IConfiguration configuration = configuration;
-    private readonly IAppDbContext context = context;
+    private readonly AppDbContext context = context;
     private readonly UserManager<AppUser> _userManager = userManager;
 
     public async Task<Result<TokenResponse>> GenerateJwtTokenAsync(AppUserDto user, CancellationToken ct = default)
@@ -29,6 +36,73 @@ public class TokenProvider(IConfiguration configuration, IAppDbContext context, 
         }
 
         return tokenResult.Value;
+    }
+
+    public async Task<Result<TokenResponse>> RotateAsync(RefreshToken presentedToken, AppUserDto user, CancellationToken ct = default)
+    {
+        var strategy = this.context.Database.CreateExecutionStrategy();
+
+        return await strategy.ExecuteAsync<
+            (TokenProvider Provider, Guid PresentedId, AppUserDto User),
+            Result<TokenResponse>>(
+            state: (Provider: this, PresentedId: presentedToken.Id, User: user),
+            operation: static async (_, state, token) =>
+            {
+                var (provider, presentedId, appUser) = state;
+                var db = provider.context;
+
+                await using var tx = await db.Database.BeginTransactionAsync(token);
+
+                // Atomically claim the presented row: only one of two concurrent
+                // requests presenting the same token can win this conditional
+                // update (the row lock serializes it), scoped to that single row so
+                // no other session for this user is ever touched.
+                var newTokenId = Guid.NewGuid();
+                var claimed = await db.RefreshTokens
+                    .Where(rt => rt.Id == presentedId && rt.RevokedAtUtc == null)
+                    .ExecuteUpdateAsync(
+                        s => s
+                            .SetProperty(rt => rt.RevokedAtUtc, DateTimeOffset.UtcNow)
+                            .SetProperty(rt => rt.ReplacedByTokenId, newTokenId),
+                        token);
+
+                if (claimed == 1)
+                {
+                    var created = await provider.CreateAsync(appUser, token, refreshTokenId: newTokenId);
+
+                    if (created.IsError)
+                    {
+                        return created.Errors;
+                    }
+
+                    await tx.CommitAsync(token);
+                    return created.Value;
+                }
+
+                var current = await db.RefreshTokens
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(rt => rt.Id == presentedId, token);
+
+                if (current?.RevokedAtUtc is { } revokedAt &&
+                    current.ReplacedByTokenId is { } replacementId &&
+                    DateTimeOffset.UtcNow - revokedAt < RotationGraceWindow)
+                {
+                    var replacement = await db.RefreshTokens
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(rt => rt.Id == replacementId, token);
+
+                    if (replacement is not null && replacement.ExpiresOnUtc > DateTimeOffset.UtcNow)
+                    {
+                        await tx.CommitAsync(token);
+                        return await provider.BuildTokenResponseAsync(appUser, replacement);
+                    }
+                }
+
+                await tx.CommitAsync(token);
+                return ApplicationErrors.RefreshTokenExpired;
+            },
+            verifySucceeded: null,
+            cancellationToken: ct);
     }
 
     public ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
@@ -62,7 +136,7 @@ public class TokenProvider(IConfiguration configuration, IAppDbContext context, 
         return Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
     }
 
-    private async Task<Result<TokenResponse>> CreateAsync(AppUserDto user, CancellationToken ct = default)
+    private async Task<(string AccessToken, DateTime ExpiresOnUtc, bool RequiresPasswordReset)> BuildAccessTokenAsync(AppUserDto user)
     {
         var jwtSettings = this.configuration.GetSection("JwtSettings");
 
@@ -101,15 +175,35 @@ public class TokenProvider(IConfiguration configuration, IAppDbContext context, 
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();
-
         var securityToken = tokenHandler.CreateToken(descriptor);
 
-        await this.context.RefreshTokens
-              .Where(rt => rt.UserId == user.UserId)
-              .ExecuteDeleteAsync(ct);
+        return (tokenHandler.WriteToken(securityToken), expires, dbUser?.RequiresPasswordReset ?? false);
+    }
+
+    private async Task<TokenResponse> BuildTokenResponseAsync(AppUserDto user, RefreshToken refreshToken)
+    {
+        var (accessToken, expires, requiresPasswordReset) = await this.BuildAccessTokenAsync(user);
+
+        return new TokenResponse
+        {
+            AccessToken = accessToken,
+            RefreshToken = refreshToken.Token!,
+            ExpiresOnUtc = expires,
+            RequiresPasswordReset = requiresPasswordReset,
+        };
+    }
+
+    /// <summary>
+    /// Issues a fresh access token and inserts a brand-new refresh-token row.
+    /// Used directly by login (no prior token to rotate) and by <see cref="RotateAsync"/>
+    /// after it has already claimed/revoked the presented row.
+    /// </summary>
+    private async Task<Result<TokenResponse>> CreateAsync(AppUserDto user, CancellationToken ct = default, Guid? refreshTokenId = null)
+    {
+        var jwtSettings = this.configuration.GetSection("JwtSettings");
 
         var refreshTokenResult = RefreshToken.Create(
-            Guid.NewGuid(),
+            refreshTokenId ?? Guid.NewGuid(),
             GenerateRefreshToken(),
             user.UserId,
             DateTime.UtcNow.AddDays(int.Parse(jwtSettings["RefreshTokenExpirationInDays"] ?? "7")));
@@ -125,13 +219,6 @@ public class TokenProvider(IConfiguration configuration, IAppDbContext context, 
 
         await this.context.SaveChangesAsync(ct);
 
-        return new TokenResponse
-        {
-            AccessToken = tokenHandler.WriteToken(securityToken),
-            RefreshToken = refreshToken.Token!,
-            ExpiresOnUtc = expires,
-            RequiresPasswordReset = dbUser?.RequiresPasswordReset ?? false,
-        };
+        return await this.BuildTokenResponseAsync(user, refreshToken);
     }
 }
-

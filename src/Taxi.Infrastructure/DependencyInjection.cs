@@ -114,7 +114,7 @@ public static class DependencyInjection
                 ValidateIssuer = true,
                 ValidateAudience = true,
                 ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero,
+                ClockSkew = TimeSpan.FromSeconds(30),
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = jwtSettings["Issuer"],
                 ValidAudience = jwtSettings["Audience"],
@@ -218,6 +218,7 @@ public static class DependencyInjection
         services.AddHostedService<OutboxDispatcherService>();
         services.AddHostedService<TripChatCleanupService>();
         services.AddHostedService<OtpCleanupService>();
+        services.AddHostedService<RefreshTokenCleanupService>();
 
         return services;
     }
