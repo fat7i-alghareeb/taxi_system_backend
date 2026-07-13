@@ -28,6 +28,7 @@ public sealed class FreshStartCommandHandler(
     IAppDbContext dbContext,
     IUser currentUser,
     IAuthSessionFactory sessionFactory,
+    IWelcomeEmailService welcomeEmailService,
     TimeProvider timeProvider) : IRequestHandler<FreshStartCommand, Result<AuthResponse>>
 {
     public async Task<Result<AuthResponse>> Handle(FreshStartCommand request, CancellationToken cancellationToken)
@@ -45,6 +46,8 @@ public sealed class FreshStartCommandHandler(
             return UserErrors.NotFound;
         }
 
+        var previousEmail = domainUser.Email; // capture before ResetForFreshStart wipes it
+
         var resetResult = domainUser.ResetForFreshStart(
             $"Passenger {domainUser.Phone}",
             timeProvider.GetUtcNow());
@@ -55,6 +58,14 @@ public sealed class FreshStartCommandHandler(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Only an email/Google-collision account had an email to notify; a phone-only
+        // collision has nothing to send to. Best-effort — never blocks the fresh start.
+        if (!string.IsNullOrWhiteSpace(previousEmail))
+        {
+            await welcomeEmailService.SendWelcomeEmailAsync(
+                previousEmail, name: null, domainUser.PreferredLanguage, cancellationToken);
+        }
 
         return await sessionFactory.CreateAsync(domainUser, isNewAccount: true, ct: cancellationToken);
     }

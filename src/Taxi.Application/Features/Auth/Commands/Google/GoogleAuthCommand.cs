@@ -76,9 +76,14 @@ public sealed class GoogleAuthCommandHandler(
             await FcmTokenSync.ApplyAsync(dbContext, domainUser, request.FcmToken, cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            // Returning Google login. Best-effort — never blocks sign-in.
-            await welcomeEmailService.SendWelcomeBackEmailAsync(
-                domainUser.Email!, domainUser.Name, domainUser.PreferredLanguage, cancellationToken);
+            // Returning Google login. Best-effort — never blocks sign-in. A GoogleId-linked
+            // account can have a null Email (e.g. after "start fresh" clears it but keeps the
+            // Google link), so guard rather than assume non-null.
+            if (!string.IsNullOrWhiteSpace(domainUser.Email))
+            {
+                await welcomeEmailService.SendWelcomeBackEmailAsync(
+                    domainUser.Email, domainUser.Name, domainUser.PreferredLanguage, cancellationToken);
+            }
 
             var sessionResult = await sessionFactory.CreateAsync(domainUser, ct: cancellationToken);
             return sessionResult.IsError ? sessionResult.Errors : AuthResult.ForSession(sessionResult.Value);

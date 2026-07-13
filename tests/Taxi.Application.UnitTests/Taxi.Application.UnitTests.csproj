@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Taxi.Application\Taxi.Application.csproj" />
+    <ProjectReference Include="..\..\src\Taxi.Infrastructure\Taxi.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

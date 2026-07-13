@@ -16,7 +16,7 @@ namespace Taxi.Infrastructure.Email;
 /// <see cref="CultureInfo.CurrentUICulture"/> around a shared-resource lookup).
 /// Fully best-effort: any failure is logged and swallowed.
 /// </summary>
-internal sealed class WelcomeEmailService(
+public sealed class WelcomeEmailService(
     IEmailSender emailSender,
     IStringLocalizerFactory localizerFactory,
     IOptions<TitanEmailOptions> emailOptions,

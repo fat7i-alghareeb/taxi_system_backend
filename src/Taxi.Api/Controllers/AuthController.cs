@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
 using Taxi.Application.Features.Auth.Commands.CompleteRegistration;
+using Taxi.Application.Features.Auth.Commands.ContinueExistingAccount;
 using Taxi.Application.Features.Auth.Commands.EmailLogin;
 using Taxi.Application.Features.Auth.Commands.EmailSignup;
 using Taxi.Application.Features.Auth.Commands.ForceResetPassword;
@@ -267,6 +268,17 @@ public sealed class AuthController(ISender sender) : ApiController
     {
         var result = await sender.Send(new FreshStartCommand(), ct);
         return result.Match(Ok, Problem);
+    }
+
+    [HttpPost("account/continue")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [EndpointSummary("Acknowledges continuing with the existing account and sends the welcome-back email.")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> ContinueExistingAccount(CancellationToken ct)
+    {
+        var result = await sender.Send(new ContinueExistingAccountCommand(), ct);
+        return result.Match(_ => NoContent(), Problem);
     }
 
     private string? ClientIp() => HttpContext.Connection.RemoteIpAddress?.ToString();
