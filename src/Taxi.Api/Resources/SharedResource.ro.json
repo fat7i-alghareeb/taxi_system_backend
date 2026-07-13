@@ -330,5 +330,14 @@
   "Trip.EditWindow.Expired": "Această cursă nu mai poate fi modificată.",
   "Trip.PassengerCount.Invalid": "Număr de pasageri nevalid.",
   "Trip.BagCount.Invalid": "Număr de bagaje nevalid.",
-  "Trip.VehicleType.NoSuitableForPassengerCount": "Niciun vehicul disponibil pentru acest număr de pasageri."
+  "Trip.VehicleType.NoSuitableForPassengerCount": "Niciun vehicul disponibil pentru acest număr de pasageri.",
+  "Auth.EmailChangeNotAllowed": "Nu îți poți schimba adresa de e-mail. Deconectează-te pentru a folosi alt cont.",
+  "Email.Welcome.Subject": "Bine ai venit la Fat7i",
+  "Email.Welcome.Heading": "Îți mulțumim că ai ales Fat7i!",
+  "Email.Welcome.Body": "Îți mulțumim că ți-ai creat contul. Ne bucurăm să te avem alături — următoarea ta cursă este la câteva atingeri distanță.",
+  "Email.Welcome.Signoff": "Cu stimă,",
+  "Email.WelcomeBack.Subject": "Bine ai revenit pe Fat7i",
+  "Email.WelcomeBack.Heading": "Ne bucurăm să te revedem!",
+  "Email.WelcomeBack.Body": "Tocmai te-ai conectat la Fat7i. Dacă nu ai fost tu, te rugăm să îți securizezi contul.",
+  "Email.WelcomeBack.Signoff": "Cu stimă,"
 }

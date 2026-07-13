@@ -330,5 +330,14 @@
   "Trip.EditWindow.Expired": "لم يعد بالإمكان تعديل هذه الرحلة.",
   "Trip.PassengerCount.Invalid": "عدد الركاب غير صالح.",
   "Trip.BagCount.Invalid": "عدد الحقائب غير صالح.",
-  "Trip.VehicleType.NoSuitableForPassengerCount": "لا تتوفر مركبة لهذا العدد من الركاب."
+  "Trip.VehicleType.NoSuitableForPassengerCount": "لا تتوفر مركبة لهذا العدد من الركاب.",
+  "Auth.EmailChangeNotAllowed": "لا يمكنك تغيير بريدك الإلكتروني. سجّل الخروج لاستخدام حساب آخر.",
+  "Email.Welcome.Subject": "مرحبًا بك في Fat7i",
+  "Email.Welcome.Heading": "شكرًا لاختيارك Fat7i!",
+  "Email.Welcome.Body": "شكرًا لإنشائك حسابك. يسعدنا انضمامك إلينا — رحلتك القادمة على بُعد نقرات قليلة.",
+  "Email.Welcome.Signoff": "مع أطيب التحيات،",
+  "Email.WelcomeBack.Subject": "مرحبًا بعودتك إلى Fat7i",
+  "Email.WelcomeBack.Heading": "سعداء بعودتك!",
+  "Email.WelcomeBack.Body": "لقد سجّلت الدخول للتو إلى Fat7i. إذا لم يكن ذلك أنت، يرجى تأمين حسابك.",
+  "Email.WelcomeBack.Signoff": "مع أطيب التحيات،"
 }

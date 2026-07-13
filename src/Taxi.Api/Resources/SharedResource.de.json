@@ -330,5 +330,14 @@
   "Trip.EditWindow.Expired": "Diese Fahrt kann nicht mehr geändert werden.",
   "Trip.PassengerCount.Invalid": "Ungültige Anzahl an Passagieren.",
   "Trip.BagCount.Invalid": "Ungültige Anzahl an Gepäckstücken.",
-  "Trip.VehicleType.NoSuitableForPassengerCount": "Für diese Anzahl an Passagieren ist kein Fahrzeug verfügbar."
+  "Trip.VehicleType.NoSuitableForPassengerCount": "Für diese Anzahl an Passagieren ist kein Fahrzeug verfügbar.",
+  "Auth.EmailChangeNotAllowed": "Sie können Ihre E-Mail-Adresse nicht ändern. Melden Sie sich ab, um ein anderes Konto zu verwenden.",
+  "Email.Welcome.Subject": "Willkommen bei Fat7i",
+  "Email.Welcome.Heading": "Danke, dass Sie sich für Fat7i entschieden haben!",
+  "Email.Welcome.Body": "Vielen Dank für die Erstellung Ihres Kontos. Wir freuen uns, Sie an Bord zu haben – Ihre nächste Fahrt ist nur wenige Klicks entfernt.",
+  "Email.Welcome.Signoff": "Herzliche Grüße,",
+  "Email.WelcomeBack.Subject": "Willkommen zurück bei Fat7i",
+  "Email.WelcomeBack.Heading": "Schön, Sie wiederzusehen!",
+  "Email.WelcomeBack.Body": "Sie haben sich gerade bei Fat7i angemeldet. Falls Sie das nicht waren, sichern Sie bitte Ihr Konto.",
+  "Email.WelcomeBack.Signoff": "Herzliche Grüße,"
 }

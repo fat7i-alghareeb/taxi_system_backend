@@ -330,5 +330,14 @@
   "Trip.EditWindow.Expired": "Cette course ne peut plus être modifiée.",
   "Trip.PassengerCount.Invalid": "Nombre de passagers invalide.",
   "Trip.BagCount.Invalid": "Nombre de bagages invalide.",
-  "Trip.VehicleType.NoSuitableForPassengerCount": "Aucun véhicule n'est disponible pour ce nombre de passagers."
+  "Trip.VehicleType.NoSuitableForPassengerCount": "Aucun véhicule n'est disponible pour ce nombre de passagers.",
+  "Auth.EmailChangeNotAllowed": "Vous ne pouvez pas modifier votre e-mail. Déconnectez-vous pour utiliser un autre compte.",
+  "Email.Welcome.Subject": "Bienvenue chez Fat7i",
+  "Email.Welcome.Heading": "Merci d'avoir choisi Fat7i !",
+  "Email.Welcome.Body": "Merci d'avoir créé votre compte. Nous sommes ravis de vous compter parmi nous — votre prochain trajet n'est qu'à quelques clics.",
+  "Email.Welcome.Signoff": "Cordialement,",
+  "Email.WelcomeBack.Subject": "Content de vous revoir sur Fat7i",
+  "Email.WelcomeBack.Heading": "Ravi de vous revoir !",
+  "Email.WelcomeBack.Body": "Vous venez de vous connecter à Fat7i. Si ce n'était pas vous, veuillez sécuriser votre compte.",
+  "Email.WelcomeBack.Signoff": "Cordialement,"
 }

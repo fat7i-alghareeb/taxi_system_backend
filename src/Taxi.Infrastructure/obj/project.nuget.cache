@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Bg6IRYWZiQs=",
+  "dgSpecHash": "JqZqc66+sU8=",
   "success": true,
-  "projectFilePath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Infrastructure\\Taxi.Infrastructure.csproj",
+  "projectFilePath": "c:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Infrastructure\\Taxi.Infrastructure.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\fat7i\\.nuget\\packages\\bouncycastle.cryptography\\2.6.2\\bouncycastle.cryptography.2.6.2.nupkg.sha512",
     "C:\\Users\\fat7i\\.nuget\\packages\\firebaseadmin\\3.5.0\\firebaseadmin.3.5.0.nupkg.sha512",

@@ -5,12 +5,14 @@ using Taxi.Application.Common.Storage;
 using Taxi.Application.Features.Auth.Dtos;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
+using Taxi.Domain.Users;
 
 namespace Taxi.Application.Features.Users.Commands.UpdateUserProfile;
 
 public class UpdateUserProfileCommandHandler(
     IAppDbContext context,
     IUser currentUser,
+    IWelcomeEmailService welcomeEmailService,
     IFileStorage fileStorage) : IRequestHandler<UpdateUserProfileCommand, Result<UserDto>>
 {
     private const long MaxFileSizeBytes = 10 * 1024 * 1024;
@@ -30,6 +32,17 @@ public class UpdateUserProfileCommandHandler(
         {
             return Error.NotFound(LocalizationKeys.User.NotFound, "User not found.");
         }
+
+        // Email is locked for accounts created via email/Google sign-in (IsEmailVerified).
+        // Phone accounts keep an unverified email and may change it freely.
+        if (user.IsEmailVerified
+            && request.Email is not null
+            && !string.Equals(request.Email.Trim(), user.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            return AuthErrors.EmailChangeNotAllowed;
+        }
+
+        var previousEmail = user.Email;
 
         string? photoUrl = user.ProfilePhotoUrl;
 
@@ -84,6 +97,15 @@ public class UpdateUserProfileCommandHandler(
 
         await context.SaveChangesAsync(ct);
 
+        // A phone user adding/changing an email gets the welcome mail on every change to a
+        // new value. Locked (email/Google) accounts can't reach here, so this only fires for
+        // phone accounts. Best-effort — never blocks the profile save.
+        if (!string.IsNullOrWhiteSpace(user.Email)
+            && !string.Equals(user.Email, previousEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            await welcomeEmailService.SendWelcomeEmailAsync(user.Email, user.Name, user.PreferredLanguage, ct);
+        }
+
         return new UserDto
         {
             Id = user.Id,
@@ -92,6 +114,8 @@ public class UpdateUserProfileCommandHandler(
             Email = user.Email,
             ProfilePhotoUrl = user.ProfilePhotoUrl,
             Name = user.Name,
+            IsPhoneVerified = user.IsPhoneVerified,
+            IsEmailVerified = user.IsEmailVerified,
             HomeAddressLabel = user.HomeAddress?.Label,
             HomeAddressLatitude = user.HomeAddress?.Latitude,
             HomeAddressLongitude = user.HomeAddress?.Longitude,

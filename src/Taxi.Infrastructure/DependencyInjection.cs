@@ -168,6 +168,7 @@ public static class DependencyInjection
         services.AddSingleton<IRegistrationTokenService, RegistrationTokenService>();
         services.AddScoped<IOtpService, OtpService>();
         services.AddScoped<IEmailSender, TitanEmailSender>();
+        services.AddScoped<IWelcomeEmailService, WelcomeEmailService>();
         services.AddHttpClient<ISmsSender, CmComSmsSender>((sp, client) =>
         {
             var smsOptions = sp.GetRequiredService<IOptions<CmComSmsOptions>>().Value;

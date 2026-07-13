@@ -330,5 +330,14 @@
   "Trip.EditWindow.Expired": "Deze rit kan niet meer worden gewijzigd.",
   "Trip.PassengerCount.Invalid": "Ongeldig aantal passagiers.",
   "Trip.BagCount.Invalid": "Ongeldig aantal koffers.",
-  "Trip.VehicleType.NoSuitableForPassengerCount": "Er is geen voertuig beschikbaar voor dit aantal passagiers."
+  "Trip.VehicleType.NoSuitableForPassengerCount": "Er is geen voertuig beschikbaar voor dit aantal passagiers.",
+  "Auth.EmailChangeNotAllowed": "Je kunt je e-mailadres niet wijzigen. Log uit om een ander account te gebruiken.",
+  "Email.Welcome.Subject": "Welkom bij Fat7i",
+  "Email.Welcome.Heading": "Bedankt dat je voor Fat7i kiest!",
+  "Email.Welcome.Body": "Bedankt voor het aanmaken van je account. We zijn blij je erbij te hebben — je volgende rit is slechts een paar tikken verwijderd.",
+  "Email.Welcome.Signoff": "Met vriendelijke groet,",
+  "Email.WelcomeBack.Subject": "Welkom terug bij Fat7i",
+  "Email.WelcomeBack.Heading": "Fijn dat je er weer bent!",
+  "Email.WelcomeBack.Body": "Je bent zojuist ingelogd bij Fat7i. Was jij dit niet, beveilig dan je account.",
+  "Email.WelcomeBack.Signoff": "Met vriendelijke groet,"
 }

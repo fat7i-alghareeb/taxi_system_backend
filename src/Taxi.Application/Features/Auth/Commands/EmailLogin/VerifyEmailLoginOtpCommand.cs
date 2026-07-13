@@ -29,6 +29,7 @@ public sealed class VerifyEmailLoginOtpCommandValidator : AbstractValidator<Veri
 public sealed class VerifyEmailLoginOtpCommandHandler(
     IAppDbContext dbContext,
     IOtpService otpService,
+    IWelcomeEmailService welcomeEmailService,
     IAuthSessionFactory sessionFactory) : IRequestHandler<VerifyEmailLoginOtpCommand, Result<AuthResponse>>
 {
     public async Task<Result<AuthResponse>> Handle(VerifyEmailLoginOtpCommand request, CancellationToken cancellationToken)
@@ -59,6 +60,10 @@ public sealed class VerifyEmailLoginOtpCommandHandler(
 
         await FcmTokenSync.ApplyAsync(dbContext, domainUser, request.FcmToken, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Returning email login. Best-effort — never blocks sign-in.
+        await welcomeEmailService.SendWelcomeBackEmailAsync(
+            domainUser.Email!, domainUser.Name, domainUser.PreferredLanguage, cancellationToken);
 
         return await sessionFactory.CreateAsync(domainUser, ct: cancellationToken);
     }

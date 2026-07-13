@@ -43,6 +43,24 @@ public static class LocalizationKeys
         public const string RegistrationTokenInvalid = "Auth.RegistrationTokenInvalid";
         public const string InvalidGoogleToken = "Auth.InvalidGoogleToken";
         public const string GoogleEmailMissing = "Auth.GoogleEmailMissing";
+
+        // Email is locked for accounts created via email/Google sign-in.
+        public const string EmailChangeNotAllowed = "Auth.EmailChangeNotAllowed";
+    }
+
+    public static class Email
+    {
+        // Welcome / thank-you email sent when an account first has a real email.
+        public const string WelcomeSubject = "Email.Welcome.Subject";
+        public const string WelcomeHeading = "Email.Welcome.Heading";
+        public const string WelcomeBody = "Email.Welcome.Body";
+        public const string WelcomeSignoff = "Email.Welcome.Signoff";
+
+        // "Welcome back" email sent on every returning email/Google login.
+        public const string WelcomeBackSubject = "Email.WelcomeBack.Subject";
+        public const string WelcomeBackHeading = "Email.WelcomeBack.Heading";
+        public const string WelcomeBackBody = "Email.WelcomeBack.Body";
+        public const string WelcomeBackSignoff = "Email.WelcomeBack.Signoff";
     }
 
     public static class Otp

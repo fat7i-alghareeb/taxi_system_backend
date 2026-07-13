@@ -330,5 +330,14 @@
   "Trip.EditWindow.Expired": "Цю поїздку більше не можна редагувати.",
   "Trip.PassengerCount.Invalid": "Недійсна кількість пасажирів.",
   "Trip.BagCount.Invalid": "Недійсна кількість багажу.",
-  "Trip.VehicleType.NoSuitableForPassengerCount": "Немає доступного автомобіля для такої кількості пасажирів."
+  "Trip.VehicleType.NoSuitableForPassengerCount": "Немає доступного автомобіля для такої кількості пасажирів.",
+  "Auth.EmailChangeNotAllowed": "Ви не можете змінити свою електронну пошту. Вийдіть, щоб скористатися іншим обліковим записом.",
+  "Email.Welcome.Subject": "Ласкаво просимо до Fat7i",
+  "Email.Welcome.Heading": "Дякуємо, що обрали Fat7i!",
+  "Email.Welcome.Body": "Дякуємо за створення облікового запису. Раді вітати вас — ваша наступна поїздка лише за кілька дотиків.",
+  "Email.Welcome.Signoff": "З найкращими побажаннями,",
+  "Email.WelcomeBack.Subject": "З поверненням до Fat7i",
+  "Email.WelcomeBack.Heading": "Раді знову вас бачити!",
+  "Email.WelcomeBack.Body": "Ви щойно увійшли в Fat7i. Якщо це були не ви, будь ласка, убезпечте свій обліковий запис.",
+  "Email.WelcomeBack.Signoff": "З найкращими побажаннями,"
 }

@@ -41,6 +41,7 @@ public sealed class CompleteRegistrationCommandHandler(
     IRegistrationTokenService registrationTokenService,
     IAppDbContext dbContext,
     IIdentityService identityService,
+    IWelcomeEmailService welcomeEmailService,
     IAuthSessionFactory sessionFactory) : IRequestHandler<CompleteRegistrationCommand, Result<AuthResponse>>
 {
     public async Task<Result<AuthResponse>> Handle(CompleteRegistrationCommand request, CancellationToken cancellationToken)
@@ -102,6 +103,10 @@ public sealed class CompleteRegistrationCommandHandler(
 
         await FcmTokenSync.ApplyAsync(dbContext, domainUser, request.FcmToken, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Welcome the brand-new email/Google account. Best-effort — never blocks sign-up.
+        await welcomeEmailService.SendWelcomeEmailAsync(
+            domainUser.Email!, domainUser.Name, domainUser.PreferredLanguage, cancellationToken);
 
         return await sessionFactory.CreateAsync(domainUser, isNewAccount: true, ct: cancellationToken);
     }

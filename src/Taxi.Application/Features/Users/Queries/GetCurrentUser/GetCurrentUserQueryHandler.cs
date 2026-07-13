@@ -75,6 +75,8 @@ public class GetCurrentUserQueryHandler(
             Email = user.Email,
             ProfilePhotoUrl = user.ProfilePhotoUrl,
             Name = isPlaceholder ? null : resolvedName,
+            IsPhoneVerified = user.IsPhoneVerified,
+            IsEmailVerified = user.IsEmailVerified,
             DriverId = driverId,
             ApprovalStatus = approvalStatus,
             VehicleTypeId = vehicleTypeId,

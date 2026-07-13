@@ -36,6 +36,7 @@ public sealed class GoogleAuthCommandHandler(
     IFirebaseAuthService firebaseAuth,
     IAppDbContext dbContext,
     IRegistrationTokenService registrationTokenService,
+    IWelcomeEmailService welcomeEmailService,
     IAuthSessionFactory sessionFactory) : IRequestHandler<GoogleAuthCommand, Result<AuthResult>>
 {
     public async Task<Result<AuthResult>> Handle(GoogleAuthCommand request, CancellationToken cancellationToken)
@@ -74,6 +75,10 @@ public sealed class GoogleAuthCommandHandler(
 
             await FcmTokenSync.ApplyAsync(dbContext, domainUser, request.FcmToken, cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
+
+            // Returning Google login. Best-effort — never blocks sign-in.
+            await welcomeEmailService.SendWelcomeBackEmailAsync(
+                domainUser.Email!, domainUser.Name, domainUser.PreferredLanguage, cancellationToken);
 
             var sessionResult = await sessionFactory.CreateAsync(domainUser, ct: cancellationToken);
             return sessionResult.IsError ? sessionResult.Errors : AuthResult.ForSession(sessionResult.Value);

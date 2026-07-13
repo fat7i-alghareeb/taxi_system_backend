@@ -50,4 +50,9 @@ public static class AuthErrors
     public static readonly Error GoogleEmailMissing = Error.Validation(
         code: LocalizationKeys.Auth.GoogleEmailMissing,
         description: "The Google account did not provide an email address.");
+
+    // Accounts created via email/Google sign-in own a verified email that cannot be changed.
+    public static readonly Error EmailChangeNotAllowed = Error.Validation(
+        code: LocalizationKeys.Auth.EmailChangeNotAllowed,
+        description: "You can't change the email of an account you signed in to with email or Google. Log out to use a different email.");
 }
