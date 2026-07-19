@@ -44,9 +44,12 @@ public sealed class TripEditApplier(IAppDbContext context) : ITripEditApplier
                 return stopsResult.Errors;
             }
 
-            // Tell the assigned driver to re-route only when the drop-off actually moved.
+            // Tell whoever is running the trip to re-route, but only when the drop-off actually
+            // moved. AcceptedByAdminId is the live check: this deployment assigns trips to admins,
+            // so DriverId alone never matches and the event would never fire.
             var newDropoff = trip.DropoffStop?.Coordinate;
-            if (trip.DriverId is not null && DropoffMoved(oldDropoff, newDropoff))
+            if ((trip.DriverId is not null || trip.AcceptedByAdminId is not null)
+                && DropoffMoved(oldDropoff, newDropoff))
             {
                 trip.RaiseDestinationChanged();
             }

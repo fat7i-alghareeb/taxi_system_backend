@@ -172,13 +172,74 @@ public class FcmNotificationService(
         var admins = await _context.AdminProfiles
             .AsNoTracking()
             .Where(admin => admin.IsActive && admin.FcmToken != null)
-            .Select(admin => new { admin.Id, admin.FcmToken, admin.PreferredLanguage })
+            .Select(admin => new AdminRecipient(admin.Id, admin.FcmToken!, admin.PreferredLanguage))
             .ToListAsync(ct);
 
         _logger.LogInformation(
             "[FCM] SendPushNotificationToAdmins called. TitleKey={TitleKey} BodyKey={BodyKey} ActiveAdminsWithToken={Count} DataKeys=[{DataKeys}]",
             title, body, admins.Count, data != null ? string.Join(",", data.Keys) : "none");
 
+        var deliveredCount = await DeliverToAdminsAsync(admins, title, body, data, ct, titleArgs, bodyArgs);
+
+        // Backup channel: if no per-device token delivery succeeded (e.g. all tokens
+        // stale/unregistered), fall back to the 'admins' topic so the alert still
+        // reaches any admin device subscribed to it. Topic broadcasts can't be
+        // per-admin-language, so resolve in the default culture.
+        if (deliveredCount == 0)
+        {
+            _logger.LogWarning(
+                "[FCM] No admin device tokens delivered ({Count} candidates). Falling back to '{Topic}' topic.",
+                admins.Count, AdminsTopic);
+            await SendPushNotificationToTopicAsync(AdminsTopic, title, body, data, ct, titleArgs, bodyArgs);
+        }
+    }
+
+    public async Task SendPushNotificationToAdminAsync(
+        Guid adminId,
+        string title,
+        string body,
+        Dictionary<string, string>? data = null,
+        CancellationToken ct = default,
+        object[]? titleArgs = null,
+        object[]? bodyArgs = null)
+    {
+        var admin = await _context.AdminProfiles
+            .AsNoTracking()
+            .Where(profile => profile.Id == adminId && profile.IsActive && profile.FcmToken != null)
+            .Select(profile => new AdminRecipient(profile.Id, profile.FcmToken!, profile.PreferredLanguage))
+            .FirstOrDefaultAsync(ct);
+
+        if (admin is null)
+        {
+            // Deliberately no all-admin fallback: this push is addressed to one person, and
+            // broadcasting it to everyone because their device is stale would be worse than
+            // dropping it. The caller decides whether a wider fan-out is appropriate.
+            _logger.LogWarning(
+                "[FCM] SendPushNotificationToAdmin skipped: admin {AdminId} is inactive or has no token.",
+                adminId);
+            return;
+        }
+
+        _logger.LogInformation(
+            "[FCM] SendPushNotificationToAdmin called. AdminId={AdminId} TitleKey={TitleKey} BodyKey={BodyKey} DataKeys=[{DataKeys}]",
+            adminId, title, body, data != null ? string.Join(",", data.Keys) : "none");
+
+        await DeliverToAdminsAsync([admin], title, body, data, ct, titleArgs, bodyArgs);
+    }
+
+    /// <summary>
+    /// Sends one message per admin, localized into that admin's own preferred language, clearing
+    /// any token Firebase reports as dead. Returns how many were actually delivered.
+    /// </summary>
+    private async Task<int> DeliverToAdminsAsync(
+        IReadOnlyList<AdminRecipient> admins,
+        string title,
+        string body,
+        Dictionary<string, string>? data,
+        CancellationToken ct,
+        object[]? titleArgs,
+        object[]? bodyArgs)
+    {
         var deliveredCount = 0;
         foreach (var admin in admins)
         {
@@ -226,18 +287,10 @@ public class FcmNotificationService(
             }
         }
 
-        // Backup channel: if no per-device token delivery succeeded (e.g. all tokens
-        // stale/unregistered), fall back to the 'admins' topic so the alert still
-        // reaches any admin device subscribed to it. Topic broadcasts can't be
-        // per-admin-language, so resolve in the default culture.
-        if (deliveredCount == 0)
-        {
-            _logger.LogWarning(
-                "[FCM] No admin device tokens delivered ({Count} candidates). Falling back to '{Topic}' topic.",
-                admins.Count, AdminsTopic);
-            await SendPushNotificationToTopicAsync(AdminsTopic, title, body, data, ct, titleArgs, bodyArgs);
-        }
+        return deliveredCount;
     }
+
+    private sealed record AdminRecipient(Guid Id, string FcmToken, string? PreferredLanguage);
 
     private (string Title, string Body) Localize(
         string title,

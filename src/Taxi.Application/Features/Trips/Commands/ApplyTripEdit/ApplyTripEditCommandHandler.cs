@@ -18,6 +18,7 @@ public sealed class ApplyTripEditCommandHandler(
     IUser currentUser,
     ITripRequoteService requoteService,
     ITripEditApplier editApplier,
+    ITripAdminEditNotifier adminEditNotifier,
     IFareAdjustmentSettlementService settlementService,
     IRefundLifecycleService refundService,
     ITripRefundSplitter refundSplitter,
@@ -54,9 +55,12 @@ public sealed class ApplyTripEditCommandHandler(
             }
         }
 
-        if (!TripEditPolicy.IsEditableForRepricing(trip.Status))
+        if (TripEditPolicy.Validate(
+                trip,
+                editsStops: request.Stops is { Count: > 0 },
+                editsPartySize: request.PassengerCount.HasValue) is { } policyError)
         {
-            return TripErrors.InvalidStatus(trip.Status);
+            return policyError;
         }
 
         var requoteResult = await requoteService.RequoteAsync(trip, request.Stops, request.PassengerCount, ct);
@@ -134,6 +138,17 @@ public sealed class ApplyTripEditCommandHandler(
         }
 
         await context.SaveChangesAsync(ct);
+
+        // The client edits one field at a time, so in practice this raises a single push.
+        if (newStops is { Count: > 0 })
+        {
+            await adminEditNotifier.NotifyAsync(trip, TripEditKind.Route, ct);
+        }
+
+        if (newPassengerCount.HasValue)
+        {
+            await adminEditNotifier.NotifyAsync(trip, TripEditKind.Passengers, ct);
+        }
 
         var dto = await TripDtoBuilder.BuildAsync(context, trip, timeProvider.GetUtcNow(), ct);
         return TripEditApplyResultDto.Applied(dto, delta, currency);

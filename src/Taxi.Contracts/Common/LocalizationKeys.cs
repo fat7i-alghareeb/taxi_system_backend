@@ -230,6 +230,7 @@ public static class LocalizationKeys
         public const string FlightNumberRequired = "Trip.FlightNumber.Required";
         public const string FlightNumberInvalid = "Trip.FlightNumber.Invalid";
         public const string InvalidRating = "Trip.Rating.Invalid";
+        public const string AlreadyRated = "Trip.Rating.AlreadyRated";
         public const string EditWindowExpired = "Trip.EditWindow.Expired";
         public const string EditDeltaChanged = "Trip.Edit.DeltaChanged";
         public const string InvalidPassengerCount = "Trip.PassengerCount.Invalid";
@@ -446,6 +447,11 @@ public static class LocalizationKeys
 
         public const string TripDestinationChangedTitle = "Notification.TripDestinationChanged.Title";
         public const string TripDestinationChangedBody = "Notification.TripDestinationChanged.Body";
+
+        public const string TripEditedByPassengerTitle = "Notification.TripEditedByPassenger.Title";
+        public const string TripEditedRouteBody = "Notification.TripEditedByPassenger.RouteBody";
+        public const string TripEditedPassengersBody = "Notification.TripEditedByPassenger.PassengersBody";
+        public const string TripEditedBagsBody = "Notification.TripEditedByPassenger.BagsBody";
     }
 }
 

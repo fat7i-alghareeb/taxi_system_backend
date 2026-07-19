@@ -6891,11 +6891,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Api\\Taxi.Api.csproj",
+      "projectUniqueName": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Api\\Taxi.Api.csproj",
       "projectName": "Taxi.Api",
-      "projectPath": "c:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Api\\Taxi.Api.csproj",
+      "projectPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Api\\Taxi.Api.csproj",
       "packagesPath": "C:\\Users\\fat7i\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Api\\obj\\",
+      "outputPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Api\\obj\\",
       "projectStyle": "PackageReference",
       "centralPackageVersionsManagementEnabled": true,
       "fallbackFolders": [
@@ -6918,11 +6918,11 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
-            "c:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Application\\Taxi.Application.csproj": {
-              "projectPath": "c:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Application\\Taxi.Application.csproj"
+            "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Application\\Taxi.Application.csproj": {
+              "projectPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Application\\Taxi.Application.csproj"
             },
-            "c:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Client\\Taxi.Client.csproj": {
-              "projectPath": "c:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Client\\Taxi.Client.csproj"
+            "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Client\\Taxi.Client.csproj": {
+              "projectPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Client\\Taxi.Client.csproj"
             },
             "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Contracts\\Taxi.Contracts.csproj": {
               "projectPath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Contracts\\Taxi.Contracts.csproj"

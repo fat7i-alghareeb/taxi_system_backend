@@ -19,6 +19,7 @@ public class HandleStripeWebhookCommandHandler(
     IStripePaymentService stripe,
     IWalletService wallet,
     ITripEditApplier editApplier,
+    ITripAdminEditNotifier adminEditNotifier,
     IRefundLifecycleService refundService,
     INotificationService notificationService,
     ITripNotifier tripNotifier,
@@ -139,6 +140,13 @@ public class HandleStripeWebhookCommandHandler(
             }
 
             await context.SaveChangesAsync(ct);
+
+            // The edit only becomes real here, so this is where the owning admin learns about it.
+            foreach (var kind in applyResult.Value)
+            {
+                await adminEditNotifier.NotifyAsync(trip, kind, ct);
+            }
+
             return Result.Success;
         }
 
@@ -197,7 +205,11 @@ public class HandleStripeWebhookCommandHandler(
         context.Payments.Add(walletPayment);
     }
 
-    private async Task<Result<Success>> ApplyPendingEditFromWebhookAsync(
+    /// <summary>
+    /// Applies a held edit and reports which fields it actually moved, so the caller can notify the
+    /// owning admin once the change is committed.
+    /// </summary>
+    private async Task<Result<IReadOnlyList<TripEditKind>>> ApplyPendingEditFromWebhookAsync(
         Trip trip,
         Payment payment,
         CancellationToken ct)
@@ -208,7 +220,7 @@ public class HandleStripeWebhookCommandHandler(
         // No held edit, or it was already applied/cancelled → idempotent no-op.
         if (pending is null || pending.Status != PendingTripEditStatus.Pending)
         {
-            return Result.Success;
+            return Array.Empty<TripEditKind>();
         }
 
         var quote = await context.PricingQuotes.FirstOrDefaultAsync(q => q.Id == pending.NewQuoteId, ct);
@@ -248,7 +260,19 @@ public class HandleStripeWebhookCommandHandler(
         }
 
         pending.MarkApplied();
-        return Result.Success;
+
+        var changed = new List<TripEditKind>(2);
+        if (newStops is { Count: > 0 })
+        {
+            changed.Add(TripEditKind.Route);
+        }
+
+        if (pending.ProposedPassengerCount.HasValue)
+        {
+            changed.Add(TripEditKind.Passengers);
+        }
+
+        return changed;
     }
 
     private async Task RevertPendingEditFromWebhookAsync(Payment payment, CancellationToken ct)

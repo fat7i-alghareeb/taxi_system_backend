@@ -111,6 +111,36 @@ public sealed class Trip : AuditableEntity
 
     private bool IsWithinEditWindow => DateTimeOffset.UtcNow <= CreatedAtUtc.AddHours(1);
 
+    /// <summary>
+    /// Window in which the customer may still repoint the route. Closes one hour after booking
+    /// or — for a scheduled ride — one hour before pickup, whichever is later. Anchoring on the
+    /// pickup keeps the address correctable for a ride booked days in advance; taking the later
+    /// of the two keeps the full post-booking hour for a ride scheduled less than an hour out,
+    /// which would otherwise be locked the moment it was created.
+    /// </summary>
+    private bool IsWithinStopsEditWindow
+    {
+        get
+        {
+            var bookingDeadline = CreatedAtUtc.AddHours(1);
+            var deadline = ScheduledAtUtc is { } scheduledAtUtc
+                ? Max(scheduledAtUtc.AddHours(-1), bookingDeadline)
+                : bookingDeadline;
+
+            return DateTimeOffset.UtcNow <= deadline;
+
+            static DateTimeOffset Max(DateTimeOffset a, DateTimeOffset b) => a >= b ? a : b;
+        }
+    }
+
+    /// <summary>
+    /// Statuses in which the customer may still change the party size. Closes as soon as the
+    /// driver starts moving: a passenger-count change can swap the assigned vehicle type, which
+    /// must not happen once someone is already driving to the pickup.
+    /// </summary>
+    private bool IsPartySizeEditable =>
+        Status is TripStatus.AwaitingAdminAcceptance or TripStatus.Accepted;
+
     public static Result<Trip> Request(
         Guid id,
         string referenceCode,
@@ -610,6 +640,12 @@ public sealed class Trip : AuditableEntity
             return TripErrors.InvalidStatus(Status);
         }
 
+        // A rating is final: once given it cannot be revised or overwritten.
+        if (PassengerRating.HasValue)
+        {
+            return TripErrors.AlreadyRated;
+        }
+
         if (stars is < 1 or > 5)
         {
             return TripErrors.InvalidRating;
@@ -637,9 +673,10 @@ public sealed class Trip : AuditableEntity
     }
 
     /// <summary>
-    /// Statuses in which the customer may still change destination / passengers
-    /// (and be charged/refunded the fare difference). No time window — gated purely
-    /// by status through arrival, but never once the ride is in progress or terminal.
+    /// Statuses in which the customer may still repoint the route (and be charged/refunded the
+    /// fare difference). Stays open through arrival — a re-route is something the driver absorbs
+    /// live — but never once the ride is in progress or terminal. Combined with
+    /// <see cref="IsWithinStopsEditWindow"/>; party size uses <see cref="IsPartySizeEditable"/>.
     /// </summary>
     private bool IsEditableForRepricing =>
         Status is TripStatus.AwaitingAdminAcceptance
@@ -649,6 +686,11 @@ public sealed class Trip : AuditableEntity
 
     public Result<Success> UpdateStops(IReadOnlyList<TripStop> newStops)
     {
+        if (!IsWithinStopsEditWindow)
+        {
+            return TripErrors.EditWindowExpired;
+        }
+
         if (!IsEditableForRepricing)
         {
             return TripErrors.InvalidStatus(Status);
@@ -666,7 +708,7 @@ public sealed class Trip : AuditableEntity
 
     public Result<Success> UpdatePassengerCount(int count, Guid? newVehicleTypeId = null)
     {
-        if (!IsEditableForRepricing)
+        if (!IsPartySizeEditable)
         {
             return TripErrors.InvalidStatus(Status);
         }
@@ -688,12 +730,7 @@ public sealed class Trip : AuditableEntity
 
     public Result<Success> UpdateBagCount(int count)
     {
-        if (!IsWithinEditWindow)
-        {
-            return TripErrors.EditWindowExpired;
-        }
-
-        if (Status is not (TripStatus.AwaitingAdminAcceptance or TripStatus.Accepted))
+        if (!IsPartySizeEditable)
         {
             return TripErrors.InvalidStatus(Status);
         }

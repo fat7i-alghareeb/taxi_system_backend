@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Features.Trips.Common;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Trips;
 
@@ -8,7 +9,8 @@ namespace Taxi.Application.Features.Trips.Commands.UpdateTripBagCount;
 
 public class UpdateTripBagCountCommandHandler(
     IAppDbContext context,
-    IUser currentUser) : IRequestHandler<UpdateTripBagCountCommand, Result<Success>>
+    IUser currentUser,
+    ITripAdminEditNotifier adminEditNotifier) : IRequestHandler<UpdateTripBagCountCommand, Result<Success>>
 {
     public async Task<Result<Success>> Handle(UpdateTripBagCountCommand request, CancellationToken ct)
     {
@@ -38,6 +40,9 @@ public class UpdateTripBagCountCommandHandler(
         }
 
         await context.SaveChangesAsync(ct);
+
+        await adminEditNotifier.NotifyAsync(trip, TripEditKind.Bags, ct);
+
         return Result.Success;
     }
 }

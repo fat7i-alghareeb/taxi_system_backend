@@ -42,9 +42,12 @@ public class PreviewTripEditCommandHandler(
             }
         }
 
-        if (!TripEditPolicy.IsEditableForRepricing(trip.Status))
+        if (TripEditPolicy.Validate(
+                trip,
+                editsStops: request.Stops is { Count: > 0 },
+                editsPartySize: request.PassengerCount.HasValue) is { } policyError)
         {
-            return TripErrors.InvalidStatus(trip.Status);
+            return policyError;
         }
 
         var requote = await requoteService.RequoteAsync(trip, request.Stops, request.PassengerCount, ct);

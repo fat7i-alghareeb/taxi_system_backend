@@ -698,6 +698,7 @@ public class HandleStripeWebhookCommandHandlerTests
             _stripe,
             _wallet,
             Substitute.For<ITripEditApplier>(),
+            Substitute.For<ITripAdminEditNotifier>(),
             Substitute.For<IRefundLifecycleService>(),
             _notifications,
             Substitute.For<ITripNotifier>(),

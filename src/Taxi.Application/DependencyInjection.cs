@@ -19,6 +19,7 @@ public static class DependencyInjection
         services.AddScoped<IFareAdjustmentSettlementService, FareAdjustmentSettlementService>();
         services.AddScoped<ITripRequoteService, TripRequoteService>();
         services.AddScoped<ITripEditApplier, TripEditApplier>();
+        services.AddScoped<ITripAdminEditNotifier, TripAdminEditNotifier>();
         services.AddScoped<IAuthSessionFactory, AuthSessionFactory>();
 
         services.AddMediatR(cfg =>

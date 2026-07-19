@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "+vZOJ3fH4zM=",
+  "dgSpecHash": "miGTa7VGIFY=",
   "success": true,
-  "projectFilePath": "c:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Application\\Taxi.Application.csproj",
+  "projectFilePath": "C:\\Users\\fat7i\\myProjects\\fat7i\\Taxi_Server\\src\\Taxi.Application\\Taxi.Application.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\fat7i\\.nuget\\packages\\fluentvalidation\\12.1.1\\fluentvalidation.12.1.1.nupkg.sha512",
     "C:\\Users\\fat7i\\.nuget\\packages\\fluentvalidation.dependencyinjectionextensions\\12.1.1\\fluentvalidation.dependencyinjectionextensions.12.1.1.nupkg.sha512",

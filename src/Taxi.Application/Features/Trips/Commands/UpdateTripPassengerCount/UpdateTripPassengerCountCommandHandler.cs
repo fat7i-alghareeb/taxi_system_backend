@@ -2,6 +2,7 @@ using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Features.Trips.Common;
 using Taxi.Application.Features.Trips.Dtos;
 using AppCoordinate = Taxi.Application.Common.Interfaces.Coordinate;
 using Taxi.Domain.Common.Results;
@@ -15,6 +16,7 @@ public class UpdateTripPassengerCountCommandHandler(
     IAppDbContext context,
     IUser currentUser,
     IDirectionsService directionsService,
+    ITripAdminEditNotifier adminEditNotifier,
     TimeProvider timeProvider) : IRequestHandler<UpdateTripPassengerCountCommand, Result<TripDto>>
 {
     public async Task<Result<TripDto>> Handle(UpdateTripPassengerCountCommand request, CancellationToken ct)
@@ -138,6 +140,8 @@ public class UpdateTripPassengerCountCommandHandler(
         }
 
         await context.SaveChangesAsync(ct);
+
+        await adminEditNotifier.NotifyAsync(trip, TripEditKind.Passengers, ct);
 
         return await TripDtoBuilder.BuildAsync(context, trip, timeProvider.GetUtcNow(), ct);
     }

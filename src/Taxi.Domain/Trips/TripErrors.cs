@@ -138,9 +138,13 @@ public static class TripErrors
         code: LocalizationKeys.Trip.InvalidRating,
         description: "The rating must be between 1 and 5 stars.");
 
+    public static readonly Error AlreadyRated = Error.Conflict(
+        code: LocalizationKeys.Trip.AlreadyRated,
+        description: "This trip has already been rated and the rating cannot be changed.");
+
     public static readonly Error EditWindowExpired = Error.Validation(
         code: LocalizationKeys.Trip.EditWindowExpired,
-        description: "Editing is only allowed within 1 hour of booking creation.");
+        description: "The window for changing the route has closed.");
 
     public static readonly Error EditDeltaChanged = Error.Validation(
         code: LocalizationKeys.Trip.EditDeltaChanged,
