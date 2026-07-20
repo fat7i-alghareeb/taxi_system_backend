@@ -17,4 +17,11 @@ public sealed class WalletOptions
 
     /// <summary>Largest allowed single top-up, in major units.</summary>
     public decimal MaxTopUpAmount { get; set; } = 500m;
+
+    /// <summary>
+    /// Smallest debt that blocks booking, in major units. Below this the debt is carried but
+    /// ignored, because Stripe refuses charges under roughly this amount — blocking on a few
+    /// cents would lock the customer out of an amount they physically cannot pay.
+    /// </summary>
+    public decimal MinDebtToBlock { get; set; } = 0.50m;
 }

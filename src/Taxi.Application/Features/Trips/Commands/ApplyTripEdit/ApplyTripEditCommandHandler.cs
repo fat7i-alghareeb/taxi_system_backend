@@ -63,7 +63,13 @@ public sealed class ApplyTripEditCommandHandler(
             return policyError;
         }
 
-        var requoteResult = await requoteService.RequoteAsync(trip, request.Stops, request.PassengerCount, ct);
+        // With a preview token the quote the customer saw is reused verbatim, so the delta can't
+        // drift. Without one (older clients) re-quote live and fall back to the drift guard.
+        var reusedPreview = request.PreviewToken.HasValue;
+        var requoteResult = reusedPreview
+            ? await requoteService.ResolveFromPreviewAsync(
+                trip, request.PreviewToken!.Value, request.Stops, request.PassengerCount, ct)
+            : await requoteService.RequoteAsync(trip, request.Stops, request.PassengerCount, ct);
         if (requoteResult.IsFailure)
         {
             return requoteResult.Error;
@@ -73,24 +79,28 @@ public sealed class ApplyTripEditCommandHandler(
 
         // Drift guard: the customer confirmed a specific difference. If the fresh re-quote no
         // longer matches (quote expired, a concurrent edit landed), bail so the app re-previews.
-        if (Math.Abs(r.Delta - request.ExpectedDelta) > DeltaDriftTolerance)
+        if (!reusedPreview && Math.Abs(r.Delta - request.ExpectedDelta) > DeltaDriftTolerance)
         {
             return TripErrors.EditDeltaChanged;
         }
 
+        // A reused quote is already in the database; a freshly built one still has to be inserted.
+        var persistQuote = !reusedPreview;
         var currency = r.CurrencyCode;
         var newStops = request.Stops is { Count: > 0 } ? r.NewStops : null;
 
         // No fare change → just apply.
         if (r.Delta == 0m)
         {
-            return await CommitAndBuildAsync(trip, r, newStops, request.PassengerCount, 0m, currency, ct);
+            return await CommitAndBuildAsync(
+                trip, r, newStops, request.PassengerCount, 0m, currency, persistQuote, ct);
         }
 
         // Fare decrease → apply immediately, then refund the difference (customer's favor).
         if (r.Delta < 0m)
         {
-            var applied = await CommitAndBuildAsync(trip, r, newStops, request.PassengerCount, r.Delta, currency, ct);
+            var applied = await CommitAndBuildAsync(
+                trip, r, newStops, request.PassengerCount, r.Delta, currency, persistQuote, ct);
             if (applied.IsFailure)
             {
                 return applied.Error;
@@ -112,12 +122,13 @@ public sealed class ApplyTripEditCommandHandler(
         var outcome = settleResult.Value;
         if (!outcome.RequiresInteractiveSheet)
         {
-            return await CommitAndBuildAsync(trip, r, newStops, request.PassengerCount, r.Delta, currency, ct);
+            return await CommitAndBuildAsync(
+                trip, r, newStops, request.PassengerCount, r.Delta, currency, persistQuote, ct);
         }
 
         // Couldn't charge silently → hold the edit for an interactive PaymentSheet. The trip is
         // NOT mutated; the success webhook applies it, and failure / expiry reverts it.
-        return await HoldForPaymentSheetAsync(trip, r, request, currency, outcome, ct);
+        return await HoldForPaymentSheetAsync(trip, r, request, currency, outcome, persistQuote, ct);
     }
 
     private async Task<Result<TripEditApplyResultDto>> CommitAndBuildAsync(
@@ -127,11 +138,16 @@ public sealed class ApplyTripEditCommandHandler(
         int? newPassengerCount,
         decimal delta,
         string currency,
+        bool persistQuote,
         CancellationToken ct)
     {
-        context.PricingQuotes.Add(r.NewQuote);
+        if (persistQuote)
+        {
+            context.PricingQuotes.Add(r.NewQuote);
+        }
 
-        var apply = await editApplier.ApplyAsync(trip, r.NewQuote, newStops, newPassengerCount, r.NewVehicleTypeId, ct);
+        var apply = await editApplier.ApplyAsync(
+            trip, r.NewQuote, newStops, newPassengerCount, r.NewVehicleTypeId, delta, ct);
         if (apply.IsFailure)
         {
             return apply.Errors;
@@ -160,6 +176,7 @@ public sealed class ApplyTripEditCommandHandler(
         ApplyTripEditCommand request,
         string currency,
         FareAdjustmentSettlementOutcome outcome,
+        bool persistQuote,
         CancellationToken ct)
     {
         // Without Stripe there is no sheet to present. Reverse any wallet portion so nothing sticks.
@@ -205,8 +222,11 @@ public sealed class ApplyTripEditCommandHandler(
         }
 
         // Persist the new quote UNUSED (the webhook marks it used on apply; the sweeper releases it
-        // if the sheet is abandoned).
-        context.PricingQuotes.Add(r.NewQuote);
+        // if the sheet is abandoned). A reused preview quote is already stored.
+        if (persistQuote)
+        {
+            context.PricingQuotes.Add(r.NewQuote);
+        }
 
         var kind = request.PassengerCount.HasValue ? PendingTripEditKind.Passenger : PendingTripEditKind.Stops;
         var proposedStopsJson = request.Stops is { Count: > 0 }

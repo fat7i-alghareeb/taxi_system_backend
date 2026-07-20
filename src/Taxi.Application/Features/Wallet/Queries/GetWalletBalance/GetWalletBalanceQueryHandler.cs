@@ -32,6 +32,14 @@ public class GetWalletBalanceQueryHandler(
         var currency = account?.Currency
             ?? (string.IsNullOrWhiteSpace(options.Currency) ? "EUR" : options.Currency.Trim().ToUpperInvariant());
 
-        return new WalletBalanceDto(account?.Balance ?? 0m, currency);
+        var amountOwed = account?.AmountOwed ?? 0m;
+
+        // The server owns the blocking rule, including the small-debt exemption, so the client
+        // never has to guess whether a negative balance actually stops them booking.
+        return new WalletBalanceDto(
+            account?.Balance ?? 0m,
+            currency,
+            amountOwed,
+            IsBookingBlocked: amountOwed >= options.MinDebtToBlock);
     }
 }

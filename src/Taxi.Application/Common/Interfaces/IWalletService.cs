@@ -62,6 +62,40 @@ public interface IWalletService
         CancellationToken ct = default);
 
     /// <summary>
+    /// Charges the FULL amount of an already-incurred fee that could not be collected any other
+    /// way, taking the balance negative. The resulting debt blocks further booking until settled.
+    /// Creates the wallet account if the customer has none, so the debt always has somewhere to
+    /// live. Idempotent via <paramref name="idempotencyKey"/>; concurrency-safe.
+    /// </summary>
+    /// <remarks>
+    /// Only for fees the customer cannot decline (waiting time). Never use for a trip fare — a ride
+    /// must not be taken on credit; that path uses <see cref="DebitForFeeAsync"/>, which clamps.
+    /// </remarks>
+    Task<Result<WalletDebitOutcome>> ChargeUncollectableFeeAsync(
+        Guid userId,
+        Guid tripId,
+        decimal amount,
+        string currency,
+        string description,
+        string idempotencyKey,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// An admin's manual correction to a balance — waiving a debt, or fixing a mis-charge.
+    /// A positive <paramref name="amount"/> credits, a negative one debits (and may overdraw,
+    /// since a correction can legitimately reinstate a debt). Records the reason on the ledger
+    /// entry. Returns the resulting balance.
+    /// </summary>
+    Task<Result<decimal>> AdjustBalanceAsync(
+        Guid userId,
+        decimal amount,
+        string currency,
+        string reason,
+        Guid adminId,
+        string idempotencyKey,
+        CancellationToken ct = default);
+
+    /// <summary>
     /// Credits the wallet to reverse a previously wallet-funded amount (a refund of money that
     /// originally came from the wallet). Idempotent via <paramref name="idempotencyKey"/>.
     /// </summary>

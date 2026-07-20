@@ -115,6 +115,25 @@ public interface ITripNotifier
         Guid? eventId = null);
 
     /// <summary>
+    /// Notifies a customer that their wallet balance moved — in practice, that a fee they could
+    /// not pay was charged to it and they now owe money. Sent to their per-user group only.
+    /// </summary>
+    Task NotifyWalletBalanceChangedAsync(
+        WalletBalanceChangedNotification payload,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Notifies the passenger (trip group + per-user group), the assigned driver and all admins
+    /// that a re-priced edit was committed, carrying the new fare and what the change cost.
+    /// Raised for both the silently-settled path and the PaymentSheet path — in the latter the
+    /// edit only becomes real at the webhook, long after the HTTP response the app got.
+    /// </summary>
+    Task NotifyTripEditAppliedAsync(
+        TripEditAppliedNotification payload,
+        Guid? driverUserId,
+        CancellationToken ct = default);
+
+    /// <summary>
     /// Pushes a new in-trip chat message to the trip group, the passenger's per-user
     /// group, the driver's per-user group (if assigned), and all admins.
     /// </summary>

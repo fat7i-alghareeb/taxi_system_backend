@@ -9,7 +9,8 @@ namespace Taxi.Application.Features.Payments.Services;
 public sealed class FeeSettlementService(
     IAppDbContext context,
     IWalletService wallet,
-    IStripePaymentService stripe) : IFeeSettlementService
+    IStripePaymentService stripe,
+    IClientConfigProvider clientConfig) : IFeeSettlementService
 {
     private readonly IAppDbContext _context = context;
 
@@ -44,11 +45,33 @@ public sealed class FeeSettlementService(
             return new FeeSettlementOutcome(total, walletPaid, 0m, 0m, currency);
         }
 
-        // 2) Remainder — the default saved reusable card (off-session), else Unpaid.
+        // 2) Remainder — the default saved reusable card (off-session).
         var cardPaid = await TryChargeCardAsync(tripId, passengerId, remaining, currency, idempotencyKey, ct);
-        var unpaid = decimal.Round(remaining - cardPaid, 2, MidpointRounding.AwayFromZero);
+        var stillOwed = decimal.Round(remaining - cardPaid, 2, MidpointRounding.AwayFromZero);
+        if (stillOwed <= 0m)
+        {
+            return new FeeSettlementOutcome(total, walletPaid, cardPaid, 0m, currency);
+        }
 
-        return new FeeSettlementOutcome(total, walletPaid, cardPaid, unpaid, currency);
+        // 3) Still uncollected — charge it to the wallet as debt, taking the balance negative.
+        //    The customer already incurred this fee and cannot decline it, so the alternative is
+        //    losing the money entirely: before this step the shortfall left no record at all and
+        //    the trip's invoice printed a "Remaining due" line. Recording it as a settled
+        //    wallet payment moves the obligation off the trip and onto the customer's balance,
+        //    which is what blocks them from booking again until they pay.
+        var debtResult = await wallet.ChargeUncollectableFeeAsync(
+            passengerId, tripId, stillOwed, currency, "Waiting fee (unpaid)", $"{idempotencyKey}-debt", ct);
+        if (debtResult.IsFailure || debtResult.Value.DebitedAmount <= 0m)
+        {
+            return new FeeSettlementOutcome(total, walletPaid, cardPaid, stillOwed, currency);
+        }
+
+        var chargedToDebt = debtResult.Value.DebitedAmount;
+        await RecordWalletFeePaymentAsync(
+            tripId, chargedToDebt, currency, debtResult.Value.WalletTransactionId, ct);
+
+        return new FeeSettlementOutcome(
+            total, walletPaid, cardPaid, 0m, currency, ChargedToDebt: chargedToDebt);
     }
 
     private async Task RecordWalletFeePaymentAsync(
@@ -93,6 +116,14 @@ public sealed class FeeSettlementService(
         string idempotencyKey,
         CancellationToken ct)
     {
+        // Card is the only Stripe-dependent step. Gating it here rather than around the whole
+        // settlement keeps the wallet and debt steps working when Stripe is switched off —
+        // otherwise the fee would silently vanish and the invoice would print "Remaining due".
+        if (!clientConfig.GetClientConfig().StripeEnabled)
+        {
+            return 0m;
+        }
+
         var passenger = await _context.DomainUsers.FirstOrDefaultAsync(u => u.Id == passengerId, ct);
         var defaultMethod = await _context.PaymentMethods
             .Where(m => m.PassengerId == passengerId && m.IsDefault && m.DeletedAtUtc == null)

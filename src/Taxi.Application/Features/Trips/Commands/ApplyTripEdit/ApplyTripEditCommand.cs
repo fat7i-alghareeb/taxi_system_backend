@@ -8,10 +8,13 @@ namespace Taxi.Application.Features.Trips.Commands.ApplyTripEdit;
 
 /// <summary>
 /// Applies a previewed destination / passenger edit and settles the fare difference.
-/// Re-quotes server-side and guards against drift from <paramref name="ExpectedDelta"/>.
+/// With a <paramref name="PreviewToken"/> the previewed quote is reused, so the delta is
+/// reproduced exactly. Without one it re-quotes live and guards against drift from
+/// <paramref name="ExpectedDelta"/>.
 /// </summary>
 public sealed record ApplyTripEditCommand(
     Guid TripId,
     IReadOnlyList<TripEditStop>? Stops,
     int? PassengerCount,
-    decimal ExpectedDelta) : IRequest<Result<TripEditApplyResultDto>>;
+    decimal ExpectedDelta,
+    Guid? PreviewToken = null) : IRequest<Result<TripEditApplyResultDto>>;

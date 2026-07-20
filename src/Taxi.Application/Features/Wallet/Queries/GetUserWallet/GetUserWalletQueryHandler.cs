@@ -46,6 +46,7 @@ public class GetUserWalletQueryHandler(IAppDbContext context)
             HasAccount: true,
             account.Balance,
             account.Currency,
-            transactions);
+            transactions,
+            account.AmountOwed);
     }
 }

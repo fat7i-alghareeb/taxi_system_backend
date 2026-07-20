@@ -189,6 +189,8 @@ public static class LocalizationKeys
         public const string TopUpDisabled = "Wallet.TopUp.Disabled";
         public const string TopUpBelowMinimum = "Wallet.TopUp.BelowMinimum";
         public const string TopUpAboveMaximum = "Wallet.TopUp.AboveMaximum";
+        public const string OutstandingDebt = "Wallet.OutstandingDebt";
+        public const string AdjustmentReasonRequired = "Wallet.Adjustment.ReasonRequired";
     }
 
     public static class Trip
@@ -432,6 +434,9 @@ public static class LocalizationKeys
         public const string WaitingFeeDueTitle = "Notification.WaitingFeeDue.Title";
         public const string WaitingFeeDueBody = "Notification.WaitingFeeDue.Body";
 
+        public const string WalletDebtTitle = "Notification.WalletDebt.Title";
+        public const string WalletDebtBody = "Notification.WalletDebt.Body";
+
         public const string WalletTopUpSucceededTitle = "Notification.WalletTopUp.Succeeded.Title";
         public const string WalletTopUpSucceededBody = "Notification.WalletTopUp.Succeeded.Body";
 
@@ -447,6 +452,11 @@ public static class LocalizationKeys
 
         public const string TripDestinationChangedTitle = "Notification.TripDestinationChanged.Title";
         public const string TripDestinationChangedBody = "Notification.TripDestinationChanged.Body";
+
+        public const string TripEditChargedTitle = "Notification.TripEditApplied.ChargedTitle";
+        public const string TripEditChargedBody = "Notification.TripEditApplied.ChargedBody";
+        public const string TripEditRefundedTitle = "Notification.TripEditApplied.RefundedTitle";
+        public const string TripEditRefundedBody = "Notification.TripEditApplied.RefundedBody";
 
         public const string TripEditedByPassengerTitle = "Notification.TripEditedByPassenger.Title";
         public const string TripEditedRouteBody = "Notification.TripEditedByPassenger.RouteBody";

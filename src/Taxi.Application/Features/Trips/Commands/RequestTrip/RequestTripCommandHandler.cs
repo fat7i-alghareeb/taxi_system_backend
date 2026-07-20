@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Trips.Common;
 using Taxi.Application.Features.Trips.Dtos;
+using Taxi.Application.Features.Wallet.Common;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Payments;
 using Taxi.Domain.Trips;
@@ -18,6 +19,7 @@ public class RequestTripCommandHandler(
     IClientConfigProvider clientConfig,
     IStripePaymentService stripe,
     IWalletService wallet,
+    IWalletDebtGuard debtGuard,
     TimeProvider timeProvider) : IRequestHandler<RequestTripCommand, Result<TripDto>>
 {
     private readonly IAppDbContext _context = context;
@@ -35,6 +37,14 @@ public class RequestTripCommandHandler(
         if (passenger is null)
         {
             return TripErrors.PassengerNotFound;
+        }
+
+        // The authoritative gate. Placed before the quote is touched so it also covers the
+        // resume branch below, which would otherwise let a customer in debt re-open a Stripe
+        // sheet on an AwaitingPayment trip and ride anyway.
+        if (await debtGuard.CheckAsync(passengerId, ct) is { } debtError)
+        {
+            return debtError;
         }
 
         var quote = await _context.PricingQuotes

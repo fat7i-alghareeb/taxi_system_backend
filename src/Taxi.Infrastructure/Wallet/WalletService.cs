@@ -269,6 +269,181 @@ public sealed class WalletService(AppDbContext db, ILogger<WalletService> logger
         return WalletErrors.InsufficientBalance;
     }
 
+    public async Task<Result<WalletDebitOutcome>> ChargeUncollectableFeeAsync(
+        Guid userId,
+        Guid tripId,
+        decimal amount,
+        string currency,
+        string description,
+        string idempotencyKey,
+        CancellationToken ct = default)
+    {
+        if (amount <= 0m)
+        {
+            return new WalletDebitOutcome(0m, null);
+        }
+
+        var rounded = decimal.Round(amount, 2, MidpointRounding.AwayFromZero);
+
+        // Idempotency: this charge already posted. CompleteTrip is retryable and its settlement is
+        // wrapped in a swallowing try/catch, so a retry must never double-charge.
+        var existing = await db.WalletTransactions
+            .FirstOrDefaultAsync(t => t.IdempotencyKey == idempotencyKey, ct);
+        if (existing is not null)
+        {
+            var already = existing.Status == WalletTransactionStatus.Committed ? existing.Amount : 0m;
+            return new WalletDebitOutcome(already, existing.Id);
+        }
+
+        // Unlike a normal debit, a customer with no wallet still owes the fee — create the account
+        // so the debt has somewhere to live.
+        var accountResult = await GetOrCreateAccountAsync(userId, currency, ct);
+        if (accountResult.IsFailure)
+        {
+            return accountResult.Error;
+        }
+
+        var account = accountResult.Value;
+
+        for (var attempt = 0; attempt < MaxConcurrencyRetries; attempt++)
+        {
+            var txnResult = WalletTransaction.CreateFeeCharge(
+                Guid.NewGuid(), account.Id, rounded, currency, idempotencyKey,
+                tripId: tripId, description: description);
+            if (txnResult.IsFailure)
+            {
+                return txnResult.Error;
+            }
+
+            var txn = txnResult.Value;
+
+            // The full amount, no clamp — this is what drives the balance negative.
+            var chargeResult = account.ChargeUncollectableFee(rounded);
+            if (chargeResult.IsFailure)
+            {
+                return chargeResult.Error;
+            }
+
+            txn.MarkCommitted(account.Balance);
+            db.WalletTransactions.Add(txn);
+
+            try
+            {
+                await db.SaveChangesAsync(ct);
+                return new WalletDebitOutcome(rounded, txn.Id);
+            }
+            catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+            {
+                db.Entry(txn).State = EntityState.Detached;
+                await db.Entry(account).ReloadAsync(ct);
+                var posted = await db.WalletTransactions
+                    .FirstOrDefaultAsync(t => t.IdempotencyKey == idempotencyKey, ct);
+                return new WalletDebitOutcome(posted?.Amount ?? 0m, posted?.Id);
+            }
+            catch (DbUpdateConcurrencyException) when (attempt < MaxConcurrencyRetries - 1)
+            {
+                // Balance moved under us (a concurrent top-up or charge) — reload and re-apply.
+                db.Entry(txn).State = EntityState.Detached;
+                await db.Entry(account).ReloadAsync(ct);
+            }
+        }
+
+        logger.LogError(
+            "Wallet debt charge for trip {TripId} failed after {Retries} concurrency retries.",
+            tripId,
+            MaxConcurrencyRetries);
+        return WalletErrors.AccountNotFound;
+    }
+
+    public async Task<Result<decimal>> AdjustBalanceAsync(
+        Guid userId,
+        decimal amount,
+        string currency,
+        string reason,
+        Guid adminId,
+        string idempotencyKey,
+        CancellationToken ct = default)
+    {
+        var rounded = decimal.Round(amount, 2, MidpointRounding.AwayFromZero);
+        if (rounded == 0m)
+        {
+            return WalletErrors.InvalidAmount;
+        }
+
+        var existing = await db.WalletTransactions
+            .FirstOrDefaultAsync(t => t.IdempotencyKey == idempotencyKey, ct);
+        if (existing is not null)
+        {
+            var account0 = await db.WalletAccounts.FirstOrDefaultAsync(a => a.UserId == userId, ct);
+            return account0?.Balance ?? 0m;
+        }
+
+        var accountResult = await GetOrCreateAccountAsync(userId, currency, ct);
+        if (accountResult.IsFailure)
+        {
+            return accountResult.Error;
+        }
+
+        var account = accountResult.Value;
+        var isCredit = rounded > 0m;
+        var magnitude = Math.Abs(rounded);
+
+        for (var attempt = 0; attempt < MaxConcurrencyRetries; attempt++)
+        {
+            var txnResult = WalletTransaction.CreateAdminAdjustment(
+                Guid.NewGuid(),
+                account.Id,
+                magnitude,
+                currency,
+                idempotencyKey,
+                isCredit ? WalletTransactionDirection.Credit : WalletTransactionDirection.Debit,
+                adminId,
+                reason);
+            if (txnResult.IsFailure)
+            {
+                return txnResult.Error;
+            }
+
+            var txn = txnResult.Value;
+
+            // A debit correction may legitimately push the balance negative (reinstating a debt
+            // that was waived in error), so it goes through the overdraft-capable path.
+            var applied = isCredit
+                ? account.Credit(magnitude)
+                : account.ChargeUncollectableFee(magnitude);
+            if (applied.IsFailure)
+            {
+                return applied.Error;
+            }
+
+            txn.MarkCommitted(account.Balance);
+            db.WalletTransactions.Add(txn);
+
+            try
+            {
+                await db.SaveChangesAsync(ct);
+                return account.Balance;
+            }
+            catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+            {
+                db.Entry(txn).State = EntityState.Detached;
+                await db.Entry(account).ReloadAsync(ct);
+                return account.Balance;
+            }
+            catch (DbUpdateConcurrencyException) when (attempt < MaxConcurrencyRetries - 1)
+            {
+                db.Entry(txn).State = EntityState.Detached;
+                await db.Entry(account).ReloadAsync(ct);
+            }
+        }
+
+        logger.LogError(
+            "Wallet adjustment for user {UserId} failed after {Retries} concurrency retries.",
+            userId,
+            MaxConcurrencyRetries);
+        return WalletErrors.AccountNotFound;
+    }
+
     public async Task<Result<Success>> CreditRefundReversalAsync(
         Guid userId,
         Guid tripId,

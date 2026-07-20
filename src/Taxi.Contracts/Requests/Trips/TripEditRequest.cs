@@ -28,4 +28,10 @@ public class ApplyTripEditRequest
 
     /// <summary>The delta the customer confirmed in the preview dialog (drift guard).</summary>
     public decimal ExpectedDelta { get; set; }
+
+    /// <summary>
+    /// Token returned by the preview. When supplied, the previewed quote is reused so the
+    /// charged delta matches the confirmed one exactly. Omit to re-price live (older clients).
+    /// </summary>
+    public Guid? PreviewToken { get; set; }
 }

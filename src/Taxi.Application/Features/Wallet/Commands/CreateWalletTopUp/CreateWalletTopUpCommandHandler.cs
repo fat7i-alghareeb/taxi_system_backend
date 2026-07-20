@@ -41,7 +41,16 @@ public class CreateWalletTopUpCommandHandler(
             : options.Currency.Trim().ToUpperInvariant();
         var amount = decimal.Round(request.Amount, 2, MidpointRounding.AwayFromZero);
 
-        if (amount < options.MinTopUpAmount)
+        // A customer in debt must be able to pay exactly what they owe, even when that is under
+        // the normal minimum — otherwise a €2.40 debt is unpayable and locks them out for good.
+        var amountOwed = await context.WalletAccounts
+            .AsNoTracking()
+            .Where(a => a.UserId == userId)
+            .Select(a => a.Balance < 0m ? -a.Balance : 0m)
+            .FirstOrDefaultAsync(ct);
+        var settlesDebtExactly = amountOwed > 0m && amount == amountOwed;
+
+        if (amount < options.MinTopUpAmount && !settlesDebtExactly)
         {
             return WalletErrors.TopUpBelowMinimum(options.MinTopUpAmount, currency);
         }

@@ -15,6 +15,7 @@ using Taxi.Application.Features.Users.Commands.UpdatePreferredLanguage;
 using Taxi.Application.Features.Users.Commands.UpdateUserProfile;
 using Taxi.Application.Features.Users.Queries.GetAllUsers;
 using Taxi.Application.Features.Users.Queries.GetCurrentUser;
+using Taxi.Application.Features.Wallet.Commands.AdjustWalletBalance;
 using Taxi.Application.Features.Wallet.Dtos;
 using Taxi.Application.Features.Wallet.Queries.GetUserWallet;
 
@@ -169,6 +170,21 @@ public class UsersController(ISender sender) : ApiController
         return result.Match(_ => NoContent(), Problem);
     }
 
+    [HttpPost("{userId:guid}/wallet/adjustments")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(WalletBalanceDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Admin manually adjusts a customer's wallet balance.")]
+    [EndpointDescription("A positive amount credits (typically waiving a debt that is blocking the customer from booking); a negative amount debits. A reason is required and the change is written to the audit log. Returns the resulting balance.")]
+    [EndpointName("AdjustWalletBalance")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> AdjustWalletBalance(Guid userId, [FromBody] AdjustWalletBalanceRequest request, CancellationToken ct)
+    {
+        var result = await sender.Send(new AdjustWalletBalanceCommand(userId, request.Amount, request.Reason), ct);
+        return result.Match(Ok, Problem);
+    }
+
     [HttpDelete("{userId:guid}/suspensions")]
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -186,4 +202,5 @@ public class UsersController(ISender sender) : ApiController
 public record UpdateFcmTokenRequest(string FcmToken);
 public record UpdatePreferredLanguageRequest(string LanguageCode);
 public record SuspendPassengerRequest(string? Reason);
+public record AdjustWalletBalanceRequest(decimal Amount, string Reason);
 

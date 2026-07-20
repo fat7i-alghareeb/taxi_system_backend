@@ -33,9 +33,7 @@ using Taxi.Application.Features.Trips.Commands.StopTripWaiting;
 using Taxi.Application.Features.Trips.Commands.SubmitCompensationClaim;
 using Taxi.Application.Features.Trips.Commands.UpdatePassengerNote;
 using Taxi.Application.Features.Trips.Commands.UpdateTripBagCount;
-using Taxi.Application.Features.Trips.Commands.UpdateTripPassengerCount;
 using Taxi.Application.Features.Trips.Commands.UpdateTripScheduledTime;
-using Taxi.Application.Features.Trips.Commands.UpdateTripStops;
 using Taxi.Application.Features.Trips.Commands.UploadTripRecording;
 using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Application.Features.Trips.Queries.GetAllRecordings;
@@ -204,37 +202,10 @@ public class TripsController(ISender sender) : ApiController
         return result.Match(_ => NoContent(), Problem);
     }
 
-    [HttpPut("{id:guid}/stops")]
-    [Authorize(Roles = "Passenger")]
-    [ProducesResponseType(typeof(TripDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [EndpointSummary("Updates trip pickup/destination addresses and recalculates fare. Only allowed within 1 hour of booking creation.")]
-    [EndpointName("UpdateTripStops")]
-    [MapToApiVersion("1.0")]
-    public async Task<IActionResult> UpdateStops(Guid id, [FromBody] UpdateTripStopsRequest request, CancellationToken ct)
-    {
-        var stops = request.Stops
-            .Select(s => new UpdateTripStopItem(s.Latitude, s.Longitude, s.Label))
-            .ToList();
-        var result = await sender.Send(new UpdateTripStopsCommand(id, stops), ct);
-        return result.Match(Ok, Problem);
-    }
-
-    [HttpPut("{id:guid}/passenger-count")]
-    [Authorize(Roles = "Passenger")]
-    [ProducesResponseType(typeof(TripDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [EndpointSummary("Updates the number of passengers. Triggers van upgrade and fare recalculation if count exceeds current vehicle capacity. Only allowed within 1 hour of booking creation.")]
-    [EndpointName("UpdateTripPassengerCount")]
-    [MapToApiVersion("1.0")]
-    public async Task<IActionResult> UpdatePassengerCount(Guid id, [FromBody] UpdateTripPassengerCountRequest request, CancellationToken ct)
-    {
-        var result = await sender.Send(new UpdateTripPassengerCountCommand(id, request.PassengerCount), ct);
-        return result.Match(Ok, Problem);
-    }
-
+    // Stops and passenger count are edited through edit/preview + edit/apply below. The old
+    // PUT /stops and PUT /passenger-count endpoints re-quoted the fare and performed the van
+    // upgrade without ever settling the difference, so anything still calling them got the
+    // bigger trip for free. Removed rather than kept in step with two pricing paths.
     [HttpPut("{id:guid}/bag-count")]
     [Authorize(Roles = "Passenger")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -280,7 +251,8 @@ public class TripsController(ISender sender) : ApiController
             .Select(s => new TripEditStop(s.Latitude, s.Longitude, s.Label))
             .ToList();
         var result = await sender.Send(
-            new ApplyTripEditCommand(id, stops, request.PassengerCount, request.ExpectedDelta), ct);
+            new ApplyTripEditCommand(
+                id, stops, request.PassengerCount, request.ExpectedDelta, request.PreviewToken), ct);
         return result.Match(Ok, Problem);
     }
 

@@ -138,6 +138,42 @@ public sealed class WalletTransaction : AuditableEntity
     }
 
     /// <summary>
+    /// Creates the Pending ledger entry for an admin's manual correction to a balance — waiving a
+    /// debt, or fixing a mis-charge. <paramref name="direction"/> decides whether it credits or
+    /// debits; the reason is recorded in <paramref name="description"/> and mirrored to the audit
+    /// log by the caller.
+    /// </summary>
+    public static Result<WalletTransaction> CreateAdminAdjustment(
+        Guid id,
+        Guid walletAccountId,
+        decimal amount,
+        string currency,
+        string idempotencyKey,
+        WalletTransactionDirection direction,
+        Guid createdByAdminId,
+        string? description = null)
+    {
+        var validation = ValidateCommon(amount, currency, idempotencyKey);
+        if (validation is { } error)
+        {
+            return error;
+        }
+
+        return new WalletTransaction(
+            id,
+            walletAccountId,
+            WalletTransactionType.AdminAdjustment,
+            direction,
+            decimal.Round(amount, 2, MidpointRounding.AwayFromZero),
+            currency.Trim().ToUpperInvariant(),
+            idempotencyKey)
+        {
+            CreatedByAdminId = createdByAdminId,
+            Description = description,
+        };
+    }
+
+    /// <summary>
     /// Creates the Pending ledger entry for reversing a wallet-funded amount back to the wallet
     /// (a refund of money that originally came from the wallet — never from a card).
     /// </summary>

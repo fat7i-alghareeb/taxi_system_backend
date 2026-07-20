@@ -253,7 +253,7 @@ public class HandleStripeWebhookCommandHandler(
         }
 
         var applyResult = await editApplier.ApplyAsync(
-            trip, quote, newStops, pending.ProposedPassengerCount, pending.NewVehicleTypeId, ct);
+            trip, quote, newStops, pending.ProposedPassengerCount, pending.NewVehicleTypeId, pending.DeltaAmount, ct);
         if (applyResult.IsFailure)
         {
             return applyResult.Errors;

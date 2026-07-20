@@ -46,6 +46,21 @@ public interface ITripRequoteService
         IReadOnlyList<TripEditStop>? newStops,
         int? newPassengerCount,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Rebuilds the requote result from a quote already produced by a preview, instead of
+    /// routing and pricing again. This is what makes preview → apply deterministic: the
+    /// directions provider returns slightly different distances between two calls seconds
+    /// apart, which used to move the delta and trip the drift guard for no real reason.
+    /// Fails with <c>EditDeltaChanged</c> when the quote is expired / already used / does
+    /// not describe the edit being applied, so the app re-previews.
+    /// </summary>
+    Task<Result<TripRequoteResult>> ResolveFromPreviewAsync(
+        Trip trip,
+        Guid previewToken,
+        IReadOnlyList<TripEditStop>? newStops,
+        int? newPassengerCount,
+        CancellationToken ct = default);
 }
 
 public sealed class TripRequoteService(
@@ -58,12 +73,7 @@ public sealed class TripRequoteService(
         int? newPassengerCount,
         CancellationToken ct = default)
     {
-        var effectiveStops = newStops is { Count: > 0 }
-            ? newStops
-            : trip.Stops
-                .OrderBy(s => s.Sequence)
-                .Select(s => new TripEditStop(s.Coordinate.Latitude, s.Coordinate.Longitude, s.AddressLabel))
-                .ToList();
+        var effectiveStops = EffectiveStops(trip, newStops);
 
         if (effectiveStops.Count < 2)
         {
@@ -189,5 +199,111 @@ public sealed class TripRequoteService(
             routeSegmentsJson,
             (int)Math.Round(totalDistanceKm * 1000m),
             (int)Math.Round(totalDurationMin * 60m));
+    }
+
+    public async Task<Result<TripRequoteResult>> ResolveFromPreviewAsync(
+        Trip trip,
+        Guid previewToken,
+        IReadOnlyList<TripEditStop>? newStops,
+        int? newPassengerCount,
+        CancellationToken ct = default)
+    {
+        var effectiveStops = EffectiveStops(trip, newStops);
+        if (effectiveStops.Count < 2)
+        {
+            return TripErrors.InvalidStops;
+        }
+
+        var quote = await context.PricingQuotes.FirstOrDefaultAsync(q => q.Id == previewToken, ct);
+
+        // A quote that is missing, someone else's, already spent, or stale can't be trusted to
+        // price this edit. Treat all of them as drift so the client previews again.
+        if (quote is null || quote.PassengerId != trip.PassengerId || quote.Used || quote.IsExpired())
+        {
+            return TripErrors.EditDeltaChanged;
+        }
+
+        // The token must describe the edit actually being applied — otherwise a cheap preview
+        // could be replayed against an expensive change.
+        if (!QuoteMatchesStops(quote, effectiveStops))
+        {
+            return TripErrors.EditDeltaChanged;
+        }
+
+        var vehicleType = await context.VehicleTypes.FirstOrDefaultAsync(v => v.Id == quote.VehicleTypeId, ct);
+        if (vehicleType is null)
+        {
+            return TripErrors.VehicleTypeNotFound;
+        }
+
+        if (newPassengerCount.HasValue)
+        {
+            if (newPassengerCount.Value < 1)
+            {
+                return TripErrors.InvalidPassengerCount;
+            }
+
+            // The quoted vehicle has to actually fit the party being applied.
+            if (vehicleType.PassengerCapacity < newPassengerCount.Value)
+            {
+                return TripErrors.EditDeltaChanged;
+            }
+        }
+
+        var stopResults = effectiveStops
+            .Select((s, index) => TripStop.Create(
+                new Domain.Trips.Coordinate(s.Latitude, s.Longitude), index, s.Label))
+            .ToList();
+        if (stopResults.Any(r => r.IsFailure))
+        {
+            return stopResults.First(r => r.IsFailure).Error;
+        }
+
+        // Same rule as the live re-quote: delta against the quote the trip currently points at.
+        var currentQuote = await context.PricingQuotes.FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
+        var oldFinalFare = currentQuote?.FinalFare ?? 0m;
+        var newVehicleTypeId = quote.VehicleTypeId == trip.VehicleTypeId ? (Guid?)null : quote.VehicleTypeId;
+
+        return new TripRequoteResult(
+            quote,
+            stopResults.Select(r => r.Value).ToList(),
+            newVehicleTypeId,
+            oldFinalFare,
+            quote.FinalFare,
+            Math.Round(quote.FinalFare - oldFinalFare, 2),
+            quote.CurrencyCode,
+            quote.EncodedOverviewPolyline ?? string.Empty,
+            quote.RouteSegmentsJson ?? string.Empty,
+            (int)Math.Round(quote.TotalDistanceKm * 1000m),
+            (int)Math.Round(quote.TotalDurationMin * 60m));
+    }
+
+    private static List<TripEditStop> EffectiveStops(Trip trip, IReadOnlyList<TripEditStop>? newStops) =>
+        newStops is { Count: > 0 }
+            ? [.. newStops]
+            : [.. trip.Stops
+                .OrderBy(s => s.Sequence)
+                .Select(s => new TripEditStop(s.Coordinate.Latitude, s.Coordinate.Longitude, s.AddressLabel))];
+
+    private const decimal CoordinateEpsilon = 0.000001m;
+
+    private static bool QuoteMatchesStops(PricingQuote quote, IReadOnlyList<TripEditStop> stops)
+    {
+        var quoted = quote.Stops.ToList();
+        if (quoted.Count != stops.Count)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < stops.Count; i++)
+        {
+            if (Math.Abs(quoted[i].Latitude - stops[i].Latitude) > CoordinateEpsilon
+                || Math.Abs(quoted[i].Longitude - stops[i].Longitude) > CoordinateEpsilon)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

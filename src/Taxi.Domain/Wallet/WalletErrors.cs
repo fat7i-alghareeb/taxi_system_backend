@@ -40,4 +40,18 @@ public static class WalletErrors
         description: $"Top-up amount is above the maximum of {maximum:0.00} {currency}.",
         maximum,
         currency);
+
+    /// <summary>
+    /// The customer's wallet is in debt from a fee that could not be collected, so they cannot
+    /// book again until it is settled. Carries the amount so the message can name it.
+    /// </summary>
+    public static Error OutstandingDebt(decimal amount, string currency) => Error.Forbidden(
+        code: LocalizationKeys.Wallet.OutstandingDebt,
+        description: $"An outstanding balance of {amount:0.00} {currency} must be paid before booking again.",
+        amount,
+        currency);
+
+    public static readonly Error AdjustmentReasonRequired = Error.Validation(
+        code: LocalizationKeys.Wallet.AdjustmentReasonRequired,
+        description: "A reason is required for a manual wallet adjustment.");
 }

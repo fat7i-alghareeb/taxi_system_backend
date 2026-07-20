@@ -2,6 +2,7 @@ using NSubstitute;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Trips.Commands.RequestTrip;
 using Taxi.Application.Features.Trips.Dtos;
+using Taxi.Application.Features.Wallet.Common;
 using Taxi.Application.UnitTests.Infrastructure;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Payments;
@@ -20,6 +21,7 @@ public class RequestTripCommandHandlerStripeTests
     private readonly IClientConfigProvider _clientConfig = Substitute.For<IClientConfigProvider>();
     private readonly IStripePaymentService _stripe = Substitute.For<IStripePaymentService>();
     private readonly IWalletService _wallet = Substitute.For<IWalletService>();
+    private readonly IWalletDebtGuard _debtGuard = Substitute.For<IWalletDebtGuard>();
 
     public RequestTripCommandHandlerStripeTests()
     {
@@ -33,7 +35,7 @@ public class RequestTripCommandHandlerStripeTests
     {
         _clientConfig.GetClientConfig().Returns(new ClientConfig(StripeEnabled: false, StripePublishableKey: string.Empty, SignalREnabled: true));
         var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId);
-        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, _wallet, TimeProvider.System);
+        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, _wallet, _debtGuard, TimeProvider.System);
 
         var result = await handler.Handle(new RequestTripCommand(quoteId, TwoStops()), default);
 
@@ -46,7 +48,7 @@ public class RequestTripCommandHandlerStripeTests
     {
         _clientConfig.GetClientConfig().Returns(new ClientConfig(StripeEnabled: false, StripePublishableKey: string.Empty, SignalREnabled: true));
         var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId);
-        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, _wallet, TimeProvider.System);
+        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, _wallet, _debtGuard, TimeProvider.System);
 
         var result = await handler.Handle(new RequestTripCommand(quoteId, TwoStops()), default);
 
@@ -65,6 +67,7 @@ public class RequestTripCommandHandlerStripeTests
             _clientConfig,
             _stripe,
             _wallet,
+            _debtGuard,
             TimeProvider.System);
         var stops = TwoStops();
         stops[0] = stops[0] with { IsAirport = true };
@@ -91,7 +94,7 @@ public class RequestTripCommandHandlerStripeTests
                 Arg.Any<CancellationToken>())
             .Returns(new StripePaymentIntentResult("pi_test_123", "cs_test_secret", "pk_test", "cus_test_123", "ek_test_secret"));
         var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId);
-        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, _wallet, TimeProvider.System);
+        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, _wallet, _debtGuard, TimeProvider.System);
 
         var result = await handler.Handle(new RequestTripCommand(quoteId, TwoStops()), default);
 
@@ -112,7 +115,7 @@ public class RequestTripCommandHandlerStripeTests
                 Arg.Any<CancellationToken>())
             .Returns(new StripePaymentIntentResult("pi_test_123", "cs_test_secret", "pk_test", "cus_test_123", "ek_test_secret"));
         var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId);
-        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, _wallet, TimeProvider.System);
+        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, _wallet, _debtGuard, TimeProvider.System);
 
         await handler.Handle(new RequestTripCommand(quoteId, TwoStops()), default);
 
@@ -132,7 +135,7 @@ public class RequestTripCommandHandlerStripeTests
                 Arg.Any<CancellationToken>())
             .Returns(PaymentErrors.StripeInitiationFailed);
         var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId);
-        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, _wallet, TimeProvider.System);
+        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, _wallet, _debtGuard, TimeProvider.System);
 
         var result = await handler.Handle(new RequestTripCommand(quoteId, TwoStops()), default);
 
@@ -145,7 +148,7 @@ public class RequestTripCommandHandlerStripeTests
     {
         _clientConfig.GetClientConfig().Returns(new ClientConfig(StripeEnabled: false, StripePublishableKey: string.Empty, SignalREnabled: true));
         var (context, quoteId) = BuildContext(_passengerId, _vehicleTypeId, quoteUsed: true);
-        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, _wallet, TimeProvider.System);
+        var handler = new RequestTripCommandHandler(context, _user, _clientConfig, _stripe, _wallet, _debtGuard, TimeProvider.System);
 
         var result = await handler.Handle(new RequestTripCommand(quoteId, TwoStops()), default);
 
@@ -287,7 +290,7 @@ public class RequestTripCommandHandlerStripeTests
     }
 
     private RequestTripCommandHandler CreateHandler(IAppDbContext context)
-        => new(context, _user, _clientConfig, _stripe, _wallet, TimeProvider.System);
+        => new(context, _user, _clientConfig, _stripe, _wallet, _debtGuard, TimeProvider.System);
 
     private static List<CoordinateDto> TwoStops()
         => [new(52.37m, 4.89m, "From"), new(52.38m, 4.90m, "To")];

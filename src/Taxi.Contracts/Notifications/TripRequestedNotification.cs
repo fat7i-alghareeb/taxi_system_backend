@@ -116,3 +116,35 @@ public sealed record TripDestinationChangedNotification(
     decimal NewDropoffLongitude,
     string? NewDropoffLabel,
     Guid EventId = default);
+
+/// <summary>
+/// The customer's wallet balance moved. Sent when a fee is charged to debt, so the app can show
+/// the outstanding amount immediately instead of waiting for the customer to open the wallet
+/// screen and discover they are blocked from booking.
+/// <c>AmountOwed</c> is positive when <c>Balance</c> is negative, zero otherwise.
+/// </summary>
+public sealed record WalletBalanceChangedNotification(
+    Guid UserId,
+    decimal Balance,
+    decimal AmountOwed,
+    string CurrencyCode,
+    Guid EventId = default);
+
+/// <summary>
+/// A re-priced customer edit has been committed. <c>Delta</c> is what the change cost
+/// (positive = charged, negative = refunded), so the app can confirm the amount immediately
+/// while it refetches the full trip.
+/// </summary>
+public sealed record TripEditAppliedNotification(
+    Guid TripId,
+    Guid PassengerId,
+    Guid? DriverId,
+    decimal NewFare,
+    string CurrencyCode,
+    decimal Delta,
+    int PassengerCount,
+    string? VehicleTypeName,
+    string? DropoffLabel,
+    bool StopsChanged,
+    bool PassengerCountChanged,
+    Guid EventId = default);

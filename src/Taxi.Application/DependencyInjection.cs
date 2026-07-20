@@ -7,6 +7,7 @@ using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Auth.Services;
 using Taxi.Application.Features.Payments.Services;
 using Taxi.Application.Features.Trips.Common;
+using Taxi.Application.Features.Wallet.Common;
 
 public static class DependencyInjection
 {
@@ -21,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<ITripEditApplier, TripEditApplier>();
         services.AddScoped<ITripAdminEditNotifier, TripAdminEditNotifier>();
         services.AddScoped<IAuthSessionFactory, AuthSessionFactory>();
+        services.AddScoped<IWalletDebtGuard, WalletDebtGuard>();
 
         services.AddMediatR(cfg =>
         {

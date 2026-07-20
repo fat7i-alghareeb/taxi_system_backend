@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Trips.Dtos;
+using Taxi.Application.Features.Wallet.Common;
 using Taxi.Contracts.Common;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Configuration;
@@ -15,7 +16,8 @@ public class GetPricingQuotesCommandHandler(
     IAppDbContext context,
     IDirectionsService directionsService,
     IUser currentUser,
-    ILanguageContext languageContext) : IRequestHandler<GetPricingQuotesCommand, Result<PricingQuotesListDto>>
+    ILanguageContext languageContext,
+    IWalletDebtGuard debtGuard) : IRequestHandler<GetPricingQuotesCommand, Result<PricingQuotesListDto>>
 {
     private readonly IAppDbContext _context = context;
 
@@ -24,6 +26,12 @@ public class GetPricingQuotesCommandHandler(
         if (!Guid.TryParse(currentUser.Id, out var passengerId))
         {
             return TripErrors.PassengerNotFound;
+        }
+
+        // Refuse a customer in debt before spending a Directions call and persisting quote rows.
+        if (await debtGuard.CheckAsync(passengerId, ct) is { } debtError)
+        {
+            return debtError;
         }
 
         var stops = request.Stops;

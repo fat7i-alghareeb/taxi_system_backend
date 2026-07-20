@@ -15,12 +15,17 @@ namespace Taxi.Application.Features.Trips.Common;
 /// </summary>
 public interface ITripEditApplier
 {
+    /// <param name="delta">
+    /// New fare minus old fare, already settled by the caller. Carried into the
+    /// <c>TripEditApplied</c> event so the passenger can be told what the change cost.
+    /// </param>
     Task<Result<Success>> ApplyAsync(
         Trip trip,
         PricingQuote newQuote,
         IReadOnlyList<TripStop>? newStops,
         int? newPassengerCount,
         Guid? newVehicleTypeId,
+        decimal delta,
         CancellationToken ct = default);
 }
 
@@ -32,6 +37,7 @@ public sealed class TripEditApplier(IAppDbContext context) : ITripEditApplier
         IReadOnlyList<TripStop>? newStops,
         int? newPassengerCount,
         Guid? newVehicleTypeId,
+        decimal delta,
         CancellationToken ct = default)
     {
         var oldDropoff = trip.DropoffStop?.Coordinate;
@@ -68,6 +74,16 @@ public sealed class TripEditApplier(IAppDbContext context) : ITripEditApplier
         newQuote.MarkAsUsed();
 
         await RefreshRouteAsync(trip, newQuote, ct);
+
+        // Every committed edit tells the passenger — this is the only path both the direct apply
+        // and the Stripe webhook share, so raising here covers both without duplicating it.
+        trip.RaiseEditApplied(
+            newQuote.FinalFare,
+            newQuote.CurrencyCode,
+            delta,
+            stopsChanged: newStops is { Count: > 0 },
+            passengerCountChanged: newPassengerCount.HasValue);
+
         return Result.Success;
     }
 

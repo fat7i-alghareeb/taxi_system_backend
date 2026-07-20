@@ -777,6 +777,35 @@ public sealed class Trip : AuditableEntity
         });
     }
 
+    /// <summary>
+    /// Emits <see cref="Events.TripEditApplied"/> once a re-priced edit has been committed, so the
+    /// passenger's app learns the new fare and details instead of sitting on stale ones. Raised by
+    /// the shared edit applier, which both the direct apply and the Stripe webhook go through.
+    /// </summary>
+    public void RaiseEditApplied(
+        decimal newFare,
+        string currencyCode,
+        decimal delta,
+        bool stopsChanged,
+        bool passengerCountChanged)
+    {
+        AddDomainEvent(new Events.TripEditApplied
+        {
+            TripId = Id,
+            PassengerId = PassengerId,
+            DriverId = DriverId,
+            ReferenceCode = ReferenceCode,
+            NewFare = newFare,
+            CurrencyCode = currencyCode,
+            Delta = delta,
+            VehicleTypeId = VehicleTypeId,
+            PassengerCount = PassengerCount,
+            DropoffLabel = DropoffStop?.AddressLabel,
+            StopsChanged = stopsChanged,
+            PassengerCountChanged = passengerCountChanged,
+        });
+    }
+
     private static string? NormalizePassengerNote(string? passengerNote)
     {
         var normalized = passengerNote?.Trim();

@@ -161,6 +161,49 @@ public sealed class SignalRTripNotifier(IHubContext<TripHub> hubContext, ILogger
         return Task.WhenAll(sends);
     }
 
+    public Task NotifyWalletBalanceChangedAsync(
+        WalletBalanceChangedNotification payload,
+        CancellationToken ct = default)
+    {
+        _logger.LogInformation(
+            "[SignalRTripNotifier] => WalletBalanceChanged group=User_{UserId} balance={Balance} owed={AmountOwed}",
+            payload.UserId,
+            payload.Balance,
+            payload.AmountOwed);
+
+        return _hubContext.Clients
+            .Group($"User_{payload.UserId}")
+            .SendAsync("WalletBalanceChanged", payload, ct);
+    }
+
+    public Task NotifyTripEditAppliedAsync(
+        TripEditAppliedNotification payload,
+        Guid? driverUserId,
+        CancellationToken ct = default)
+    {
+        _logger.LogInformation(
+            "[SignalRTripNotifier] => TripEditApplied groups=Trip_{TripId},User_{PassengerId},Admins tripId={TripId} delta={Delta} newFare={NewFare}",
+            payload.TripId,
+            payload.PassengerId,
+            payload.TripId,
+            payload.Delta,
+            payload.NewFare);
+
+        var sends = new List<Task>
+        {
+            _hubContext.Clients.Group($"Trip_{payload.TripId}").SendAsync("TripEditApplied", payload, ct),
+            _hubContext.Clients.Group($"User_{payload.PassengerId}").SendAsync("TripEditApplied", payload, ct),
+            _hubContext.Clients.Group(TripHub.AdminsGroup).SendAsync("TripEditApplied", payload, ct),
+        };
+
+        if (driverUserId is { } driver)
+        {
+            sends.Add(_hubContext.Clients.Group($"User_{driver}").SendAsync("TripEditApplied", payload, ct));
+        }
+
+        return Task.WhenAll(sends);
+    }
+
     public Task NotifyTripCancelledToDriverAsync(Guid tripId, Guid driverUserId, Guid passengerId, CancellationToken ct = default, Guid? eventId = null)
     {
         _logger.LogInformation(
