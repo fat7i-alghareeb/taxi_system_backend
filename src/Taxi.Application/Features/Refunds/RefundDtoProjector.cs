@@ -76,6 +76,7 @@ public static class RefundDtoProjector
                 refund.TripCompensationClaimId,
                 refund.RequestedByAdminId,
                 refund.AdminNote,
+                refund.LastReconciledAtUtc,
                 false,
                 null);
         }).ToList();
@@ -149,6 +150,7 @@ public static class RefundDtoProjector
                 null,
                 null,
                 cancellation.Note,
+                null,
                 false,
                 cancellation.Reason.ToString());
         }).ToList();

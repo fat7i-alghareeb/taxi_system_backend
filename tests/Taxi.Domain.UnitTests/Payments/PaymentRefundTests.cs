@@ -84,6 +84,19 @@ public class PaymentRefundTests
         Assert.NotNull(refund.FailedAtUtc);
     }
 
+    [Fact]
+    public void TouchReconciliationCheck_SetsLastReconciledAtUtc_WithoutChangingStatus()
+    {
+        var refund = CreateRefund().Value;
+        refund.MarkPending("re_123");
+
+        refund.TouchReconciliationCheck();
+
+        Assert.NotNull(refund.LastReconciledAtUtc);
+        Assert.Equal(PaymentRefundStatus.Pending, refund.Status);
+        Assert.False(refund.CanRetry);
+    }
+
     private static Taxi.Domain.Common.Results.Result<PaymentRefund> CreateRefund(
         decimal amount = 20m,
         decimal originalAmount = 100m,

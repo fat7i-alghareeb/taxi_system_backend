@@ -83,6 +83,7 @@ public sealed class PaymentRefund : AuditableEntity
     public DateTimeOffset? FailedAtUtc { get; private set; }
     public string? LastStripeEventId { get; private set; }
     public string? AdminNote { get; private set; }
+    public DateTimeOffset? LastReconciledAtUtc { get; private set; }
 
     public static Result<PaymentRefund> Create(
         Guid id,
@@ -228,6 +229,15 @@ public sealed class PaymentRefund : AuditableEntity
     {
         CanRetry = canRetry;
         RetryBlockedReason = canRetry ? null : NormalizeOptional(retryBlockedReason);
+        return Result.Success;
+    }
+
+    // Records that a background reconciliation pass checked this refund's status with Stripe
+    // and it is still not resolved. Does not change Status/CanRetry/RetryBlockedReason — those
+    // only change via MarkSucceeded/MarkFailed once Stripe actually reports an outcome.
+    public Result<Success> TouchReconciliationCheck(DateTimeOffset? checkedAtUtc = null)
+    {
+        LastReconciledAtUtc = checkedAtUtc ?? DateTimeOffset.UtcNow;
         return Result.Success;
     }
 

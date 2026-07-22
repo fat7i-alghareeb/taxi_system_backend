@@ -33,5 +33,6 @@ public record AdminRefundDetailDto(
     Guid? TripCompensationClaimId,
     Guid? RequestedByAdminId,
     string? AdminNote,
+    DateTimeOffset? LastReconciledAtUtc = null,
     bool IsManualObligation = false,
     string? CancellationReason = null);

@@ -123,6 +123,73 @@ public sealed class RefundLifecycleService(
         return await ExecuteStripeRefundAsync(payment, refund, ct);
     }
 
+    public async Task<Result<PaymentRefund>> ReconcilePendingRefundAsync(Guid refundId, CancellationToken ct = default)
+    {
+        var refund = await context.PaymentRefunds.FirstOrDefaultAsync(refund => refund.Id == refundId, ct);
+        if (refund is null)
+        {
+            return PaymentErrors.NotFound;
+        }
+
+        if (refund.Status != PaymentRefundStatus.Pending || string.IsNullOrWhiteSpace(refund.StripeRefundId))
+        {
+            return refund;
+        }
+
+        var lookup = await stripe.GetRefundAsync(refund.StripeRefundId, ct);
+        if (lookup.IsFailure)
+        {
+            refund.TouchReconciliationCheck();
+            await context.SaveChangesAsync(ct);
+            return refund;
+        }
+
+        var stripeRefund = lookup.Value;
+        if (string.Equals(stripeRefund.Status, "succeeded", StringComparison.OrdinalIgnoreCase))
+        {
+            var payment = await context.Payments.FirstOrDefaultAsync(payment => payment.Id == refund.PaymentId, ct);
+            if (payment is null)
+            {
+                return PaymentErrors.NotFound;
+            }
+
+            refund.MarkSucceeded();
+            var stateResult = await RecalculateRefundedPaymentStateAsync(payment, ct);
+            if (stateResult.IsFailure)
+            {
+                return stateResult.Errors;
+            }
+
+            await context.SaveChangesAsync(ct);
+            await NotifyRefundRealtimeAsync(refund, payment, ct);
+            return refund;
+        }
+
+        if (string.Equals(stripeRefund.Status, "failed", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(stripeRefund.Status, "canceled", StringComparison.OrdinalIgnoreCase))
+        {
+            var payment = await context.Payments.FirstOrDefaultAsync(payment => payment.Id == refund.PaymentId, ct);
+            if (payment is null)
+            {
+                return PaymentErrors.NotFound;
+            }
+
+            refund.MarkFailed(
+                stripeRefund.Status,
+                stripeRefund.FailureReason ?? stripeRefund.Status,
+                GenericCustomerFailureMessage,
+                canRetry: true);
+            await context.SaveChangesAsync(ct);
+            await NotifyAdminsRefundFailedAsync(refund, payment, ct);
+            await NotifyRefundRealtimeAsync(refund, payment, ct);
+            return refund;
+        }
+
+        refund.TouchReconciliationCheck();
+        await context.SaveChangesAsync(ct);
+        return refund;
+    }
+
     public async Task<Result<RefundableBalanceResult>> GetRefundableBalanceAsync(
         Guid paymentId,
         CancellationToken ct = default)

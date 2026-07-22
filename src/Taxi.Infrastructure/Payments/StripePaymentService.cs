@@ -711,9 +711,38 @@ public sealed class StripePaymentService : IStripePaymentService
         catch (StripeException ex)
         {
             this.logger.LogError(ex, "Stripe refund failed for {PaymentIntentId}", paymentIntentId);
-            return PaymentErrors.StripeInitiationFailed;
+            return MapStripeException(ex);
         }
     }
+
+    public async Task<Result<StripeRefundResult>> GetRefundAsync(string stripeRefundId, CancellationToken ct = default)
+    {
+        try
+        {
+            var service = new RefundService();
+            var refund = await service.GetAsync(stripeRefundId, cancellationToken: ct);
+            return new StripeRefundResult(
+                refund.Id,
+                FromMinorUnits(refund.Amount),
+                (refund.Currency ?? string.Empty).ToUpperInvariant(),
+                refund.Status,
+                refund.PaymentIntentId,
+                refund.ChargeId,
+                refund.FailureReason);
+        }
+        catch (StripeException ex)
+        {
+            this.logger.LogError(ex, "Stripe refund lookup failed for {StripeRefundId}", stripeRefundId);
+            return MapStripeException(ex);
+        }
+    }
+
+    // Preserves Stripe's own error code/message instead of collapsing every failure into the
+    // generic StripeInitiationFailed text, so FailureReason is actually debuggable afterwards.
+    private static Error MapStripeException(StripeException ex)
+        => ex.StripeError is null
+            ? PaymentErrors.StripeInitiationFailed
+            : Error.Failure(code: ex.StripeError.Code ?? PaymentErrors.StripeInitiationFailed.Code, description: ex.StripeError.Message ?? PaymentErrors.StripeInitiationFailed.Description);
 
     private static string ResolveKlarnaLocale(string? preferredLanguage)
     {

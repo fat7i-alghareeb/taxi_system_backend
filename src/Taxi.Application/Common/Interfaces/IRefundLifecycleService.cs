@@ -10,6 +10,11 @@ public interface IRefundLifecycleService
 
     Task<Result<PaymentRefund>> RetryRefundAsync(Guid refundId, Guid adminId, string? note, CancellationToken ct = default);
 
+    // Checks a Pending refund directly against Stripe and resolves it if Stripe now reports an
+    // outcome. No-op if the refund isn't Pending or has no StripeRefundId yet. Used by the
+    // background reconciliation job to recover refunds whose confirming webhook never arrived.
+    Task<Result<PaymentRefund>> ReconcilePendingRefundAsync(Guid refundId, CancellationToken ct = default);
+
     Task<Result<RefundableBalanceResult>> GetRefundableBalanceAsync(Guid paymentId, CancellationToken ct = default);
 
     Task<Result<RefundSummaryDto?>> BuildCustomerRefundSummaryAsync(

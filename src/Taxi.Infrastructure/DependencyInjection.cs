@@ -43,6 +43,7 @@ public static class DependencyInjection
         services.Configure<InvoiceIssuerOptions>(configuration.GetSection(InvoiceIssuerOptions.SectionName));
         services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.SectionName));
         services.Configure<OtpOptions>(configuration.GetSection(OtpOptions.SectionName));
+        services.Configure<RefundReconciliationOptions>(configuration.GetSection(RefundReconciliationOptions.SectionName));
         services.Configure<WalletOptions>(configuration.GetSection(WalletOptions.SectionName));
         services.Configure<PaymentPreferenceOptions>(configuration.GetSection(PaymentPreferenceOptions.SectionName));
         services.Configure<CmComSmsOptions>(configuration.GetSection(CmComSmsOptions.SectionName));
@@ -220,6 +221,7 @@ public static class DependencyInjection
         services.AddHostedService<TripChatCleanupService>();
         services.AddHostedService<OtpCleanupService>();
         services.AddHostedService<RefreshTokenCleanupService>();
+        services.AddHostedService<RefundPendingReconciliationService>();
 
         return services;
     }

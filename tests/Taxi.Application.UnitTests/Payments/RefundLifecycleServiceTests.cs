@@ -491,6 +491,65 @@ public class RefundLifecycleServiceTests
             Arg.Any<string?>());
     }
 
+    [Fact]
+    public async Task ReconcilePendingRefundAsync_StripeReportsSucceeded_MarksSucceeded()
+    {
+        var payment = CreateCompletedPayment();
+        var pendingRefund = CreatePendingRefund(payment, 20m, PaymentRefundSourceType.PassengerCancellation);
+        var context = BuildContext(payment, [pendingRefund]);
+        stripe.GetRefundAsync(pendingRefund.StripeRefundId!, Arg.Any<CancellationToken>())
+            .Returns(new StripeRefundResult(pendingRefund.StripeRefundId!, 20m, "EUR", "succeeded"));
+        var service = CreateService(context);
+
+        var result = await service.ReconcilePendingRefundAsync(pendingRefund.Id, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Succeeded, result.Value.Status);
+    }
+
+    [Fact]
+    public async Task ReconcilePendingRefundAsync_StripeReportsFailed_MarksFailedAndNotifiesAdmins()
+    {
+        var payment = CreateCompletedPayment();
+        var pendingRefund = CreatePendingRefund(payment, 20m, PaymentRefundSourceType.PassengerCancellation);
+        var context = BuildContext(payment, [pendingRefund]);
+        stripe.GetRefundAsync(pendingRefund.StripeRefundId!, Arg.Any<CancellationToken>())
+            .Returns(new StripeRefundResult(
+                pendingRefund.StripeRefundId!, 20m, "EUR", "failed", FailureReason: "insufficient_funds"));
+        var service = CreateService(context);
+
+        var result = await service.ReconcilePendingRefundAsync(pendingRefund.Id, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Failed, result.Value.Status);
+        Assert.True(result.Value.CanRetry);
+        Assert.Equal("insufficient_funds", result.Value.FailureReason);
+        await notifications.Received(1).SendPushNotificationToAdminsAsync(
+            LocalizationKeys.Payment.RefundFailedAdminTitle,
+            LocalizationKeys.Payment.RefundFailedAdminBody,
+            Arg.Any<Dictionary<string, string>>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Is<object[]?>(args => args == null),
+            Arg.Is<object[]?>(args => args != null && args.Length == 3));
+    }
+
+    [Fact]
+    public async Task ReconcilePendingRefundAsync_StripeStillPending_OnlyTouchesReconciliationCheck()
+    {
+        var payment = CreateCompletedPayment();
+        var pendingRefund = CreatePendingRefund(payment, 20m, PaymentRefundSourceType.PassengerCancellation);
+        var context = BuildContext(payment, [pendingRefund]);
+        stripe.GetRefundAsync(pendingRefund.StripeRefundId!, Arg.Any<CancellationToken>())
+            .Returns(new StripeRefundResult(pendingRefund.StripeRefundId!, 20m, "EUR", "pending"));
+        var service = CreateService(context);
+
+        var result = await service.ReconcilePendingRefundAsync(pendingRefund.Id, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentRefundStatus.Pending, result.Value.Status);
+        Assert.NotNull(result.Value.LastReconciledAtUtc);
+    }
+
     private static Payment CreateCompletedPayment(decimal amount = 100m)
     {
         var payment = Payment.CreateForStripe(

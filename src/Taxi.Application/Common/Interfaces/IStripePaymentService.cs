@@ -30,6 +30,10 @@ public interface IStripePaymentService
         CancellationToken ct = default,
         string? idempotencyKey = null);
 
+    // Looks up a refund's current status directly from Stripe, used by the reconciliation
+    // job to resolve refunds stuck in Pending because their confirming webhook never arrived.
+    Task<Result<StripeRefundResult>> GetRefundAsync(string stripeRefundId, CancellationToken ct = default);
+
     // Charges an off-session waiting-fee surcharge against the card saved during the
     // original (on-session) upfront payment. Returns the resulting intent status; a
     // soft decline / authentication_required is reported via the result's Status and
@@ -148,7 +152,8 @@ public sealed record StripeRefundResult(
     string Currency,
     string? Status = null,
     string? PaymentIntentId = null,
-    string? ChargeId = null);
+    string? ChargeId = null,
+    string? FailureReason = null);
 
 public sealed record StripeSurchargeResult(
     string PaymentIntentId,

@@ -67,6 +67,9 @@ public sealed class PaymentRefundConfiguration : IEntityTypeConfiguration<Paymen
         builder.Property(x => x.AdminNote)
             .HasMaxLength(2000);
 
+        builder.Property(x => x.LastReconciledAtUtc)
+            .IsRequired(false);
+
         builder.Property(x => x.CreatedAtUtc)
             .IsRequired();
 
