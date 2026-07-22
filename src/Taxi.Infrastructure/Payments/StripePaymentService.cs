@@ -277,9 +277,20 @@ public sealed class StripePaymentService : IStripePaymentService
                 Currency = currency.ToLowerInvariant(),
                 CaptureMethod = "automatic",
                 Customer = customerId,
-                // Keep the card reusable for later off-session ride-related charges.
-                SetupFutureUsage = "off_session",
                 AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions { Enabled = true },
+                PaymentMethodOptions = new PaymentIntentPaymentMethodOptionsOptions
+                {
+                    // Keep the card reusable for later off-session ride-related charges.
+                    // Scoped to cards only — setting setup_future_usage at the top level
+                    // together with automatic payment methods makes Stripe reject the
+                    // intent for methods that only support `none` (e.g. Klarna), which is
+                    // exactly what surfaced as "Payment initiation failed" on fare edits.
+                    // Mirrors CreatePaymentIntentAsync so iDEAL/Klarna stay available.
+                    Card = new PaymentIntentPaymentMethodOptionsCardOptions
+                    {
+                        SetupFutureUsage = "off_session",
+                    },
+                },
                 Metadata = new Dictionary<string, string>
                 {
                     ["tripId"] = tripId.ToString(),

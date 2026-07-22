@@ -33,6 +33,13 @@ public class UpdateTripBagCountCommandHandler(
             }
         }
 
+        // Bags bypass the preview/apply pipeline, so enforce the customer edit window here
+        // too (the authoritative gate lives in TripEditPolicy, not the domain method).
+        if (TripEditPolicy.Validate(trip, editsStops: false, editsPartySize: true) is { } policyError)
+        {
+            return policyError;
+        }
+
         var updateResult = trip.UpdateBagCount(request.BagCount);
         if (updateResult.IsError)
         {
