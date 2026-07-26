@@ -13,10 +13,12 @@ namespace Taxi.Application.UnitTests.Trips;
 using TripCoordinate = Taxi.Domain.Trips.Coordinate;
 
 /// <summary>
-/// The customer edit window closed from 1 hour to 5 minutes and now also gates party size
-/// (previously status-only). Covers <see cref="TripEditPolicy"/> directly, plus
-/// <see cref="UpdateTripBagCountCommandHandler"/> — bags bypass the preview/apply pipeline that
-/// <see cref="TripEditPolicy.Validate"/> normally guards, so the handler applies it itself.
+/// The customer edit window is now a single strict rule: five minutes from booking creation, for
+/// route, party size, bags and scheduled time alike. The scheduled-pickup anchor (which used to
+/// keep a ride booked days ahead editable until shortly before pickup) was deliberately removed so
+/// the customer sees one deadline instead of two. Covers <see cref="TripEditPolicy"/> directly,
+/// plus <see cref="UpdateTripBagCountCommandHandler"/> — bags bypass the preview/apply pipeline
+/// that <see cref="TripEditPolicy.Validate"/> normally guards, so the handler applies it itself.
 /// </summary>
 public class TripEditPolicyTests
 {
@@ -76,19 +78,22 @@ public class TripEditPolicyTests
     }
 
     [Fact]
-    public void Validate_ScheduledDaysAhead_KeepsPartySizeEditableLongAfterBooking()
+    public void Validate_ScheduledDaysAhead_StillExpiresFiveMinutesAfterBooking()
     {
+        // This used to be allowed: the window was anchored to the pickup, so a ride booked days
+        // ahead stayed editable. The rule is now strictly CreatedAtUtc + 5 minutes for every trip.
         var trip = CreateAcceptedTrip(
             bookedMinutesAgo: 60 * 24,
             scheduledAt: DateTimeOffset.UtcNow.AddDays(3));
 
         var error = TripEditPolicy.Validate(trip, editsStops: false, editsPartySize: true);
 
-        Assert.Null(error);
+        Assert.NotNull(error);
+        Assert.Equal(TripErrors.EditWindowExpired.Code, error!.Value.Code);
     }
 
     [Fact]
-    public void Validate_ScheduledWithinFiveMinutes_ClosesPartySizeAsPickupNears()
+    public void Validate_ScheduledSoonAndBookedLongAgo_ReturnsEditWindowExpired()
     {
         var trip = CreateAcceptedTrip(
             bookedMinutesAgo: 60 * 24,
@@ -98,6 +103,58 @@ public class TripEditPolicyTests
 
         Assert.NotNull(error);
         Assert.Equal(TripErrors.EditWindowExpired.Code, error!.Value.Code);
+    }
+
+    [Fact]
+    public void Validate_ScheduledSoonButJustBooked_StaysEditable()
+    {
+        // Guards against "simplifying" the rule into a pickup-relative check: a ride booked right
+        // now for 20 minutes' time must keep its full five minutes.
+        var trip = CreateAcceptedTrip(
+            bookedMinutesAgo: 0,
+            scheduledAt: DateTimeOffset.UtcNow.AddMinutes(20));
+
+        var error = TripEditPolicy.Validate(trip, editsStops: true, editsPartySize: true);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void Validate_ScheduleWithinWindow_ReturnsNull()
+    {
+        var trip = CreateAcceptedTrip(bookedMinutesAgo: 3);
+
+        var error = TripEditPolicy.Validate(
+            trip, editsStops: false, editsPartySize: false, editsSchedule: true);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void Validate_ScheduleAfterFiveMinutes_ReturnsEditWindowExpired()
+    {
+        // Before this fix the scheduled-time endpoint had no policy check at all and relied on a
+        // stale one-hour domain guard — this is the regression case.
+        var trip = CreateAcceptedTrip(bookedMinutesAgo: 6);
+
+        var error = TripEditPolicy.Validate(
+            trip, editsStops: false, editsPartySize: false, editsSchedule: true);
+
+        Assert.NotNull(error);
+        Assert.Equal(TripErrors.EditWindowExpired.Code, error!.Value.Code);
+    }
+
+    [Fact]
+    public void Validate_ScheduleOnceEnRoute_ReturnsInvalidStatusEvenWithinWindow()
+    {
+        var trip = CreateAcceptedTrip(bookedMinutesAgo: 1);
+        trip.DriverEnRoute(DateTimeOffset.UtcNow);
+
+        var error = TripEditPolicy.Validate(
+            trip, editsStops: false, editsPartySize: false, editsSchedule: true);
+
+        Assert.NotNull(error);
+        Assert.Equal(TripErrors.InvalidStatus(TripStatus.EnRoute).Code, error!.Value.Code);
     }
 
     [Fact]

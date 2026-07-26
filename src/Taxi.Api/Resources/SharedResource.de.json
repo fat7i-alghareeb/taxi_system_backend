@@ -171,7 +171,6 @@
   "Payment.Refund.Failed.AdminTitle": "Rückerstattung fehlgeschlagen",
   "Payment.Refund.Failed.AdminBody": "Rückerstattung {0} {1} für Fahrt {2} ist fehlgeschlagen. Bitte prüfen.",
   "User.StripeCustomerIdRequired": "Stripe-Kunden-ID ist erforderlich.",
-  "Trip.Cancellation.WindowExpired": "Die Stornierung durch den Fahrgast ist nur innerhalb von 1 Stunde nach der Buchung möglich. Sie können gegebenenfalls einen Entschädigungsanspruch wegen Fahrgassverspätung geltend machen.",
   "Trip.Cancellation.DriverTooEarly": "Die Stornierung durch den Fahrer ist erst nach der Ankunft und 10 Minuten Wartezeit des Fahrgasts möglich.",
   "Trip.Cancellation.InvalidReason": "Der ausgewählte Stornierungsgrund ist für diese Aktion ungültig.",
   "Trip.CompensationClaim.NoteRequired": "Bitte fügen Sie eine Notiz hinzu, in der Sie den Entschädigungsanspruch wegen Fahrerverspätung erklären.",

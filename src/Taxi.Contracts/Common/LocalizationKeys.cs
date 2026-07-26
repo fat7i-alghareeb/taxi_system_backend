@@ -213,7 +213,6 @@ public static class LocalizationKeys
         public const string AlreadyAccepted = "Trip.AlreadyAccepted";
         public const string NotAcceptedByCurrentAdmin = "Trip.NotAcceptedByCurrentAdmin";
         public const string CannotCancel = "Trip.CannotCancel";
-        public const string CancellationWindowExpired = "Trip.Cancellation.WindowExpired";
         public const string DriverCancelTooEarly = "Trip.Cancellation.DriverTooEarly";
         public const string InvalidCancellationReason = "Trip.Cancellation.InvalidReason";
         public const string CompensationClaimNoteRequired = "Trip.CompensationClaim.NoteRequired";

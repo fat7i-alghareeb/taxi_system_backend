@@ -4,14 +4,21 @@ using Xunit;
 namespace Taxi.Domain.UnitTests.Trips;
 
 /// <summary>
-/// The customer edit rules deliberately differ per field: the route is bounded by a time window
-/// but stays editable through arrival, while party size has no window and closes the moment the
-/// driver starts moving (a passenger-count change can swap the assigned vehicle).
+/// The domain gates customer edits on status and shape only — there is deliberately no clock here.
+/// Every edit deadline (the five-minute customer window) lives in <c>TripEditPolicy</c> in the
+/// Application layer, because these same mutation methods are reached from the async Stripe-webhook
+/// commit path: a window check here would discard an edit the rider has already paid for. Do not
+/// re-add a time window to <c>Trip</c>. The window itself is covered in
+/// <c>Taxi.Application.UnitTests.Trips.TripEditPolicyTests</c>.
+///
+/// The status gates still differ per field: the route stays editable through arrival, while party
+/// size closes the moment the driver starts moving (a passenger-count change can swap the assigned
+/// vehicle).
 /// </summary>
 public class TripCustomerEditTests
 {
     [Fact]
-    public void UpdateStops_WithinWindow_Succeeds()
+    public void UpdateStops_WhileAccepted_Succeeds()
     {
         var trip = CreateAcceptedTrip(bookedMinutesAgo: 10);
 
@@ -22,55 +29,42 @@ public class TripCustomerEditTests
     }
 
     [Fact]
-    public void UpdateStops_AfterWindowClosed_ReturnsEditWindowExpired()
+    public void UpdateStops_LongAfterBooking_StillSucceedsBecauseTheWindowLivesInThePolicy()
     {
+        // Regression test for the webhook-commit case: a rider previews an edit at t+4:30, pays for
+        // it, and Stripe's confirmation lands at t+5:30. TripEditApplier calls straight into
+        // UpdateStops at that point, so a clock guard here would silently drop a paid-for re-route.
         var trip = CreateAcceptedTrip(bookedMinutesAgo: 90);
 
         var result = trip.UpdateStops(BuildStops(52.40m, 4.95m));
 
-        Assert.True(result.IsError);
-        Assert.Equal(TripErrors.EditWindowExpired.Code, result.Errors[0].Code);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(52.40m, trip.DropoffStop!.Coordinate.Latitude);
     }
 
     [Fact]
-    public void UpdateStops_ScheduledDaysAhead_StaysEditableLongAfterBooking()
+    public void UpdateScheduledTime_LongAfterBooking_Succeeds()
     {
-        // The booking hour is long gone, but the ride is days away — the customer must still be
-        // able to correct the address. This is the case a CreatedAtUtc-only window got wrong.
-        var trip = CreateAcceptedTrip(
-            bookedMinutesAgo: 60 * 24,
-            scheduledAt: DateTimeOffset.UtcNow.AddDays(3));
+        // Same reasoning as UpdateStops: the five-minute rule is enforced by the handler.
+        var trip = CreateAcceptedTrip(bookedMinutesAgo: 90);
+        var newPickup = DateTimeOffset.UtcNow.AddHours(4);
 
-        var result = trip.UpdateStops(BuildStops(52.40m, 4.95m));
+        var result = trip.UpdateScheduledTime(newPickup);
 
         Assert.True(result.IsSuccess);
+        Assert.Equal(newPickup, trip.ScheduledAtUtc);
     }
 
     [Fact]
-    public void UpdateStops_ScheduledWithinTheHour_ClosesOnceThePickupIsNear()
+    public void UpdateScheduledTime_OnceEnRoute_ReturnsInvalidStatus()
     {
-        var trip = CreateAcceptedTrip(
-            bookedMinutesAgo: 60 * 24,
-            scheduledAt: DateTimeOffset.UtcNow.AddMinutes(30));
+        var trip = CreateAcceptedTrip(bookedMinutesAgo: 1);
+        trip.DriverEnRoute(DateTimeOffset.UtcNow);
 
-        var result = trip.UpdateStops(BuildStops(52.40m, 4.95m));
+        var result = trip.UpdateScheduledTime(DateTimeOffset.UtcNow.AddHours(4));
 
         Assert.True(result.IsError);
-        Assert.Equal(TripErrors.EditWindowExpired.Code, result.Errors[0].Code);
-    }
-
-    [Fact]
-    public void UpdateStops_ScheduledSoonButJustBooked_KeepsTheFullBookingHour()
-    {
-        // Without taking the later of the two deadlines, a ride booked for 20 minutes' time would
-        // be locked the instant it was created.
-        var trip = CreateAcceptedTrip(
-            bookedMinutesAgo: 0,
-            scheduledAt: DateTimeOffset.UtcNow.AddMinutes(20));
-
-        var result = trip.UpdateStops(BuildStops(52.40m, 4.95m));
-
-        Assert.True(result.IsSuccess);
+        Assert.Equal(TripErrors.InvalidStatus(TripStatus.EnRoute).Code, result.Errors[0].Code);
     }
 
     [Fact]

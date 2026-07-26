@@ -193,7 +193,7 @@ public class TripsController(ISender sender) : ApiController
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [EndpointSummary("Updates the scheduled pickup time. Only allowed within 1 hour of booking creation.")]
+    [EndpointSummary("Updates the scheduled pickup time. Only allowed within 5 minutes of booking creation, for scheduled and immediate trips alike.")]
     [EndpointName("UpdateTripScheduledTime")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> UpdateScheduledTime(Guid id, [FromBody] UpdateTripScheduledTimeRequest request, CancellationToken ct)
@@ -211,7 +211,7 @@ public class TripsController(ISender sender) : ApiController
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [EndpointSummary("Updates the number of bags. Only allowed within 1 hour of booking creation.")]
+    [EndpointSummary("Updates the number of bags. Only allowed within 5 minutes of booking creation. Bags never change the fare.")]
     [EndpointName("UpdateTripBagCount")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> UpdateBagCount(Guid id, [FromBody] UpdateTripBagCountRequest request, CancellationToken ct)
@@ -225,7 +225,7 @@ public class TripsController(ISender sender) : ApiController
     [ProducesResponseType(typeof(TripEditPreviewDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [EndpointSummary("Previews the fare difference for a proposed destination / passenger change (no mutation). Allowed until the ride is in progress.")]
+    [EndpointSummary("Previews the fare difference for a proposed destination / passenger change (no mutation). Allowed within 5 minutes of booking creation, and never once the ride is in progress.")]
     [EndpointName("PreviewTripEdit")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> PreviewTripEdit(Guid id, [FromBody] PreviewTripEditRequest request, CancellationToken ct)
@@ -242,7 +242,7 @@ public class TripsController(ISender sender) : ApiController
     [ProducesResponseType(typeof(TripEditApplyResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [EndpointSummary("Applies a previewed destination / passenger change and settles the fare difference. A higher fare is charged (wallet → saved card → PaymentSheet); a lower fare is refunded.")]
+    [EndpointSummary("Applies a previewed destination / passenger change and settles the fare difference. Allowed within 5 minutes of booking creation. A higher fare is charged (wallet → saved card → PaymentSheet); a lower fare is refunded.")]
     [EndpointName("ApplyTripEdit")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> ApplyTripEdit(Guid id, [FromBody] ApplyTripEditRequest request, CancellationToken ct)
@@ -262,7 +262,7 @@ public class TripsController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Cancels a trip.")]
-    [EndpointDescription("Cancellable until the ride is InProgress. Free (100% refund) within 1 hour of booking, or — for scheduled trips — until 1 hour before pickup; after that 20% is refunded. Not allowed once InProgress, Completed, Cancelled, Refunded, or PaymentFailed.")]
+    [EndpointDescription("Cancellable until the ride is InProgress. Free (100% refund) within 5 minutes of booking, for scheduled and immediate trips alike; after that 45% is refunded. An admin-initiated cancellation always refunds 100%. Not allowed once InProgress, Completed, Cancelled, Refunded, or PaymentFailed.")]
     [EndpointName("CancelTrip")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> CancelTrip(Guid id, [FromBody] CancelTripRequest? request, CancellationToken ct)

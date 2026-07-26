@@ -171,7 +171,6 @@
   "Payment.Refund.Failed.AdminTitle": "Повернення не вдалося",
   "Payment.Refund.Failed.AdminBody": "Повернення {0} {1} для поїздки {2} не вдалося. Будь ласка, перевірте.",
   "User.StripeCustomerIdRequired": "ID клієнта Stripe обов’язковий.",
-  "Trip.Cancellation.WindowExpired": "Скасування поїздки пасажиром можливе лише протягом 1 години після бронювання. Ви можете подати запит на компенсацію за затримку водія, якщо це застосовно.",
   "Trip.Cancellation.DriverTooEarly": "Скасування поїздки водієм можливе лише після прибуття та 10 хвилин очікування пасажира.",
   "Trip.Cancellation.InvalidReason": "Вибрана причина скасування недійсна для цієї дії.",
   "Trip.CompensationClaim.NoteRequired": "Будь ласка, додайте примітку з поясненням запиту на компенсацію за затримку водія.",

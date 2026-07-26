@@ -171,7 +171,6 @@
   "Payment.Refund.Failed.AdminTitle": "Reembolso fallido",
   "Payment.Refund.Failed.AdminBody": "El reembolso {0} {1} del viaje {2} falló. Revíselo, por favor.",
   "User.StripeCustomerIdRequired": "El ID de cliente de Stripe es obligatorio.",
-  "Trip.Cancellation.WindowExpired": "La cancelación por parte del pasajero solo está disponible dentro de 1 hora después de la reserva. Puede presentar una solicitud de compensación por retraso del conductor si corresponde.",
   "Trip.Cancellation.DriverTooEarly": "La cancelación del conductor solo está disponible después de la llegada y 10 minutos de tiempo de espera del pasajero.",
   "Trip.Cancellation.InvalidReason": "El motivo de cancelación seleccionado no es válido para esta acción.",
   "Trip.CompensationClaim.NoteRequired": "Agregue una nota explicando la solicitud de compensación por retraso del conductor.",

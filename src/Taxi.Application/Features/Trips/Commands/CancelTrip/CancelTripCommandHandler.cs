@@ -54,8 +54,8 @@ public class CancelTripCommandHandler(
 
         var preCancelStatus = trip.Status;
 
-        // Fare must be known before the policy block because the arrived-fee case computes
-        // a flat deduction (fare − €6.50) rather than a fixed percentage.
+        // Fare must be known before the policy block because every branch below computes a
+        // percentage of it.
         var quote = await context.PricingQuotes.FirstOrDefaultAsync(q => q.Id == trip.QuoteId, ct);
         var fare = quote?.FinalFare ?? 0;
         var currency = quote?.CurrencyCode ?? "EUR";

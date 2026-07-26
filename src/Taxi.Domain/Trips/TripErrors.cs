@@ -70,10 +70,9 @@ public static class TripErrors
         code: LocalizationKeys.Trip.CannotCancel,
         description: "This trip cannot be cancelled in its current status.");
 
-    public static readonly Error CancellationWindowExpired = Error.Validation(
-        code: LocalizationKeys.Trip.CancellationWindowExpired,
-        description: "Passenger cancellation is only available within 1 hour of booking.");
-
+    // No CancellationWindowExpired error: a passenger may cancel in any cancellable status. The
+    // five-minute mark only changes the refund percentage (see CancellationPolicy), never whether
+    // the cancellation is allowed.
     public static readonly Error DriverCancelTooEarly = Error.Validation(
         code: LocalizationKeys.Trip.DriverCancelTooEarly,
         description: "Driver cancellation is only available after arriving and waiting at least 10 minutes.");
@@ -144,7 +143,7 @@ public static class TripErrors
 
     public static readonly Error EditWindowExpired = Error.Validation(
         code: LocalizationKeys.Trip.EditWindowExpired,
-        description: "The window for changing the route has closed.");
+        description: "The window for changing this trip has closed.");
 
     public static readonly Error EditDeltaChanged = Error.Validation(
         code: LocalizationKeys.Trip.EditDeltaChanged,

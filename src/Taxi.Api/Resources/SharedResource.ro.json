@@ -171,7 +171,6 @@
   "Payment.Refund.Failed.AdminTitle": "Rambursare eșuată",
   "Payment.Refund.Failed.AdminBody": "Rambursarea {0} {1} pentru cursa {2} a eșuat. Vă rugăm să verificați.",
   "User.StripeCustomerIdRequired": "ID-ul clientului Stripe este obligatoriu.",
-  "Trip.Cancellation.WindowExpired": "Anularea de către pasager este disponibilă doar în decurs de 1 oră de la rezervare. Puteți depune o cerere de compensare pentru întârzierea șoferului, dacă este cazul.",
   "Trip.Cancellation.DriverTooEarly": "Anularea de către șofer este disponibilă numai după sosire și 10 minute de timp de așteptare al pasagerului.",
   "Trip.Cancellation.InvalidReason": "Motivul de anulare selectat este nevalid pentru această acțiune.",
   "Trip.CompensationClaim.NoteRequired": "Vă rugăm să adăugați o notă care să explice cererea de compensare pentru întârzierea șoferului.",

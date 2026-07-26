@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Taxi.Application.Common.Interfaces;
+using Taxi.Application.Features.Trips.Common;
 using Taxi.Domain.Common.Results;
 using Taxi.Domain.Trips;
 
@@ -29,6 +30,18 @@ public class UpdateTripScheduledTimeCommandHandler(
             {
                 return TripErrors.NotOwnedByPassenger;
             }
+        }
+
+        // This endpoint bypasses the preview/apply pipeline, so the customer edit window has to be
+        // enforced here — same as UpdateTripBagCountCommandHandler. Deliberately after the
+        // ownership check, so a stranger cannot probe a trip's booking time.
+        if (TripEditPolicy.Validate(
+                trip,
+                editsStops: false,
+                editsPartySize: false,
+                editsSchedule: true) is { } policyError)
+        {
+            return policyError;
         }
 
         var updateResult = trip.UpdateScheduledTime(request.ScheduledAtUtc);

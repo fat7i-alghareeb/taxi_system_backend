@@ -171,7 +171,6 @@
   "Payment.Refund.Failed.AdminTitle": "Zwrot nie powiódł się",
   "Payment.Refund.Failed.AdminBody": "Zwrot {0} {1} dla przejazdu {2} nie powiódł się. Sprawdź to.",
   "User.StripeCustomerIdRequired": "ID klienta Stripe jest wymagane.",
-  "Trip.Cancellation.WindowExpired": "Anulowanie podróży przez pasażera jest możliwe tylko w ciągu 1 godziny od rezerwacji. W stosownych przypadkach możesz złożyć wniosek o odszkodowanie za opóźnienie kierowcy.",
   "Trip.Cancellation.DriverTooEarly": "Anulowanie podróży przez kierowcę jest możliwe dopiero po przybyciu i 10 minutach oczekiwania pasażera.",
   "Trip.Cancellation.InvalidReason": "Wybrany powód anulowania jest nieprawidłowy dla tej akcji.",
   "Trip.CompensationClaim.NoteRequired": "Dodaj notatkę wyjaśniającą roszczenie o odszkodowanie za opóźnienie kierowcy.",

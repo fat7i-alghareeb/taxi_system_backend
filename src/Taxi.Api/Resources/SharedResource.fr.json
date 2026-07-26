@@ -171,7 +171,6 @@
   "Payment.Refund.Failed.AdminTitle": "Remboursement échoué",
   "Payment.Refund.Failed.AdminBody": "Le remboursement {0} {1} pour le trajet {2} a échoué. Veuillez vérifier.",
   "User.StripeCustomerIdRequired": "L'ID client Stripe est requis.",
-  "Trip.Cancellation.WindowExpired": "L'annulation par le passager n'est disponible que dans l'heure qui suit la réservation. Vous pouvez soumettre une demande d'indemnisation pour retard du chauffeur, le cas échéant.",
   "Trip.Cancellation.DriverTooEarly": "L'annulation par le chauffeur n'est disponible qu'après l'arrivée et 10 minutes d'attente du passager.",
   "Trip.Cancellation.InvalidReason": "Le motif d'annulation sélectionné n'est pas valide pour cette action.",
   "Trip.CompensationClaim.NoteRequired": "Veuillez ajouter une note expliquant la demande d'indemnisation pour retard du chauffeur.",

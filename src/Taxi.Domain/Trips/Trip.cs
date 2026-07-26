@@ -67,7 +67,8 @@ public sealed class Trip : AuditableEntity
     /// <summary>
     /// Airport trip flagged by the passenger at booking. Airport trips get a longer
     /// free waiting window (30 min vs 10) and the driver may decline to keep waiting
-    /// after it, which cancels the trip with a 20% passenger refund.
+    /// after it, which cancels the trip and refunds the passenger
+    /// <see cref="CancellationPolicy.DriverCancelRefundPercent"/>.
     /// </summary>
     public bool IsAirport { get; private set; }
     public string? FlightNumber { get; private set; }
@@ -109,29 +110,9 @@ public sealed class Trip : AuditableEntity
     public int? PassengerRating { get; private set; }
     public string? RatingComment { get; private set; }
 
-    private bool IsWithinEditWindow => DateTimeOffset.UtcNow <= CreatedAtUtc.AddHours(1);
-
-    /// <summary>
-    /// Window in which the customer may still repoint the route. Closes one hour after booking
-    /// or — for a scheduled ride — one hour before pickup, whichever is later. Anchoring on the
-    /// pickup keeps the address correctable for a ride booked days in advance; taking the later
-    /// of the two keeps the full post-booking hour for a ride scheduled less than an hour out,
-    /// which would otherwise be locked the moment it was created.
-    /// </summary>
-    private bool IsWithinStopsEditWindow
-    {
-        get
-        {
-            var bookingDeadline = CreatedAtUtc.AddHours(1);
-            var deadline = ScheduledAtUtc is { } scheduledAtUtc
-                ? Max(scheduledAtUtc.AddHours(-1), bookingDeadline)
-                : bookingDeadline;
-
-            return DateTimeOffset.UtcNow <= deadline;
-
-            static DateTimeOffset Max(DateTimeOffset a, DateTimeOffset b) => a >= b ? a : b;
-        }
-    }
+    // No clock-based edit window lives on Trip. Every customer edit deadline is enforced by
+    // TripEditPolicy in the Application layer, because these mutation methods are also reached
+    // from the async Stripe-webhook commit path — see UpdateStops.
 
     /// <summary>
     /// Statuses in which the customer may still change the party size. Closes as soon as the
@@ -656,13 +637,13 @@ public sealed class Trip : AuditableEntity
         return Result.Success;
     }
 
+    /// <summary>
+    /// Moves the scheduled pickup. Status-gated only — the five-minute customer edit window is
+    /// enforced by <c>TripEditPolicy</c> in the Application layer, so an edit that was already
+    /// approved (and possibly paid for) is never rejected when it is committed asynchronously.
+    /// </summary>
     public Result<Success> UpdateScheduledTime(DateTimeOffset? newScheduledAtUtc)
     {
-        if (!IsWithinEditWindow)
-        {
-            return TripErrors.EditWindowExpired;
-        }
-
         if (Status is not (TripStatus.AwaitingAdminAcceptance or TripStatus.Accepted))
         {
             return TripErrors.InvalidStatus(Status);
@@ -675,8 +656,9 @@ public sealed class Trip : AuditableEntity
     /// <summary>
     /// Statuses in which the customer may still repoint the route (and be charged/refunded the
     /// fare difference). Stays open through arrival — a re-route is something the driver absorbs
-    /// live — but never once the ride is in progress or terminal. Combined with
-    /// <see cref="IsWithinStopsEditWindow"/>; party size uses <see cref="IsPartySizeEditable"/>.
+    /// live — but never once the ride is in progress or terminal. Combined with the five-minute
+    /// window enforced by <c>TripEditPolicy</c> in the Application layer; party size uses
+    /// <see cref="IsPartySizeEditable"/>.
     /// </summary>
     private bool IsEditableForRepricing =>
         Status is TripStatus.AwaitingAdminAcceptance
@@ -684,13 +666,15 @@ public sealed class Trip : AuditableEntity
             or TripStatus.EnRoute
             or TripStatus.Arrived;
 
+    /// <summary>
+    /// Repoints the route. Status- and shape-gated only — the five-minute customer edit window is
+    /// enforced by <c>TripEditPolicy</c> in the Application layer. Critically, this method is also
+    /// reached from the Stripe webhook that commits a held edit, which can land after the window
+    /// has closed; a clock guard here would discard a re-route the rider has already been charged
+    /// for.
+    /// </summary>
     public Result<Success> UpdateStops(IReadOnlyList<TripStop> newStops)
     {
-        if (!IsWithinStopsEditWindow)
-        {
-            return TripErrors.EditWindowExpired;
-        }
-
         if (!IsEditableForRepricing)
         {
             return TripErrors.InvalidStatus(Status);
