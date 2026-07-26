@@ -305,6 +305,7 @@
   "RefundIssue.InvalidRequestType": "Invalid refund issue type.",
   "RefundIssue.InvalidReviewStatus": "Invalid refund issue review status.",
   "RefundIssue.AlreadyClosed": "This refund issue is already closed.",
+  "RefundIssue.AlreadyOpen": "You already have a refund review request for this trip. We will get back to you within 2 working days at most.",
   "RefundIssue.Created.AdminTitle": "Refund issue submitted",
   "RefundIssue.Created.AdminBody": "A customer requested refund review for trip {0}.",
   "Refund.Retry.Succeeded.AdminTitle": "Refund retry accepted",

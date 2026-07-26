@@ -305,6 +305,7 @@
   "RefundIssue.InvalidRequestType": "نوع طلب مراجعة الاسترداد غير صالح.",
   "RefundIssue.InvalidReviewStatus": "حالة مراجعة الاسترداد غير صالحة.",
   "RefundIssue.AlreadyClosed": "طلب مراجعة الاسترداد هذا مغلق بالفعل.",
+  "RefundIssue.AlreadyOpen": "لديك بالفعل طلب مراجعة استرداد لهذه الرحلة. سنعاود التواصل معك خلال يومَي عمل كحد أقصى.",
   "RefundIssue.Created.AdminTitle": "تم إرسال طلب مراجعة استرداد",
   "RefundIssue.Created.AdminBody": "طلب أحد العملاء مراجعة الاسترداد للرحلة {0}.",
   "Refund.Retry.Succeeded.AdminTitle": "تم قبول إعادة محاولة الاسترداد",

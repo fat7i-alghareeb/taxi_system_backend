@@ -305,6 +305,7 @@
   "RefundIssue.InvalidRequestType": "Type de demande de remboursement invalide.",
   "RefundIssue.InvalidReviewStatus": "Statut de revue de remboursement invalide.",
   "RefundIssue.AlreadyClosed": "Cette demande de remboursement est déjà clôturée.",
+  "RefundIssue.AlreadyOpen": "Vous avez déjà une demande de vérification de remboursement pour ce trajet. Nous vous répondrons sous 2 jours ouvrés maximum.",
   "RefundIssue.Created.AdminTitle": "Demande de remboursement envoyée",
   "RefundIssue.Created.AdminBody": "Un client a demandé une revue de remboursement pour la course {0}.",
   "Refund.Retry.Succeeded.AdminTitle": "Nouvelle tentative de remboursement acceptée",

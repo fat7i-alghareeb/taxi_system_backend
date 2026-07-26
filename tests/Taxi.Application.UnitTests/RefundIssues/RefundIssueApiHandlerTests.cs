@@ -5,6 +5,7 @@ using Taxi.Application.Common.Interfaces;
 using Taxi.Application.Features.Payments.Dtos;
 using Taxi.Application.Features.RefundIssues.Commands.SubmitRefundIssue;
 using Taxi.Application.Features.RefundIssues.Dtos;
+using Taxi.Application.Features.Trips.Dtos;
 using Taxi.Application.Features.Refunds.Commands.RetryRefund;
 using Taxi.Application.Features.Refunds.Queries.GetRefundById;
 using Taxi.Application.Features.Refunds.Queries.GetRefunds;
@@ -112,6 +113,109 @@ public class RefundIssueApiHandlerTests
             issue.RefundAmountSnapshot == cancellation.RefundAmount));
     }
 
+    [Theory]
+    [InlineData(RefundIssueReviewStatus.Open)]
+    [InlineData(RefundIssueReviewStatus.InReview)]
+    public async Task SubmitRefundIssue_WhenAnIssueIsStillOpen_IsRejectedAndDoesNotNotifyAdminsAgain(
+        RefundIssueReviewStatus existingStatus)
+    {
+        // The reported bug: pressing the CTA a second time created another row AND fired another
+        // admin push + SignalR broadcast. The DidNotReceive assertions are what actually pin it.
+        var passengerId = Guid.NewGuid();
+        var trip = CreateTrip(passengerId);
+        var context = BuildContext(
+            trips: [trip],
+            issues: [CreateIssue(trip.Id, passengerId, existingStatus)]);
+        var notifications = Substitute.For<INotificationService>();
+        var tripNotifier = Substitute.For<ITripNotifier>();
+        var handler = BuildSubmitHandler(context, passengerId, notifications, tripNotifier);
+
+        var result = await handler.Handle(BuildCommand(trip.Id), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(RefundIssueErrors.AlreadyOpen.Code, result.Errors[0].Code);
+        context.RefundIssues.DidNotReceive().Add(Arg.Any<RefundIssue>());
+        await context.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+        await notifications.DidNotReceiveWithAnyArgs().SendPushNotificationToAdminsAsync(
+            default!, default!, default!, default, default, default);
+        await tripNotifier.DidNotReceiveWithAnyArgs().NotifyRefundIssueCreatedToAdminsAsync(
+            default, default, default, default, default!, default!, default, default);
+    }
+
+    [Theory]
+    [InlineData(RefundIssueReviewStatus.Resolved)]
+    [InlineData(RefundIssueReviewStatus.Dismissed)]
+    public async Task SubmitRefundIssue_WhenThePreviousIssueIsClosed_CreatesANewOne(
+        RefundIssueReviewStatus existingStatus)
+    {
+        // Closing an issue frees the slot: a passenger whose refund still hasn't landed after the
+        // admin resolved their first request must be able to come back.
+        var passengerId = Guid.NewGuid();
+        var trip = CreateTrip(passengerId);
+        var context = BuildContext(
+            trips: [trip],
+            issues: [CreateIssue(trip.Id, passengerId, existingStatus)]);
+        var handler = BuildSubmitHandler(context, passengerId);
+
+        var result = await handler.Handle(BuildCommand(trip.Id), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        context.RefundIssues.Received(1).Add(Arg.Any<RefundIssue>());
+    }
+
+    [Fact]
+    public async Task SubmitRefundIssue_WhenTheOpenIssueBelongsToAnotherTrip_CreatesANewOne()
+    {
+        var passengerId = Guid.NewGuid();
+        var trip = CreateTrip(passengerId);
+        var context = BuildContext(
+            trips: [trip],
+            issues: [CreateIssue(Guid.NewGuid(), passengerId, RefundIssueReviewStatus.Open)]);
+        var handler = BuildSubmitHandler(context, passengerId);
+
+        var result = await handler.Handle(BuildCommand(trip.Id), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        context.RefundIssues.Received(1).Add(Arg.Any<RefundIssue>());
+    }
+
+    [Fact]
+    public async Task SubmitRefundIssue_WhenCallerIsNotTheOwner_ReportsOwnershipNotTheOpenIssue()
+    {
+        // Ownership must fail first. Answering AlreadyOpen for a stranger's trip would leak whether
+        // it has an open refund complaint.
+        var passengerId = Guid.NewGuid();
+        var trip = CreateTrip(passengerId);
+        var context = BuildContext(
+            trips: [trip],
+            issues: [CreateIssue(trip.Id, passengerId, RefundIssueReviewStatus.Open)]);
+        var handler = BuildSubmitHandler(context, Guid.NewGuid());
+
+        var result = await handler.Handle(BuildCommand(trip.Id), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(TripErrors.NotOwnedByPassenger.Code, result.Errors[0].Code);
+    }
+
+    [Fact]
+    public async Task SubmitRefundIssue_WhenAdminSubmitsForAPassengerWithAnOpenIssue_IsRejected()
+    {
+        // The guard filters on trip.PassengerId, not the caller — an admin submitting on the
+        // passenger's behalf writes the passenger's id, so a callerId predicate would let this path
+        // slip past the handler and hit the unique index instead.
+        var passengerId = Guid.NewGuid();
+        var trip = CreateTrip(passengerId);
+        var context = BuildContext(
+            trips: [trip],
+            issues: [CreateIssue(trip.Id, passengerId, RefundIssueReviewStatus.Open)]);
+        var handler = BuildSubmitHandler(context, Guid.NewGuid(), isAdmin: true);
+
+        var result = await handler.Handle(BuildCommand(trip.Id), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(RefundIssueErrors.AlreadyOpen.Code, result.Errors[0].Code);
+    }
+
     [Fact]
     public void CustomerRefundDtos_DoNotExposeStripeInternals()
     {
@@ -124,10 +228,22 @@ public class RefundIssueApiHandlerTests
             .Select(property => property.Name)
             .ToList();
 
+        // TripRefundIssueDto rides on TripDto, which GET /trips/{id} also serves to the assigned
+        // driver — so it must additionally withhold the passenger's note and the admin's notes.
+        var tripRefundIssueProperties = typeof(TripRefundIssueDto)
+            .GetProperties()
+            .Select(property => property.Name)
+            .ToList();
+
         Assert.DoesNotContain(customerRefundProperties, name => name.Contains("Stripe", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(refundIssueProperties, name => name.Contains("Stripe", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(tripRefundIssueProperties, name => name.Contains("Stripe", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(customerRefundProperties, name => name.Contains("FailureReason", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(refundIssueProperties, name => name.Contains("FailureReason", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(tripRefundIssueProperties, name => name.Contains("FailureReason", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(tripRefundIssueProperties, name => name.Contains("AdminNotes", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(tripRefundIssueProperties, name => name.Contains("ReviewedByAdminId", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(tripRefundIssueProperties, name => name.Equals("Note", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -246,6 +362,55 @@ public class RefundIssueApiHandlerTests
         Assert.True(result.IsFailure);
         Assert.Equal(PaymentErrors.RefundFullyRefunded.Code, result.Error.Code);
         await lifecycle.Received(1).RetryRefundAsync(refund.Id, adminId, "retry note", Arg.Any<CancellationToken>());
+    }
+
+    private static SubmitRefundIssueCommand BuildCommand(Guid tripId) =>
+        new(
+            tripId,
+            nameof(RefundIssueRequestType.DidNotReceiveRefund),
+            "did-not-receive",
+            "Still nothing on my bank account.",
+            false);
+
+    private static SubmitRefundIssueCommandHandler BuildSubmitHandler(
+        IAppDbContext context,
+        Guid callerId,
+        INotificationService? notifications = null,
+        ITripNotifier? tripNotifier = null,
+        bool isAdmin = false)
+    {
+        var currentUser = Substitute.For<IUser>();
+        currentUser.Id.Returns(callerId.ToString());
+        currentUser.IsAdmin.Returns(isAdmin);
+
+        return new SubmitRefundIssueCommandHandler(
+            context,
+            currentUser,
+            notifications ?? Substitute.For<INotificationService>(),
+            tripNotifier ?? Substitute.For<ITripNotifier>(),
+            Substitute.For<ILogger<SubmitRefundIssueCommandHandler>>());
+    }
+
+    private static RefundIssue CreateIssue(
+        Guid tripId,
+        Guid passengerId,
+        RefundIssueReviewStatus status)
+    {
+        var issue = RefundIssue.Create(
+            Guid.NewGuid(),
+            passengerId,
+            tripId,
+            paymentId: null,
+            RefundIssueRequestType.DidNotReceiveRefund,
+            "did-not-receive").Value;
+
+        // Create() always starts at Open; Review() rejects Open as a target.
+        if (status != RefundIssueReviewStatus.Open)
+        {
+            issue.Review(status, Guid.NewGuid(), adminNotes: null);
+        }
+
+        return issue;
     }
 
     private static Trip CreateTrip(Guid passengerId)

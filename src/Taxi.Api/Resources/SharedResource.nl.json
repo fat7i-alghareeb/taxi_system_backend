@@ -305,6 +305,7 @@
   "RefundIssue.InvalidRequestType": "Ongeldig type terugbetalingsverzoek.",
   "RefundIssue.InvalidReviewStatus": "Ongeldige beoordelingsstatus voor het terugbetalingsverzoek.",
   "RefundIssue.AlreadyClosed": "Dit terugbetalingsverzoek is al gesloten.",
+  "RefundIssue.AlreadyOpen": "Je hebt al een controleverzoek voor de terugbetaling van deze rit. We komen binnen maximaal 2 werkdagen bij je terug.",
   "RefundIssue.Created.AdminTitle": "Terugbetalingsverzoek ingediend",
   "RefundIssue.Created.AdminBody": "Een klant vraagt een terugbetalingscontrole aan voor rit {0}.",
   "Refund.Retry.Succeeded.AdminTitle": "Nieuwe terugbetalingspoging geaccepteerd",

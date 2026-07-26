@@ -305,6 +305,7 @@
   "RefundIssue.InvalidRequestType": "Nieprawidłowy typ zgłoszenia zwrotu.",
   "RefundIssue.InvalidReviewStatus": "Nieprawidłowy status weryfikacji zgłoszenia zwrotu.",
   "RefundIssue.AlreadyClosed": "To zgłoszenie zwrotu jest już zamknięte.",
+  "RefundIssue.AlreadyOpen": "Masz już zgłoszenie weryfikacji zwrotu dla tego przejazdu. Odezwiemy się w ciągu maksymalnie 2 dni roboczych.",
   "RefundIssue.Created.AdminTitle": "Przesłano zgłoszenie zwrotu",
   "RefundIssue.Created.AdminBody": "Klient poprosił o weryfikację zwrotu dla przejazdu {0}.",
   "Refund.Retry.Succeeded.AdminTitle": "Ponowna próba zwrotu zaakceptowana",

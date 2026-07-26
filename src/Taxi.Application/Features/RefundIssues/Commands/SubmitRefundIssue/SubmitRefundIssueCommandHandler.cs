@@ -46,6 +46,34 @@ public sealed class SubmitRefundIssueCommandHandler(
             return TripErrors.NotOwnedByPassenger;
         }
 
+        // One open refund review per passenger per trip. Mirrors the
+        // IX_RefundIssues_TripId_PassengerId_Open filtered unique index — the index is the real
+        // guarantee, this check is what turns a repeat tap into a clean 409 instead of a
+        // constraint violation, and stops the duplicate admin push + SignalR broadcast that made
+        // this bug visible in the first place.
+        //
+        // Placed after the ownership check so NotOwnedByPassenger stays the first observable
+        // failure for a non-owner: answering 409 for someone else's trip would reveal whether it
+        // has an open refund complaint. Placed before the payment/refund/cancellation loads below
+        // because those three round-trips only exist to snapshot values onto a row we are about to
+        // refuse to create, and repeat presses are this bug's hot path.
+        //
+        // Filtered on trip.PassengerId rather than callerId to match what gets written below: an
+        // admin may submit on the passenger's behalf, and a callerId predicate would let that path
+        // slip past this check straight into the unique index.
+        var hasOpenIssue = await context.RefundIssues
+            .AsNoTracking()
+            .AnyAsync(
+                issue => issue.TripId == trip.Id
+                    && issue.PassengerId == trip.PassengerId
+                    && (issue.ReviewStatus == RefundIssueReviewStatus.Open
+                        || issue.ReviewStatus == RefundIssueReviewStatus.InReview),
+                ct);
+        if (hasOpenIssue)
+        {
+            return RefundIssueErrors.AlreadyOpen;
+        }
+
         var payment = await context.Payments
             .AsNoTracking()
             .Where(payment => payment.TripId == trip.Id)

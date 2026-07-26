@@ -45,6 +45,15 @@ public static class TripDtoBuilder
             .Where(c => c.TripId == trip.Id)
             .OrderByDescending(c => c.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
+
+        // Latest of any status, not latest-open: the same single query also lets the app tell the
+        // passenger "your earlier request was resolved on X" above a fresh form, which is exactly
+        // the state that resolving an issue creates. TripRefundIssueDto.IsOpen carries the branch.
+        var refundIssue = await context.RefundIssues
+            .Where(i => i.TripId == trip.Id && i.PassengerId == trip.PassengerId)
+            .OrderByDescending(i => i.CreatedAtUtc)
+            .FirstOrDefaultAsync(ct);
+
         var activeWaitingSession = await context.TripWaitingSessions
             .Where(w => w.TripId == trip.Id && w.StoppedAtUtc == null)
             .OrderByDescending(w => w.StartedAtUtc)
@@ -127,6 +136,7 @@ public static class TripDtoBuilder
             Refund: latestRefund?.ToRefundDto(),
             PassengerCount: trip.PassengerCount,
             BagCount: trip.BagCount,
-            NoDriverDecisionRequired: trip.NoDriverDecisionRequired);
+            NoDriverDecisionRequired: trip.NoDriverDecisionRequired,
+            RefundIssue: refundIssue?.ToTripDto());
     }
 }

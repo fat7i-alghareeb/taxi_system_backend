@@ -305,6 +305,7 @@
   "RefundIssue.InvalidRequestType": "Недійсний тип звернення щодо повернення коштів.",
   "RefundIssue.InvalidReviewStatus": "Недійсний статус розгляду звернення щодо повернення коштів.",
   "RefundIssue.AlreadyClosed": "Це звернення щодо повернення коштів уже закрито.",
+  "RefundIssue.AlreadyOpen": "У вас уже є запит на перевірку повернення коштів для цієї поїздки. Ми відповімо протягом щонайбільше 2 робочих днів.",
   "RefundIssue.Created.AdminTitle": "Надіслано звернення щодо повернення",
   "RefundIssue.Created.AdminBody": "Клієнт попросив перевірити повернення коштів для поїздки {0}.",
   "Refund.Retry.Succeeded.AdminTitle": "Повторну спробу повернення прийнято",

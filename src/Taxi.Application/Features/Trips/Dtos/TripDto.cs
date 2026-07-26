@@ -45,7 +45,12 @@ public record TripDto(
     TripRefundDto? Refund = null,
     int PassengerCount = 1,
     int BagCount = 0,
-    bool NoDriverDecisionRequired = false);
+    bool NoDriverDecisionRequired = false,
+
+    // The passenger's latest refund review request, so the app can show "under review" instead of
+    // offering the form again. Appended with a default because TripDto is also constructed
+    // positionally from the request/cancel/edit handlers, where null is the correct value.
+    TripRefundIssueDto? RefundIssue = null);
 
 public record TripRouteSegmentDto(
     int DistanceMeters,

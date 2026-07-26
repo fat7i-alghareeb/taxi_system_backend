@@ -305,6 +305,7 @@
   "RefundIssue.InvalidRequestType": "Ungültiger Typ der Rückerstattungsanfrage.",
   "RefundIssue.InvalidReviewStatus": "Ungültiger Prüfstatus der Rückerstattungsanfrage.",
   "RefundIssue.AlreadyClosed": "Diese Rückerstattungsanfrage ist bereits geschlossen.",
+  "RefundIssue.AlreadyOpen": "Für diese Fahrt liegt bereits eine Anfrage zur Rückerstattungsprüfung vor. Wir melden uns innerhalb von maximal 2 Werktagen.",
   "RefundIssue.Created.AdminTitle": "Rückerstattungsanfrage eingereicht",
   "RefundIssue.Created.AdminBody": "Ein Kunde hat eine Rückerstattungsprüfung für Fahrt {0} angefordert.",
   "Refund.Retry.Succeeded.AdminTitle": "Rückerstattungsversuch akzeptiert",

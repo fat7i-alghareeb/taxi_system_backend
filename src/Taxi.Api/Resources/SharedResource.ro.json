@@ -305,6 +305,7 @@
   "RefundIssue.InvalidRequestType": "Tip de solicitare de rambursare nevalid.",
   "RefundIssue.InvalidReviewStatus": "Stare de revizuire a rambursării nevalidă.",
   "RefundIssue.AlreadyClosed": "Această solicitare de rambursare este deja închisă.",
+  "RefundIssue.AlreadyOpen": "Ai deja o solicitare de verificare a rambursării pentru această cursă. Revenim în maximum 2 zile lucrătoare.",
   "RefundIssue.Created.AdminTitle": "Solicitare de rambursare trimisă",
   "RefundIssue.Created.AdminBody": "Un client a cerut revizuirea rambursării pentru cursa {0}.",
   "Refund.Retry.Succeeded.AdminTitle": "Reîncercarea rambursării a fost acceptată",

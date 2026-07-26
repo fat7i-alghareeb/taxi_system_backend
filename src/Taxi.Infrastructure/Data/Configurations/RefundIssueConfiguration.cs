@@ -57,6 +57,19 @@ public sealed class RefundIssueConfiguration : IEntityTypeConfiguration<RefundIs
         builder.HasIndex(x => x.TripCancellationId);
         builder.HasIndex(x => new { x.ReviewStatus, x.CreatedAtUtc });
 
+        // At most ONE Open/InReview refund review per passenger per trip. The handler check in
+        // SubmitRefundIssueCommandHandler is TOCTOU on its own; this is what actually holds the
+        // invariant against retried or replayed requests.
+        //
+        // ReviewStatus is persisted as text (HasConversion<string>() above), so the partial-index
+        // predicate compares string literals, not enum ordinals. The non-unique HasIndex(TripId)
+        // above stays: the admin list's ?tripId= filter needs it and a partial index cannot serve
+        // unfiltered lookups.
+        builder.HasIndex(x => new { x.TripId, x.PassengerId })
+            .IsUnique()
+            .HasFilter("\"ReviewStatus\" IN ('Open', 'InReview')")
+            .HasDatabaseName("IX_RefundIssues_TripId_PassengerId_Open");
+
         builder.HasOne<User>()
             .WithMany()
             .HasForeignKey(x => x.PassengerId)

@@ -305,6 +305,7 @@
   "RefundIssue.InvalidRequestType": "Tipo de solicitud de reembolso no válido.",
   "RefundIssue.InvalidReviewStatus": "Estado de revisión de reembolso no válido.",
   "RefundIssue.AlreadyClosed": "Esta solicitud de reembolso ya está cerrada.",
+  "RefundIssue.AlreadyOpen": "Ya tienes una solicitud de revisión de reembolso para este viaje. Te responderemos en un plazo máximo de 2 días laborables.",
   "RefundIssue.Created.AdminTitle": "Solicitud de reembolso enviada",
   "RefundIssue.Created.AdminBody": "Un cliente solicitó revisión de reembolso para el viaje {0}.",
   "Refund.Retry.Succeeded.AdminTitle": "Reintento de reembolso aceptado",

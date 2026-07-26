@@ -273,6 +273,7 @@ public static class LocalizationKeys
         public const string InvalidRequestType = "RefundIssue.InvalidRequestType";
         public const string InvalidReviewStatus = "RefundIssue.InvalidReviewStatus";
         public const string AlreadyClosed = "RefundIssue.AlreadyClosed";
+        public const string AlreadyOpen = "RefundIssue.AlreadyOpen";
         public const string CreatedAdminTitle = "RefundIssue.Created.AdminTitle";
         public const string CreatedAdminBody = "RefundIssue.Created.AdminBody";
         public const string RetrySucceededAdminTitle = "Refund.Retry.Succeeded.AdminTitle";

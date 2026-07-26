@@ -317,7 +317,8 @@ public class TripsController(ISender sender) : ApiController
     [ProducesResponseType(typeof(RefundIssueDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [EndpointSummary("Creates a customer refund review/support request. This never triggers a Stripe refund.")]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [EndpointSummary("Creates a customer refund review/support request. One per trip while Open or InReview; returns 409 otherwise. This never triggers a Stripe refund.")]
     [EndpointName("SubmitRefundIssue")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> SubmitRefundIssue(Guid id, [FromBody] CreateRefundIssueRequest request, CancellationToken ct)
