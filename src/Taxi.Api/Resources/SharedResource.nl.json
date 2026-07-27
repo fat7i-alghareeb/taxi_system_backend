@@ -108,6 +108,7 @@
   "User.Profile.NameRequired": "Naam is vereist.",
   "User.Profile.PhotoInvalid": "Foto moet een JPEG- of PNG-afbeelding zijn van minder dan 5MB.",
   "Trip.ScheduledAt.TooSoon": "De geplande tijd moet minimaal 15 minuten in de toekomst liggen.",
+  "Trip.Schedule.Conflict": "U heeft al een rit rond deze tijd. Er kan maar één rit tegelijk onderweg zijn — kies een andere tijd.",
   "Trip.Scheduled.NotReady": "Deze rit is gepland en kan pas op de geplande tijd worden toegewezen.",
   "Trip.Scheduled.EnRouteNotReady": "Deze geplande rit kan pas 15 minuten vóór de geplande tijd als onderweg worden gemarkeerd.",
   "Trip.Scheduled.ArrivalNotReady": "Deze geplande rit kan niet vóór de geplande tijd als aangekomen worden gemarkeerd.",

@@ -108,6 +108,7 @@
   "User.Profile.NameRequired": "El nombre es obligatorio.",
   "User.Profile.PhotoInvalid": "La foto debe ser una imagen JPEG o PNG de menos de 5MB.",
   "Trip.ScheduledAt.TooSoon": "La hora programada debe ser al menos 15 minutos en el futuro.",
+  "Trip.Schedule.Conflict": "Ya tiene un viaje a esta hora. Solo puede haber un viaje en curso a la vez — elija otra hora.",
   "Trip.Scheduled.NotReady": "Este viaje está programado y no puede asignarse hasta su hora programada.",
   "Trip.Scheduled.EnRouteNotReady": "Este viaje programado solo puede marcarse en camino 15 minutos antes de su hora programada.",
   "Trip.Scheduled.ArrivalNotReady": "Este viaje programado no puede marcarse como llegado antes de su hora programada.",

@@ -108,6 +108,7 @@
   "User.Profile.NameRequired": "Imię i nazwisko są wymagane.",
   "User.Profile.PhotoInvalid": "Zdjęcie musi być w formacie JPEG lub PNG i mieć mniej niż 5 MB.",
   "Trip.ScheduledAt.TooSoon": "Zaplanowany czas musi być co najmniej 15 minut w przyszłości.",
+  "Trip.Schedule.Conflict": "Masz już przejazd o tej porze. Tylko jeden przejazd może trwać jednocześnie — wybierz inną godzinę.",
   "Trip.Scheduled.NotReady": "Ten przejazd jest zaplanowany i nie może zostać przypisany przed wyznaczonym czasem.",
   "Trip.Scheduled.EnRouteNotReady": "Ten zaplanowany przejazd można oznaczyć jako w drodze dopiero 15 minut przed wyznaczonym czasem.",
   "Trip.Scheduled.ArrivalNotReady": "Tego zaplanowanego przejazdu nie można oznaczyć jako przybyły przed wyznaczonym czasem.",

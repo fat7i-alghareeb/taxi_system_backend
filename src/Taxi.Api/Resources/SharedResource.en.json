@@ -106,6 +106,7 @@
   "User.Profile.NameRequired": "Name is required.",
   "User.Profile.PhotoInvalid": "Photo must be a JPEG or PNG image under 5MB.",
   "Trip.ScheduledAt.TooSoon": "Scheduled time must be at least 15 minutes in the future.",
+  "Trip.Schedule.Conflict": "You already have a ride around this time. Only one ride can be underway at a time — please pick another time.",
   "Trip.Scheduled.NotReady": "This trip is scheduled and cannot be assigned until its scheduled time.",
   "Trip.Scheduled.EnRouteNotReady": "This scheduled trip can only be marked on the way 15 minutes before its scheduled time.",
   "Trip.Scheduled.ArrivalNotReady": "This scheduled trip cannot be marked arrived before its scheduled time.",

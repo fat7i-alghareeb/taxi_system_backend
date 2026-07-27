@@ -17,16 +17,7 @@ public class GetMyActiveTripQueryHandler(
     private readonly IAppDbContext _context = context;
     private readonly IUser _currentUser = currentUser;
 
-    // Non-terminal statuses that count as a live, resumable trip. AwaitingPayment
-    // and PendingQuote are excluded — those are still part of the booking flow.
-    private static readonly TripStatus[] ActiveStatuses =
-    [
-        TripStatus.AwaitingAdminAcceptance,
-        TripStatus.Accepted,
-        TripStatus.EnRoute,
-        TripStatus.Arrived,
-        TripStatus.InProgress,
-    ];
+    private static readonly TripStatus[] ActiveStatuses = TripStatuses.Active;
 
     public async Task<Result<TripDto?>> Handle(GetMyActiveTripQuery request, CancellationToken ct)
     {

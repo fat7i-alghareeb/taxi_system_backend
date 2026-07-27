@@ -108,6 +108,7 @@
   "User.Profile.NameRequired": "Le nom est requis.",
   "User.Profile.PhotoInvalid": "La photo doit être une image JPEG ou PNG de moins de 5 Mo.",
   "Trip.ScheduledAt.TooSoon": "L'heure programmée doit être au moins 15 minutes dans le futur.",
+  "Trip.Schedule.Conflict": "Vous avez déjà une course à cette heure. Une seule course peut être en cours à la fois — veuillez choisir un autre horaire.",
   "Trip.Scheduled.NotReady": "Ce trajet est programmé et ne peut pas être attribué avant son heure prévue.",
   "Trip.Scheduled.EnRouteNotReady": "Ce trajet programmé ne peut être marqué en route que 15 minutes avant son heure prévue.",
   "Trip.Scheduled.ArrivalNotReady": "Ce trajet programmé ne peut pas être marqué arrivé avant son heure prévue.",

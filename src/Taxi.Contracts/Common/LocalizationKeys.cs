@@ -206,6 +206,7 @@ public static class LocalizationKeys
         public const string VehicleTypeNotFound = "Trip.VehicleType.NotFound";
         public const string DriverNotFound = "Trip.Driver.NotFound";
         public const string ScheduledAtTooSoon = "Trip.ScheduledAt.TooSoon";
+        public const string ScheduleConflict = "Trip.Schedule.Conflict";
         public const string ScheduledNotReady = "Trip.Scheduled.NotReady";
         public const string ScheduledEnRouteNotReady = "Trip.Scheduled.EnRouteNotReady";
         public const string ScheduledArrivalNotReady = "Trip.Scheduled.ArrivalNotReady";

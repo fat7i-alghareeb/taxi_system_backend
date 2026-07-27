@@ -108,6 +108,7 @@
   "User.Profile.NameRequired": "Numele este obligatoriu.",
   "User.Profile.PhotoInvalid": "Fotografia trebuie să fie o imagine JPEG sau PNG sub 5MB.",
   "Trip.ScheduledAt.TooSoon": "Ora programată trebuie să fie cu cel puțin 15 minute în viitor.",
+  "Trip.Schedule.Conflict": "Aveți deja o cursă în jurul acestei ore. Poate fi o singură cursă în desfășurare la un moment dat — alegeți altă oră.",
   "Trip.Scheduled.NotReady": "Această cursă este programată și nu poate fi alocată înainte de ora programată.",
   "Trip.Scheduled.EnRouteNotReady": "Această cursă programată poate fi marcată ca în drum doar cu 15 minute înainte de ora programată.",
   "Trip.Scheduled.ArrivalNotReady": "Această cursă programată nu poate fi marcată ca sosită înainte de ora programată.",

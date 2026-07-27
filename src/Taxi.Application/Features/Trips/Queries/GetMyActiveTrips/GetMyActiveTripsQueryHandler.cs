@@ -17,16 +17,7 @@ public class GetMyActiveTripsQueryHandler(
     private readonly IAppDbContext _context = context;
     private readonly IUser _currentUser = currentUser;
 
-    /// Kept in sync with GetMyActiveTripQueryHandler.ActiveStatuses. AwaitingPayment
-    /// and PendingQuote are excluded — those are still part of the booking flow.
-    private static readonly TripStatus[] ActiveStatuses =
-    [
-        TripStatus.AwaitingAdminAcceptance,
-        TripStatus.Accepted,
-        TripStatus.EnRoute,
-        TripStatus.Arrived,
-        TripStatus.InProgress,
-    ];
+    private static readonly TripStatus[] ActiveStatuses = TripStatuses.Active;
 
     /// Sanity cap. A passenger legitimately holding more than this many open trips
     /// is a support case, not a UI case.

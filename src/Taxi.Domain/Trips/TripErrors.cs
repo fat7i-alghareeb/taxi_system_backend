@@ -37,6 +37,10 @@ public static class TripErrors
         code: LocalizationKeys.Trip.QuoteAlreadyUsed,
         description: "This quote has already been used.");
 
+    public static readonly Error ScheduleConflict = Error.Conflict(
+        code: LocalizationKeys.Trip.ScheduleConflict,
+        description: "You already have a ride around this time. Only one ride can be underway at a time.");
+
     public static readonly Error DriverNotFound = Error.NotFound(
         code: LocalizationKeys.Trip.DriverNotFound,
         description: "No available driver found to assign to this trip.");

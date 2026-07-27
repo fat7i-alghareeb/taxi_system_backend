@@ -47,6 +47,16 @@ public class RequestTripCommandHandler(
             return debtError;
         }
 
+        // Only one trip may be underway at a time. Placed before the quote is touched so it
+        // also covers the resume branch below. The comparison is on when each trip becomes
+        // *active* rather than on pickup times: a scheduled trip goes live at
+        // pickup - ScheduledEnRouteLeadTime, so an immediate ride booked half an hour before
+        // a reservation's dispatch window opens would otherwise slip through.
+        if (await HasConflictingTripAsync(passengerId, request.ScheduledAt, ct))
+        {
+            return TripErrors.ScheduleConflict;
+        }
+
         var quote = await _context.PricingQuotes
             .FirstOrDefaultAsync(q => q.Id == request.QuoteId && q.PassengerId == passengerId, ct);
 
@@ -199,6 +209,37 @@ public class RequestTripCommandHandler(
         }
 
         return await BuildTripResultAsync(trip, quote, stripePaymentDto, ct);
+    }
+
+    /// <summary>
+    /// Whether the passenger already holds a trip whose active window overlaps the
+    /// one being booked. AwaitingPayment is excluded via <see cref="TripStatuses.Active"/>,
+    /// so a trip being resumed never conflicts with itself and an abandoned
+    /// half-paid booking never blocks the next one.
+    /// </summary>
+    private async Task<bool> HasConflictingTripAsync(
+        Guid passengerId,
+        DateTimeOffset? scheduledAt,
+        CancellationToken ct)
+    {
+        var newWindowStart = TripScheduleConflict.ActiveWindowStart(
+            scheduledAt,
+            timeProvider.GetUtcNow());
+
+        // The window maths cannot be translated to SQL, so narrow the rows in the
+        // database and decide in memory. A passenger holds a handful of open trips
+        // at most.
+        var openTrips = await _context.Trips
+            .AsNoTracking()
+            .Where(t => t.PassengerId == passengerId && TripStatuses.Active.Contains(t.Status))
+            .Select(t => new { t.ScheduledAtUtc, t.CreatedAtUtc })
+            .ToListAsync(ct);
+
+        return openTrips.Any(
+            t => TripScheduleConflict.ConflictsWith(
+                newWindowStart,
+                t.ScheduledAtUtc,
+                t.CreatedAtUtc));
     }
 
     // Card path — full fare on the Stripe sheet. Unchanged from the original behavior.

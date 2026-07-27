@@ -7,7 +7,12 @@ namespace Taxi.Domain.Trips;
 
 public sealed class Trip : AuditableEntity
 {
-    private static readonly TimeSpan ScheduledEnRouteLeadTime = TimeSpan.FromMinutes(15);
+    /// <summary>
+    /// How far before the scheduled pickup a trip stops being a quiet
+    /// reservation and starts occupying the passenger. Public because
+    /// <see cref="TripScheduleConflict"/> reasons about the same moment.
+    /// </summary>
+    public static readonly TimeSpan ScheduledEnRouteLeadTime = TimeSpan.FromMinutes(15);
 
     // Tolerance that absorbs small clock differences between the driver's device
     // and the server when checking whether a scheduled trip's start time has

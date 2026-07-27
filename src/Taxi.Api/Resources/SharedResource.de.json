@@ -108,6 +108,7 @@
   "User.Profile.NameRequired": "Name ist erforderlich.",
   "User.Profile.PhotoInvalid": "Das Foto muss ein JPEG- oder PNG-Bild unter 5 MB sein.",
   "Trip.ScheduledAt.TooSoon": "Die geplante Zeit muss mindestens 15 Minuten in der Zukunft liegen.",
+  "Trip.Schedule.Conflict": "Sie haben bereits eine Fahrt um diese Zeit. Es kann immer nur eine Fahrt unterwegs sein — bitte wählen Sie eine andere Zeit.",
   "Trip.Scheduled.NotReady": "Diese Fahrt ist geplant und kann erst zu ihrer geplanten Zeit zugewiesen werden.",
   "Trip.Scheduled.EnRouteNotReady": "Diese geplante Fahrt kann erst 15 Minuten vor ihrer geplanten Zeit als unterwegs markiert werden.",
   "Trip.Scheduled.ArrivalNotReady": "Diese geplante Fahrt kann nicht vor ihrer geplanten Zeit als angekommen markiert werden.",
