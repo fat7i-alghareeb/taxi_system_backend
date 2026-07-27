@@ -111,6 +111,8 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip>
         builder.Property(t => t.UnacceptedOverdueSentAtUtc).IsRequired(false);
         builder.Property(t => t.AcceptedReminder30SentAtUtc).IsRequired(false);
         builder.Property(t => t.AcceptedReminder15SentAtUtc).IsRequired(false);
+        builder.Property(t => t.CustomerReminder30SentAtUtc).IsRequired(false);
+        builder.Property(t => t.CustomerReminder15SentAtUtc).IsRequired(false);
 
         builder.Property(t => t.NoDriverPromptDueAtUtc).IsRequired(false);
         builder.Property(t => t.NoDriverDecisionRequired)

@@ -8,8 +8,9 @@ using Taxi.Domain.Trips;
 namespace Taxi.Infrastructure.BackgroundJobs;
 
 /// <summary>
-/// Produces admin-only preparation and escalation reminders for scheduled trips.
-/// It never changes trip workflow status and never sends customer notifications.
+/// Produces reminders for scheduled trips: admin preparation/escalation reminders,
+/// plus the 30- and 15-minute countdown reminders promised to the passenger at
+/// booking time. It never changes trip workflow status.
 /// </summary>
 public sealed class ScheduledTripActivationService(
     IServiceScopeFactory scopeFactory,
@@ -45,72 +46,31 @@ public sealed class ScheduledTripActivationService(
         var hasChanges = false;
         foreach (var trip in trips)
         {
-            var stage = ResolveCurrentStage(trip, now);
-            if (stage is null || trip.HasReminderBeenSent(stage.Value))
-            {
-                continue;
-            }
+            var dueStages = ScheduledTripReminderSchedule.ResolveDueStages(
+                trip.Status,
+                trip.ScheduledAtUtc!.Value,
+                trip.CreatedAtUtc,
+                now);
 
-            trip.MarkReminderSent(stage.Value, now);
-            hasChanges = true;
-            logger.LogInformation(
-                "Queued scheduled trip reminder {Stage} for trip {TripId}.",
-                stage,
-                trip.Id);
+            foreach (var stage in dueStages)
+            {
+                if (trip.HasReminderBeenSent(stage))
+                {
+                    continue;
+                }
+
+                trip.MarkReminderSent(stage, now);
+                hasChanges = true;
+                logger.LogInformation(
+                    "Queued scheduled trip reminder {Stage} for trip {TripId}.",
+                    stage,
+                    trip.Id);
+            }
         }
 
         if (hasChanges)
         {
             await context.SaveChangesAsync(ct);
         }
-    }
-
-    private static ScheduledTripReminderStage? ResolveCurrentStage(
-        Trip trip,
-        DateTimeOffset now)
-    {
-        var remaining = trip.ScheduledAtUtc!.Value - now;
-
-        if (trip.Status == TripStatus.AwaitingAdminAcceptance)
-        {
-            if (remaining <= TimeSpan.Zero)
-            {
-                return ScheduledTripReminderStage.UnacceptedOverdue;
-            }
-
-            if (remaining <= TimeSpan.FromMinutes(15))
-            {
-                return ScheduledTripReminderStage.Unaccepted15Minutes;
-            }
-
-            if (remaining <= TimeSpan.FromMinutes(30))
-            {
-                return ScheduledTripReminderStage.Unaccepted30Minutes;
-            }
-
-            if (remaining <= TimeSpan.FromMinutes(60))
-            {
-                return ScheduledTripReminderStage.Unaccepted60Minutes;
-            }
-
-            return null;
-        }
-
-        if (remaining <= TimeSpan.Zero)
-        {
-            return null;
-        }
-
-        if (remaining <= TimeSpan.FromMinutes(15))
-        {
-            return ScheduledTripReminderStage.Accepted15Minutes;
-        }
-
-        if (remaining <= TimeSpan.FromMinutes(30))
-        {
-            return ScheduledTripReminderStage.Accepted30Minutes;
-        }
-
-        return null;
     }
 }

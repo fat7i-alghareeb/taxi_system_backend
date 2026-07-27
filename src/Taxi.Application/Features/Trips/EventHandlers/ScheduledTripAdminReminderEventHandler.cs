@@ -33,8 +33,16 @@ public sealed class ScheduledTripAdminReminderEventHandler(
             ScheduledTripReminderStage.Accepted15Minutes =>
                 (LocalizationKeys.Notification.AdminAcceptedReminder15Title,
                  LocalizationKeys.Notification.AdminAcceptedReminder15Body),
-            _ => throw new ArgumentOutOfRangeException(),
+            // Customer-facing stages raise ScheduledTripCustomerReminder instead and
+            // never reach here; ignore rather than throw so a future stage cannot
+            // take down the reminder dispatcher.
+            _ => (Title: null!, Body: null!),
         };
+
+        if (title is null)
+        {
+            return Task.CompletedTask;
+        }
 
         return notificationService.SendPushNotificationToAdminsAsync(
             title,

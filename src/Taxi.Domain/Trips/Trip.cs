@@ -88,6 +88,14 @@ public sealed class Trip : AuditableEntity
     public DateTimeOffset? AcceptedReminder15SentAtUtc { get; private set; }
 
     /// <summary>
+    /// Customer-facing countdown reminders. Separate from the admin flags above
+    /// because both audiences are due at the same T-30 / T-15 marks and each must
+    /// be sent exactly once.
+    /// </summary>
+    public DateTimeOffset? CustomerReminder30SentAtUtc { get; private set; }
+    public DateTimeOffset? CustomerReminder15SentAtUtc { get; private set; }
+
+    /// <summary>
     /// When the next "no driver found" prompt becomes due while the trip is
     /// awaiting acceptance. Armed on <see cref="ConfirmPayment"/>, re-armed 40 min
     /// out by <see cref="PostponeNoDriverSearch"/>, cleared once the trip leaves
@@ -577,8 +585,14 @@ public sealed class Trip : AuditableEntity
         ScheduledTripReminderStage.UnacceptedOverdue => UnacceptedOverdueSentAtUtc.HasValue,
         ScheduledTripReminderStage.Accepted30Minutes => AcceptedReminder30SentAtUtc.HasValue,
         ScheduledTripReminderStage.Accepted15Minutes => AcceptedReminder15SentAtUtc.HasValue,
+        ScheduledTripReminderStage.Customer30Minutes => CustomerReminder30SentAtUtc.HasValue,
+        ScheduledTripReminderStage.Customer15Minutes => CustomerReminder15SentAtUtc.HasValue,
         _ => false,
     };
+
+    private static bool IsCustomerStage(ScheduledTripReminderStage stage) =>
+        stage is ScheduledTripReminderStage.Customer30Minutes
+              or ScheduledTripReminderStage.Customer15Minutes;
 
     public void MarkReminderSent(ScheduledTripReminderStage stage, DateTimeOffset sentAtUtc)
     {
@@ -602,6 +616,25 @@ public sealed class Trip : AuditableEntity
             case ScheduledTripReminderStage.Accepted15Minutes:
                 AcceptedReminder15SentAtUtc = sentAtUtc;
                 break;
+            case ScheduledTripReminderStage.Customer30Minutes:
+                CustomerReminder30SentAtUtc = sentAtUtc;
+                break;
+            case ScheduledTripReminderStage.Customer15Minutes:
+                CustomerReminder15SentAtUtc = sentAtUtc;
+                break;
+        }
+
+        if (IsCustomerStage(stage))
+        {
+            AddDomainEvent(new ScheduledTripCustomerReminder
+            {
+                TripId = Id,
+                PassengerId = PassengerId,
+                ReferenceCode = ReferenceCode,
+                ScheduledAtUtc = ScheduledAtUtc!.Value,
+                Stage = stage,
+            });
+            return;
         }
 
         AddDomainEvent(new ScheduledTripAdminReminder

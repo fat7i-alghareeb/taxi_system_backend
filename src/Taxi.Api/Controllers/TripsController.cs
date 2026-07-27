@@ -40,6 +40,7 @@ using Taxi.Application.Features.Trips.Queries.GetAllRecordings;
 using Taxi.Application.Features.Trips.Queries.GetAllTrips;
 using Taxi.Application.Features.Trips.Queries.GetCompensationClaims;
 using Taxi.Application.Features.Trips.Queries.GetMyActiveTrip;
+using Taxi.Application.Features.Trips.Queries.GetMyActiveTrips;
 using Taxi.Application.Features.Trips.Queries.GetPassengerTripCount;
 using Taxi.Application.Features.Trips.Queries.GetPassengerTrips;
 using Taxi.Application.Features.Trips.Queries.GetTripById;
@@ -95,6 +96,19 @@ public class TripsController(ISender sender) : ApiController
     {
         var result = await sender.Send(new GetMyActiveTripQuery(), ct);
         return result.Match(dto => dto is null ? NoContent() : Ok(dto), Problem);
+    }
+
+    [HttpGet("active/list")]
+    [Authorize(Roles = "Passenger,Admin")]
+    [ProducesResponseType(typeof(List<TripDto>), StatusCodes.Status200OK)]
+    [EndpointSummary("Returns every active (non-terminal) trip the calling passenger holds.")]
+    [EndpointDescription("The customer app books concurrently: one live trip plus any number of future reservations. Returns them soonest-pickup first, empty array when there are none. The single-trip 'active' endpoint stays as-is for the driver app.")]
+    [EndpointName("GetMyActiveTrips")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetMyActiveTrips(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetMyActiveTripsQuery(), ct);
+        return result.Match(Ok, Problem);
     }
 
     [HttpGet("{id:guid}", Name = "GetTripById")]

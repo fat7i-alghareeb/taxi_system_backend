@@ -431,6 +431,11 @@ public static class LocalizationKeys
         public const string AdminAcceptedReminder15Title = "Notification.AdminAcceptedReminder15.Title";
         public const string AdminAcceptedReminder15Body = "Notification.AdminAcceptedReminder15.Body";
 
+        public const string TripCustomerReminder30Title = "Notification.TripCustomerReminder30.Title";
+        public const string TripCustomerReminder30Body = "Notification.TripCustomerReminder30.Body";
+        public const string TripCustomerReminder15Title = "Notification.TripCustomerReminder15.Title";
+        public const string TripCustomerReminder15Body = "Notification.TripCustomerReminder15.Body";
+
         public const string WaitingFeeDueTitle = "Notification.WaitingFeeDue.Title";
         public const string WaitingFeeDueBody = "Notification.WaitingFeeDue.Body";
 
