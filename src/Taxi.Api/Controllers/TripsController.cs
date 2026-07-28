@@ -276,7 +276,7 @@ public class TripsController(ISender sender) : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Cancels a trip.")]
-    [EndpointDescription("Cancellable until the ride is InProgress. Free (100% refund) within 5 minutes of booking, for scheduled and immediate trips alike; after that 45% is refunded. An admin-initiated cancellation always refunds 100%. Not allowed once InProgress, Completed, Cancelled, Refunded, or PaymentFailed.")]
+    [EndpointDescription("Cancellable until the ride is InProgress. Within 5 minutes of booking, for scheduled and immediate trips alike, the fare is refunded minus a flat EUR 6.50 cancellation fee (returned on the cancellation as CancellationFeeAmount); a fare below the fee refunds nothing and the remainder becomes wallet debt. After 5 minutes 45% is refunded with no fee. An admin-initiated cancellation always refunds 100%. Not allowed once InProgress, Completed, Cancelled, Refunded, or PaymentFailed.")]
     [EndpointName("CancelTrip")]
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> CancelTrip(Guid id, [FromBody] CancelTripRequest? request, CancellationToken ct)

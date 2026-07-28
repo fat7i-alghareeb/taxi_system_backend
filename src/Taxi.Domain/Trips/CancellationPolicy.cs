@@ -8,8 +8,19 @@ namespace Taxi.Domain.Trips;
 /// </summary>
 public static class CancellationPolicy
 {
-    /// <summary>Refund when cancelling inside the free window.</summary>
+    /// <summary>
+    /// Refund percent when cancelling inside the window. The fare is refunded in full and the
+    /// flat <see cref="WithinWindowFeeAmount"/> is then deducted, so this stays 100 and the
+    /// deduction is carried separately — see <see cref="ApplyWithinWindowFee"/>.
+    /// </summary>
     public const int WithinWindowRefundPercent = 100;
+
+    /// <summary>
+    /// Flat administrative cancellation fee ("annuleringskosten") deducted when a passenger
+    /// cancels inside <see cref="FreeWindowFromBooking"/>. The window is no longer free: the
+    /// passenger gets the fare back minus this amount.
+    /// </summary>
+    public const decimal WithinWindowFeeAmount = 6.50m;
 
     /// <summary>Refund when a passenger cancels after the 5-minute free window has closed.</summary>
     public const int AfterWindowRefundPercent = 45;
@@ -18,21 +29,37 @@ public static class CancellationPolicy
     public const int DriverCancelRefundPercent = 45;
 
     /// <summary>
-    /// Free-cancellation grace measured from booking creation time.
-    /// Applies to all trip types (immediate and scheduled). After this window,
-    /// the passenger receives <see cref="AfterWindowRefundPercent"/> of the fare.
+    /// Early-cancellation grace measured from booking creation time.
+    /// Applies to all trip types (immediate and scheduled). Inside this window the passenger pays
+    /// only <see cref="WithinWindowFeeAmount"/>; after it, they receive
+    /// <see cref="AfterWindowRefundPercent"/> of the fare.
+    /// The name is kept for continuity — the window is no longer free.
     /// </summary>
     public static readonly TimeSpan FreeWindowFromBooking = TimeSpan.FromMinutes(5);
 
     /// <summary>
-    /// Whether a passenger cancellation is still free at <paramref name="now"/>.
-    /// Free if cancellation occurs within <see cref="FreeWindowFromBooking"/> of booking creation.
-    /// The window is inclusive: exactly at the boundary is still free.
+    /// Whether a passenger cancellation still falls inside the early window at <paramref name="now"/>.
+    /// The window is inclusive: exactly at the boundary still counts as inside.
     /// </summary>
     public static bool IsWithinFreeWindow(
         DateTimeOffset createdAtUtc,
         DateTimeOffset now)
     {
         return now <= createdAtUtc + FreeWindowFromBooking;
+    }
+
+    /// <summary>
+    /// Splits <paramref name="fare"/> for an in-window passenger cancellation.
+    /// The fee is always the full <see cref="WithinWindowFeeAmount"/> — it is never capped to the
+    /// fare — so a fare below the fee refunds nothing and leaves a <c>Shortfall</c> the caller must
+    /// still collect (as wallet debt). Handlers and tests share this one formula.
+    /// </summary>
+    public static (decimal Fee, decimal Refund, decimal Shortfall) ApplyWithinWindowFee(decimal fare)
+    {
+        var fee = WithinWindowFeeAmount;
+        var refund = Math.Round(Math.Max(0m, fare - fee), 2, MidpointRounding.AwayFromZero);
+        var shortfall = Math.Round(Math.Max(0m, fee - fare), 2, MidpointRounding.AwayFromZero);
+
+        return (fee, refund, shortfall);
     }
 }

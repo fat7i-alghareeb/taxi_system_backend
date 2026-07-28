@@ -12,7 +12,8 @@ public static class TripPolicyDtoMapper
             cancellation.RefundAmount,
             cancellation.CurrencyCode,
             cancellation.Note,
-            cancellation.CreatedAtUtc);
+            cancellation.CreatedAtUtc,
+            cancellation.CancellationFeeAmount);
 
     public static CompensationClaimDto ToDto(this TripCompensationClaim claim) =>
         new(

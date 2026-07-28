@@ -4,6 +4,11 @@ using Taxi.Infrastructure.Hubs;
 
 namespace Taxi.Infrastructure.RealTime;
 
+/// <summary>
+/// TRACKING DISABLED: driver location tracking was switched off product-wide, so nothing is
+/// broadcast any more. The class stays registered so <see cref="IDriverLocationNotifier"/> still
+/// resolves; restore the commented body to re-enable.
+/// </summary>
 public sealed class SignalRDriverLocationNotifier(IHubContext<TripHub> hubContext)
     : IDriverLocationNotifier
 {
@@ -18,6 +23,9 @@ public sealed class SignalRDriverLocationNotifier(IHubContext<TripHub> hubContex
         string? routeToPickupPolyline,
         CancellationToken ct = default)
     {
+        return Task.CompletedTask;
+
+        /*
         var payload = new
         {
             EventId = Guid.NewGuid(),
@@ -47,5 +55,6 @@ public sealed class SignalRDriverLocationNotifier(IHubContext<TripHub> hubContex
         }
 
         return Task.WhenAll(sends);
+        */
     }
 }

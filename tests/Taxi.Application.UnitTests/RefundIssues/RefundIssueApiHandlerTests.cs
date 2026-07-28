@@ -473,6 +473,7 @@ public class RefundIssueApiHandlerTests
             CancellationReason.PassengerAfterOneHour,
             refundPercent,
             refundAmount,
+            cancellationFeeAmount: 0m,
             "EUR",
             "customer cancelled").Value;
 

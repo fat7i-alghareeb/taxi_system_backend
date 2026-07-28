@@ -14,6 +14,7 @@ public sealed class TripCancellation : AuditableEntity
         CancellationReason reason,
         decimal refundPercent,
         decimal refundAmount,
+        decimal cancellationFeeAmount,
         string currencyCode,
         string? note)
         : base(id)
@@ -23,6 +24,7 @@ public sealed class TripCancellation : AuditableEntity
         Reason = reason;
         RefundPercent = refundPercent;
         RefundAmount = refundAmount;
+        CancellationFeeAmount = cancellationFeeAmount;
         CurrencyCode = currencyCode;
         Note = note;
         CreatedAtUtc = DateTimeOffset.UtcNow;
@@ -33,6 +35,14 @@ public sealed class TripCancellation : AuditableEntity
     public CancellationReason Reason { get; private set; }
     public decimal RefundPercent { get; private set; }
     public decimal RefundAmount { get; private set; }
+
+    /// <summary>
+    /// Flat fee withheld from the fare ("annuleringskosten"), 0 when the policy charged none.
+    /// Carried separately from <see cref="RefundPercent"/> so a 100%-of-fare refund minus a fee
+    /// stays explainable on receipts instead of collapsing into an odd percentage.
+    /// </summary>
+    public decimal CancellationFeeAmount { get; private set; }
+
     public string CurrencyCode { get; private set; } = "EUR";
     public string? Note { get; private set; }
 
@@ -43,10 +53,11 @@ public sealed class TripCancellation : AuditableEntity
         CancellationReason reason,
         decimal refundPercent,
         decimal refundAmount,
+        decimal cancellationFeeAmount,
         string currencyCode,
         string? note)
     {
-        if (refundPercent < 0 || refundPercent > 100 || refundAmount < 0)
+        if (refundPercent < 0 || refundPercent > 100 || refundAmount < 0 || cancellationFeeAmount < 0)
         {
             return TripErrors.InvalidCancellationReason;
         }
@@ -58,6 +69,7 @@ public sealed class TripCancellation : AuditableEntity
             reason,
             refundPercent,
             refundAmount,
+            cancellationFeeAmount,
             currencyCode,
             note);
     }

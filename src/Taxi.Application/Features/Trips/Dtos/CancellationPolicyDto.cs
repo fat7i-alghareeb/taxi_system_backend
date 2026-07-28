@@ -7,7 +7,8 @@ public record CancellationPolicyDto(
     decimal RefundAmount,
     string CurrencyCode,
     string? Note,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    decimal CancellationFeeAmount = 0m);
 
 public record CompensationClaimDto(
     Guid Id,

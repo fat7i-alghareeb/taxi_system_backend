@@ -7,6 +7,11 @@ using Taxi.Infrastructure.RealTime;
 
 namespace Taxi.Infrastructure.Hubs;
 
+/// <summary>
+/// TRACKING DISABLED: driver location tracking was switched off product-wide. The hub is no longer
+/// mapped in Program.cs, <see cref="UpdateLocation"/> is a no-op, and the helpers below are kept
+/// intact so the feature can be restored by uncommenting.
+/// </summary>
 [Authorize]
 public sealed class LocationTrackingHub(
     IAppDbContext context,
@@ -22,6 +27,10 @@ public sealed class LocationTrackingHub(
     private readonly IDirectionsService _directionsService = directionsService;
     private readonly PickupRouteCache _pickupRouteCache = pickupRouteCache;
 
+    // TRACKING DISABLED: accepts and discards. Restore the body below to re-enable.
+    public Task UpdateLocation(double lat, double lng) => Task.CompletedTask;
+
+    /*
     public async Task UpdateLocation(double lat, double lng)
     {
         var userId = Context.UserIdentifier;
@@ -77,6 +86,7 @@ public sealed class LocationTrackingHub(
             routePolyline,
             Context.ConnectionAborted);
     }
+    */
 
     /// <summary>
     /// Returns the encoded driver→target route, reusing a throttled per-trip cache.

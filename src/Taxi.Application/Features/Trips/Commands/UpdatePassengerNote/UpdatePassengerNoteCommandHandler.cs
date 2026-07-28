@@ -61,6 +61,8 @@ public class UpdatePassengerNoteCommandHandler(
         double? driverLatitude = null;
         double? driverLongitude = null;
 
+        // TRACKING DISABLED: see TripDtoBuilder — driver coordinates are no longer maintained.
+        /*
         if (trip.DriverId.HasValue)
         {
             var driver = await context.Drivers.FirstOrDefaultAsync(d => d.Id == trip.DriverId.Value, ct);
@@ -70,6 +72,7 @@ public class UpdatePassengerNoteCommandHandler(
                 driverLongitude = driver.CurrentLng.HasValue ? (double)driver.CurrentLng.Value : null;
             }
         }
+        */
 
         var stopDtos = trip.Stops
             .OrderBy(s => s.Sequence)

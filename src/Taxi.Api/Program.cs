@@ -80,7 +80,8 @@ app.UseCoreMiddlewares(builder.Configuration);
 
 app.MapControllers().RequireRateLimiting("SlidingWindow");
 app.MapHub<TripHub>(TripHub.HubUrl).RequireRateLimiting("SignalRConnections");
-app.MapHub<LocationTrackingHub>("/hubs/location").RequireRateLimiting("SignalRConnections");
+// TRACKING DISABLED: driver location tracking is switched off product-wide.
+// app.MapHub<LocationTrackingHub>("/hubs/location").RequireRateLimiting("SignalRConnections");
 
 app.Run();
 

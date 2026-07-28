@@ -18,6 +18,7 @@ public class CancelTripCommandHandler(
     IClientConfigProvider clientConfig,
     IStripePaymentService stripe,
     ITripRefundSplitter refundSplitter,
+    IWalletService wallet,
     TimeProvider timeProvider,
     ILogger<CancelTripCommandHandler> logger) : IRequestHandler<CancelTripCommand, Result<TripDto>>
 {
@@ -60,7 +61,7 @@ public class CancelTripCommandHandler(
         var fare = quote?.FinalFare ?? 0;
         var currency = quote?.CurrencyCode ?? "EUR";
 
-        // Free window is 5 minutes from booking creation for all trip types (immediate and scheduled).
+        // The early window is 5 minutes from booking creation for all trip types (immediate and scheduled).
         // See CancellationPolicy.IsWithinFreeWindow.
         var isWithinPassengerWindow = CancellationPolicy.IsWithinFreeWindow(
             trip.CreatedAtUtc,
@@ -68,14 +69,17 @@ public class CancelTripCommandHandler(
 
         // Cancellation policy:
         //   - Admin override: full refund (nothing charged yet => 0).
-        //   - Passenger, never charged (AwaitingPayment): no refund.
-        //   - Passenger inside the 5-minute free window: free cancellation (100% refund).
-        //   - Passenger after the free window: still cancellable, but only 45% refunded.
-        //     Applies to all statuses including Arrived — no flat-fee exception.
+        //   - Passenger, never charged (AwaitingPayment): no refund, and no fee — they were never charged.
+        //   - Passenger inside the 5-minute window: fare back minus the flat CancellationFeeAmount.
+        //     The fee is never capped to the fare; a shortfall becomes wallet debt below.
+        //   - Passenger after the window: still cancellable, but only 45% refunded and no fee on top.
+        //     Applies to all statuses including Arrived.
         CancellationActor actor;
         CancellationReason reason;
         decimal refundPercent;
         decimal refundAmount;
+        var cancellationFee = 0m;
+        var feeShortfall = 0m;
 
         if (isAdmin)
         {
@@ -98,8 +102,11 @@ public class CancelTripCommandHandler(
             else if (isWithinPassengerWindow)
             {
                 reason = CancellationReason.PassengerWithinFiveMinutes;
+                // Percent stays 100 — the whole fare is returned and the flat fee is then withheld,
+                // which keeps the receipt readable as "fare − fee" instead of an odd percentage.
                 refundPercent = CancellationPolicy.WithinWindowRefundPercent;
-                refundAmount = Math.Round(fare * refundPercent / 100m, 2, MidpointRounding.AwayFromZero);
+                (cancellationFee, refundAmount, feeShortfall) =
+                    CancellationPolicy.ApplyWithinWindowFee(fare);
             }
             else
             {
@@ -126,6 +133,7 @@ public class CancelTripCommandHandler(
             reason,
             refundPercent,
             refundAmount,
+            cancellationFee,
             currency,
             request.Note);
 
@@ -191,12 +199,37 @@ public class CancelTripCommandHandler(
 
         await context.SaveChangesAsync(ct);
 
+        // Fare below the flat fee: the refund already floors at 0, so the uncovered remainder is
+        // pushed onto the wallet as debt — the one overdraft-capable path. Never blocks the
+        // cancellation: the trip is already cancelled and the money is owed either way.
+        if (feeShortfall > 0)
+        {
+            var shortfallResult = await wallet.ChargeUncollectableFeeAsync(
+                trip.PassengerId,
+                trip.Id,
+                feeShortfall,
+                currency,
+                "Cancellation fee",
+                $"cancel-fee-shortfall-{cancellationResult.Value.Id:N}",
+                ct);
+
+            if (shortfallResult.IsFailure)
+            {
+                logger.LogWarning(
+                    "Uncollected cancellation fee shortfall {Shortfall} for trip {TripId} could not be charged to the wallet.",
+                    feeShortfall,
+                    trip.Id);
+            }
+        }
+
         double? driverLatitude = null;
         double? driverLongitude = null;
 
         var vehicleType = await context.VehicleTypes.FirstOrDefaultAsync(v => v.Id == trip.VehicleTypeId, ct);
         var vehicleTypeName = vehicleType?.Name.En ?? "Unknown";
 
+        // TRACKING DISABLED: see TripDtoBuilder — driver coordinates are no longer maintained.
+        /*
         if (trip.DriverId.HasValue)
         {
             var driver = await context.Drivers.FirstOrDefaultAsync(d => d.Id == trip.DriverId.Value, ct);
@@ -206,6 +239,7 @@ public class CancelTripCommandHandler(
                 driverLongitude = driver.CurrentLng.HasValue ? (double)driver.CurrentLng.Value : null;
             }
         }
+        */
 
         var stopDtos = trip.Stops
             .OrderBy(s => s.Sequence)

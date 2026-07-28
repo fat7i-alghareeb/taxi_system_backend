@@ -79,6 +79,8 @@ public sealed class DriverCancelTripCommandHandler(
             reason,
             CancellationPolicy.DriverCancelRefundPercent,
             refundAmount,
+            // No flat fee here: this is a no-show/late cancellation priced purely by percentage.
+            cancellationFeeAmount: 0m,
             currency,
             request.Note);
         if (cancellationResult.IsError)

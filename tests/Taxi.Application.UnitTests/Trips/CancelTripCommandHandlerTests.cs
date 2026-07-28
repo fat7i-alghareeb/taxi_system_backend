@@ -19,25 +19,59 @@ public class CancelTripCommandHandlerTests
     private const decimal Fare = 20.00m;
     private const string Currency = "eur";
 
+    /// <summary>Flat in-window cancellation fee; kept local so a policy change fails these tests loudly.</summary>
+    private const decimal Fee = 6.50m;
+
     // ── Policy tests ──────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task Handle_WithinFiveMinutes_Returns100PercentRefund()
+    public async Task Handle_WithinFiveMinutes_RefundsFareMinusCancellationFee()
     {
         var now = DateTimeOffset.UtcNow;
         var (trip, quote, payment) = BuildAcceptedTripWithPayment(now.AddMinutes(-3), Fare);
-        var handler = BuildHandler(trip, quote, payment, now);
+        var wallet = BuildWallet();
+        var handler = BuildHandler(trip, quote, payment, now, wallet: wallet);
 
         var result = await handler.Handle(new CancelTripCommand(trip.Id), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(nameof(CancellationReason.PassengerWithinFiveMinutes), result.Value.Cancellation!.Reason);
+        // Percent stays 100 — the deduction is carried by the fee, not by the percentage.
         Assert.Equal(100m, result.Value.Cancellation.RefundPercent);
-        Assert.Equal(Fare, result.Value.Cancellation.RefundAmount);
+        Assert.Equal(Fee, result.Value.Cancellation.CancellationFeeAmount);
+        Assert.Equal(Fare - Fee, result.Value.Cancellation.RefundAmount);
+        // Fare covers the fee, so nothing is pushed onto the wallet as debt.
+        await wallet.DidNotReceiveWithAnyArgs().ChargeUncollectableFeeAsync(
+            default, default, default, default!, default!, default!);
     }
 
     [Fact]
-    public async Task Handle_AfterFiveMinutes_Returns45PercentRefund()
+    public async Task Handle_WithinFiveMinutes_FareBelowFee_RefundsNothingAndChargesShortfallToWallet()
+    {
+        var now = DateTimeOffset.UtcNow;
+        const decimal smallFare = 5.00m;
+        var (trip, quote, payment) = BuildAcceptedTripWithPayment(now.AddMinutes(-1), smallFare);
+        var wallet = BuildWallet();
+        var handler = BuildHandler(trip, quote, payment, now, wallet: wallet);
+
+        var result = await handler.Handle(new CancelTripCommand(trip.Id), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        // The fee is never capped to the fare: refund floors at 0 and the rest becomes debt.
+        Assert.Equal(Fee, result.Value.Cancellation!.CancellationFeeAmount);
+        Assert.Equal(0m, result.Value.Cancellation.RefundAmount);
+        await wallet.Received(1).ChargeUncollectableFeeAsync(
+            _passengerId,
+            trip.Id,
+            Fee - smallFare,
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_AfterFiveMinutes_Returns45PercentRefund_AndNoFee()
     {
         var now = DateTimeOffset.UtcNow;
         var (trip, quote, payment) = BuildAcceptedTripWithPayment(now.AddMinutes(-6), Fare);
@@ -48,14 +82,15 @@ public class CancelTripCommandHandlerTests
         Assert.True(result.IsSuccess);
         Assert.Equal(nameof(CancellationReason.PassengerAfterFiveMinutes), result.Value.Cancellation!.Reason);
         Assert.Equal(45m, result.Value.Cancellation.RefundPercent);
+        Assert.Equal(0m, result.Value.Cancellation.CancellationFeeAmount);
         Assert.Equal(Math.Round(Fare * 0.45m, 2, MidpointRounding.AwayFromZero), result.Value.Cancellation.RefundAmount);
     }
 
     [Fact]
-    public async Task Handle_ExactlyAtFiveMinuteBoundary_IsStillFree()
+    public async Task Handle_ExactlyAtFiveMinuteBoundary_StillChargesOnlyTheFee()
     {
         var now = DateTimeOffset.UtcNow;
-        // now == createdAt + 5 min  ⟹  still within free window (inclusive <=)
+        // now == createdAt + 5 min  ⟹  still inside the window (inclusive <=)
         var (trip, quote, payment) = BuildAcceptedTripWithPayment(now.AddMinutes(-5), Fare);
         var handler = BuildHandler(trip, quote, payment, now);
 
@@ -64,10 +99,11 @@ public class CancelTripCommandHandlerTests
         Assert.True(result.IsSuccess);
         Assert.Equal(nameof(CancellationReason.PassengerWithinFiveMinutes), result.Value.Cancellation!.Reason);
         Assert.Equal(100m, result.Value.Cancellation.RefundPercent);
+        Assert.Equal(Fee, result.Value.Cancellation.CancellationFeeAmount);
     }
 
     [Fact]
-    public async Task Handle_ScheduledTrip_WithinFiveMinutes_Returns100Percent()
+    public async Task Handle_ScheduledTrip_WithinFiveMinutes_ChargesTheSameFee()
     {
         var now = DateTimeOffset.UtcNow;
         var (trip, quote, payment) = BuildAcceptedTripWithPayment(now.AddMinutes(-2), Fare, scheduledAt: now.AddDays(3));
@@ -78,6 +114,8 @@ public class CancelTripCommandHandlerTests
         Assert.True(result.IsSuccess);
         Assert.Equal(nameof(CancellationReason.PassengerWithinFiveMinutes), result.Value.Cancellation!.Reason);
         Assert.Equal(100m, result.Value.Cancellation.RefundPercent);
+        Assert.Equal(Fee, result.Value.Cancellation.CancellationFeeAmount);
+        Assert.Equal(Fare - Fee, result.Value.Cancellation.RefundAmount);
     }
 
     [Fact]
@@ -116,6 +154,7 @@ public class CancelTripCommandHandlerTests
             clientConfig,
             stripe,
             Substitute.For<ITripRefundSplitter>(),
+            BuildWallet(),
             new FakeTimeProvider(now),
             Substitute.For<ILogger<CancelTripCommandHandler>>());
 
@@ -124,6 +163,8 @@ public class CancelTripCommandHandlerTests
         Assert.True(result.IsSuccess);
         Assert.Equal(0m, result.Value.Cancellation!.RefundPercent);
         Assert.Equal(0m, result.Value.Cancellation.RefundAmount);
+        // Never charged, so the fee is never applied either.
+        Assert.Equal(0m, result.Value.Cancellation.CancellationFeeAmount);
         await stripe.Received(1).CancelPaymentIntentAsync(payment.StripePaymentIntentId!, Arg.Any<CancellationToken>());
     }
 
@@ -144,6 +185,8 @@ public class CancelTripCommandHandlerTests
         Assert.Equal(nameof(CancellationReason.AdminOverride), result.Value.Cancellation!.Reason);
         Assert.Equal(100m, result.Value.Cancellation.RefundPercent);
         Assert.Equal(Fare, result.Value.Cancellation.RefundAmount);
+        // The passenger did not cancel, so no fee is withheld.
+        Assert.Equal(0m, result.Value.Cancellation.CancellationFeeAmount);
     }
 
     [Fact]
@@ -164,6 +207,7 @@ public class CancelTripCommandHandlerTests
             clientConfig,
             Substitute.For<IStripePaymentService>(),
             refundSplitter,
+            BuildWallet(),
             new FakeTimeProvider(now),
             Substitute.For<ILogger<CancelTripCommandHandler>>());
 
@@ -173,7 +217,8 @@ public class CancelTripCommandHandlerTests
         await refundSplitter.Received(1).RefundAsync(
             Arg.Is<TripRefundSplitRequest>(request =>
                 request.TripId == trip.Id &&
-                request.TotalAmount == Fare &&
+                // Booked 3 minutes ago: the split is asked for the post-fee amount, not the fare.
+                request.TotalAmount == Fare - Fee &&
                 request.SourceType == PaymentRefundSourceType.PassengerCancellation),
             Arg.Any<CancellationToken>());
     }
@@ -197,6 +242,7 @@ public class CancelTripCommandHandlerTests
             clientConfig,
             Substitute.For<IStripePaymentService>(),
             refundSplitter,
+            BuildWallet(),
             new FakeTimeProvider(now),
             Substitute.For<ILogger<CancelTripCommandHandler>>());
 
@@ -324,7 +370,8 @@ public class CancelTripCommandHandlerTests
         PricingQuote quote,
         Payment payment,
         DateTimeOffset fakeNow,
-        IUser? user = null)
+        IUser? user = null,
+        IWalletService? wallet = null)
     {
         var clientConfig = Substitute.For<IClientConfigProvider>();
         clientConfig.GetClientConfig().Returns(new ClientConfig(StripeEnabled: true, StripePublishableKey: "pk_test", SignalREnabled: false));
@@ -340,8 +387,25 @@ public class CancelTripCommandHandlerTests
             clientConfig,
             Substitute.For<IStripePaymentService>(),
             refundSplitter,
+            wallet ?? BuildWallet(),
             new FakeTimeProvider(fakeNow),
             Substitute.For<ILogger<CancelTripCommandHandler>>());
+    }
+
+    private static IWalletService BuildWallet()
+    {
+        var wallet = Substitute.For<IWalletService>();
+        wallet.ChargeUncollectableFeeAsync(
+                Arg.Any<Guid>(),
+                Arg.Any<Guid>(),
+                Arg.Any<decimal>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>())
+            .Returns(call => Task.FromResult<Result<WalletDebitOutcome>>(
+                new WalletDebitOutcome(call.ArgAt<decimal>(2), Guid.NewGuid())));
+        return wallet;
     }
 
     private static IAppDbContext BuildContext(Trip trip, PricingQuote quote, Payment payment)

@@ -142,6 +142,9 @@ public class DriversController(ISender sender) : ApiController
         return result.Match(_ => NoContent(), Problem);
     }
 
+    // TRACKING DISABLED: driver location tracking is switched off product-wide. The command and its
+    // validator are left in place so restoring this endpoint is a pure uncomment.
+    /*
     [HttpPost("me/location")]
     [Authorize(Roles = "Driver,Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -154,6 +157,7 @@ public class DriversController(ISender sender) : ApiController
         var result = await sender.Send(new UpdateDriverLocationCommand(request.Latitude, request.Longitude), ct);
         return result.Match(_ => NoContent(), Problem);
     }
+    */
 
     [HttpGet("me/earnings")]
     [Authorize(Roles = "Driver,Admin")]

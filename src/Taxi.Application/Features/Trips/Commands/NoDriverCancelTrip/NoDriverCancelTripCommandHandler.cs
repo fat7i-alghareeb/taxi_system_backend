@@ -66,6 +66,8 @@ public class NoDriverCancelTripCommandHandler(
             CancellationReason.NoDriverAvailable,
             refundPercent,
             refundAmount,
+            // Platform-side failure (no driver found) — the passenger is never charged a fee.
+            cancellationFeeAmount: 0m,
             currency,
             request.Note);
 

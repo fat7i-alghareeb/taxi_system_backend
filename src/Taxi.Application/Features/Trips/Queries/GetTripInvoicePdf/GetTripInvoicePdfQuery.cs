@@ -1,4 +1,4 @@
-using MediatR;
+using Taxi.Application.Common.Interfaces;
 using Taxi.Domain.Common.Results;
 
 namespace Taxi.Application.Features.Trips.Queries.GetTripInvoicePdf;
@@ -14,6 +14,13 @@ namespace Taxi.Application.Features.Trips.Queries.GetTripInvoicePdf;
 /// <c>nl, en, ar, de, es, fr, pl, ro, uk</c>.
 /// </param>
 public record GetTripInvoicePdfQuery(Guid TripId, string? LanguageCode = null)
-    : IRequest<Result<TripInvoicePdfResult>>;
+    : ICachedQuery<Result<TripInvoicePdfResult>>
+{
+    public string CacheKey => $"trip-invoice-pdf-{TripId}-{LanguageCode ?? "nl"}";
+
+    public string[] Tags => [$"trip-financials-{TripId}"];
+
+    public TimeSpan Expiration => TimeSpan.FromMinutes(30);
+}
 
 public sealed record TripInvoicePdfResult(string FileName, byte[] Bytes);

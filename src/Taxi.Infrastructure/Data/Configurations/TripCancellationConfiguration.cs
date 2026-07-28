@@ -13,6 +13,7 @@ public sealed class TripCancellationConfiguration : IEntityTypeConfiguration<Tri
         builder.Property(x => x.Reason).HasConversion<string>().HasMaxLength(40).IsRequired();
         builder.Property(x => x.RefundPercent).HasPrecision(5, 2);
         builder.Property(x => x.RefundAmount).HasPrecision(18, 2);
+        builder.Property(x => x.CancellationFeeAmount).HasPrecision(18, 2).HasDefaultValue(0m);
         builder.Property(x => x.CurrencyCode).HasMaxLength(3).IsRequired();
         builder.Property(x => x.Note).HasMaxLength(1000);
         builder.HasOne<Trip>().WithMany().HasForeignKey(x => x.TripId).OnDelete(DeleteBehavior.Restrict);

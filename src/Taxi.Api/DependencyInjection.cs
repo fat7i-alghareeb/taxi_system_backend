@@ -229,9 +229,11 @@ public static class DependencyInjection
 
     public static IServiceCollection AddControllerWithJsonConfiguration(this IServiceCollection services)
     {
-        services.AddControllers().AddJsonOptions(options => options
-            .JsonSerializerOptions
-            .DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull);
+        services.AddControllers(options =>
+            options.ModelBinderProviders.Insert(0, new InvariantDecimalModelBinderProvider()))
+            .AddJsonOptions(options => options
+                .JsonSerializerOptions
+                .DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull);
 
         return services;
     }

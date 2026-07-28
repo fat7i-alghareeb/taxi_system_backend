@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
 
 using Taxi.Application.Common.Interfaces;
@@ -18,6 +19,7 @@ public sealed class RefundLifecycleService(
     IWalletService wallet,
     INotificationService notificationService,
     ITripNotifier tripNotifier,
+    HybridCache cache,
     ILogger<RefundLifecycleService> logger) : IRefundLifecycleService
 {
     private const string GenericCustomerFailureMessage =
@@ -516,6 +518,12 @@ public sealed class RefundLifecycleService(
 
     private async Task<Result<Success>> RecalculateRefundedPaymentStateAsync(Payment payment, CancellationToken ct)
     {
+        // A succeeded refund changes the live RefundedAmount/RemainingAmount
+        // GetTripReceiptQuery computes from PaymentRefunds — invalidate the
+        // cached receipt/invoice/PDF for this trip regardless of whether this
+        // refund happens to be the one that fully refunds the trip.
+        await cache.RemoveByTagAsync($"trip-financials-{payment.TripId}", ct);
+
         var refunds = await context.PaymentRefunds
             .Where(refund => refund.PaymentId == payment.Id)
             .ToListAsync(ct);

@@ -73,6 +73,9 @@ public static class TripDtoBuilder
             .OrderByDescending(r => r.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
 
+        // TRACKING DISABLED: driver coordinates are no longer updated, so serving the last-known
+        // (and now permanently stale) position would only put a frozen car on the customer's map.
+        /*
         if (trip.DriverId.HasValue)
         {
             var driver = await context.Drivers.FirstOrDefaultAsync(d => d.Id == trip.DriverId.Value, ct);
@@ -82,6 +85,7 @@ public static class TripDtoBuilder
                 driverLongitude = driver.CurrentLng.HasValue ? (double)driver.CurrentLng.Value : null;
             }
         }
+        */
 
         var passenger = await context.DomainUsers
             .FirstOrDefaultAsync(u => u.Id == trip.PassengerId, ct);
