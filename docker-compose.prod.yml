@@ -59,6 +59,11 @@ services:
       # https for cookies, OAuth redirects, etc.
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=TaxiDb_Prod;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      # Schema migrations. Preferred: keep this false and apply migrations as an explicit
+      # deploy step (see DEPLOYMENT.md) so a container restart can never change the schema.
+      # Set APPLY_MIGRATIONS_ON_STARTUP=true in .env when there is no separate migration
+      # step available — the API will then migrate and seed on boot.
+      Database__ApplyMigrationsOnStartup: ${APPLY_MIGRATIONS_ON_STARTUP:-false}
       JwtSettings__Secret: ${JWT_SECRET}
       # Required — seeding aborts rather than creating an admin with a built-in password.
       Seed__AdminPassword: ${SEED_ADMIN_PASSWORD:?SEED_ADMIN_PASSWORD must be set}
