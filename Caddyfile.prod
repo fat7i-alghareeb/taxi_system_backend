@@ -10,6 +10,20 @@
 api.fat7i.dev {
     encode zstd gzip
 
+    # Baseline security headers. These matter more than usual here because the API
+    # serves user-uploaded files (chat photos, KYC documents) from this same origin:
+    # without nosniff a browser can be talked into treating an upload as active content.
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "no-referrer"
+        Cross-Origin-Resource-Policy "same-origin"
+        # The API returns JSON and files, never HTML that should execute anything.
+        Content-Security-Policy "default-src 'none'; frame-ancestors 'none'; sandbox"
+        -Server
+    }
+
     reverse_proxy taxi.api:8080 {
         header_up X-Real-IP {remote_host}
         header_up X-Forwarded-Proto {scheme}

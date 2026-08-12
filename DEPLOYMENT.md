@@ -341,7 +341,29 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f taxi.api
 docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f caddy
 ```
 
-The API automatically applies EF migrations and seeds admin users on startup.
+### Migrations are a deploy step, not a startup side effect
+
+`Database:ApplyMigrationsOnStartup` is **false** in production, so the API no longer applies
+schema changes when a container happens to restart. Apply them explicitly, before enabling
+traffic, using a role that has DDL rights (the app's own `taxi_app` role deliberately does not):
+
+```bash
+dotnet ef database update \
+  --project src/Taxi.Infrastructure \
+  --startup-project src/Taxi.Api \
+  --connection "Host=...;Database=TaxiDb_Prod;Username=<migration_role>;Password=<...>"
+```
+
+Seeding still runs on startup, but it **will refuse to start** unless `SEED_ADMIN_PASSWORD`
+and `SEED_SECOND_ADMIN_PASSWORD` are set in `.env`. That is deliberate: the seeder used to
+create `admin` / `admin` and `admin2` / `admin2` with compiled-in passwords. Both seeded
+accounts are flagged `RequiresPasswordReset` — change them at first login.
+
+> **Note:** `docker-compose.override.yml` was renamed to `docker-compose.dev.yml`. Compose
+> auto-loads any file named `docker-compose.override.yml`, so a bare `docker compose up -d`
+> on this host used to start the stack in **Development** mode — Swagger published, the API
+> and PostgreSQL bound to `0.0.0.0`, and Seq with authentication disabled. Both environments
+> now require an explicit `-f`.
 
 ## 12. Check It Works
 

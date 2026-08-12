@@ -45,6 +45,7 @@ public class UpdateUserProfileCommandHandler(
         var previousEmail = user.Email;
 
         string? photoUrl = user.ProfilePhotoUrl;
+        string? supersededPhotoUrl = null;
 
         // 1. Handle Photo Upload
         if (request.PhotoStream != null)
@@ -65,6 +66,7 @@ public class UpdateUserProfileCommandHandler(
                 "image/webp" => ".webp",
                 _ => ".jpg",
             };
+            supersededPhotoUrl = user.ProfilePhotoUrl;
             photoUrl = await fileStorage.SaveAsync(
                 request.PhotoStream, StoragePaths.ProfilePhoto(userId, extension), ct);
         }
@@ -96,6 +98,15 @@ public class UpdateUserProfileCommandHandler(
         }
 
         await context.SaveChangesAsync(ct);
+
+        // Profile photo names are random now, so a new upload no longer overwrites the old
+        // file in place — remove it, otherwise every previous photo stays on disk and
+        // fetchable by anyone who kept the URL.
+        if (!string.IsNullOrWhiteSpace(supersededPhotoUrl)
+            && !string.Equals(supersededPhotoUrl, photoUrl, StringComparison.OrdinalIgnoreCase))
+        {
+            await fileStorage.DeleteAsync(supersededPhotoUrl, ct);
+        }
 
         // A phone user adding/changing an email gets the welcome mail on every change to a
         // new value. Locked (email/Google) accounts can't reach here, so this only fires for

@@ -1,0 +1,74 @@
+name: Security scan
+
+# Dependency and secret scanning. This repository previously had no CI at all, so
+# vulnerable-package drift and accidentally committed secrets went undetected.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly — new advisories land against unchanged code, so a push-only trigger
+    # would never re-evaluate a dependency after it is merged.
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  dotnet-vulnerable-packages:
+    name: NuGet vulnerability scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore Taxi_Server.slnx
+
+      - name: Fail on vulnerable packages (including transitive)
+        run: |
+          set -o pipefail
+          dotnet list Taxi_Server.slnx package --vulnerable --include-transitive \
+            | tee vulnerable.txt
+          if grep -qiE '\b(Critical|High|Moderate)\b' vulnerable.txt; then
+            echo "::error::Vulnerable NuGet packages detected."
+            exit 1
+          fi
+
+      - name: Report deprecated packages (non-blocking)
+        continue-on-error: true
+        run: dotnet list Taxi_Server.slnx package --deprecated --include-transitive
+
+  secret-scan:
+    name: Secret scan (full history)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: a secret removed in a later commit is still extractable
+          # from the commit that introduced it.
+          fetch-depth: 0
+
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-and-test:
+    name: Build + unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - run: dotnet build Taxi_Server.slnx --configuration Release
+
+      - name: Unit tests
+        # Integration tests need Docker/Testcontainers and are run separately.
+        run: dotnet test tests/Taxi.Application.UnitTests --configuration Release --no-build

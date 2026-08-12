@@ -60,6 +60,9 @@ services:
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=TaxiDb_Prod;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       JwtSettings__Secret: ${JWT_SECRET}
+      # Required — seeding aborts rather than creating an admin with a built-in password.
+      Seed__AdminPassword: ${SEED_ADMIN_PASSWORD:?SEED_ADMIN_PASSWORD must be set}
+      Seed__SecondAdminPassword: ${SEED_SECOND_ADMIN_PASSWORD:?SEED_SECOND_ADMIN_PASSWORD must be set}
       AppSettings__GoogleMapsApiKey: ${GOOGLE_MAPS_API_KEY}
       AppSettings__FirebaseCredentials: ${FIREBASE_CREDENTIALS}
       AppSettings__ApiBaseUrl: ${API_BASE_URL}
@@ -79,6 +82,8 @@ services:
       Otp__MaxAttempts: ${OTP_MAX_ATTEMPTS:-5}
       Otp__ResendCooldownSeconds: ${OTP_RESEND_COOLDOWN_SECONDS:-60}
       Otp__OtpRetentionDays: ${OTP_RETENTION_DAYS:-30}
+      Otp__ReviewBypassRecipient: ${OTP_REVIEW_BYPASS_RECIPIENT:-}
+      Otp__ReviewBypassCode: ${OTP_REVIEW_BYPASS_CODE:-}
       # Auth — CM.com SMS
       Sms__CmCom__BaseUrl: ${CM_BASE_URL:-https://gw.messaging.cm.com/}
       Sms__CmCom__ProductToken: ${CM_PRODUCT_TOKEN}

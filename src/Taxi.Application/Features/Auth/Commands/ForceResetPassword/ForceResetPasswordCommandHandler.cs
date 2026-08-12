@@ -8,6 +8,7 @@ namespace Taxi.Application.Features.Auth.Commands.ForceResetPassword;
 public class ForceResetPasswordCommandHandler(
     IIdentityService identityService,
     ITokenProvider tokenProvider,
+    ISessionRevoker sessionRevoker,
     IUser currentUser) : IRequestHandler<ForceResetPasswordCommand, Result<TokenResponse>>
 {
     private readonly IIdentityService _identityService = identityService;
@@ -35,7 +36,12 @@ public class ForceResetPasswordCommandHandler(
             return clearResult.Error;
         }
 
-        // 3. Generate a fresh JWT that does NOT contain requires_password_reset claim anymore
+        // 3. Kill every existing session. A password change must invalidate sessions the
+        // attacker may already hold — otherwise a stolen refresh token survives the reset
+        // that was performed specifically to lock that attacker out.
+        await sessionRevoker.RevokeAllForUserAsync(userId, ct);
+
+        // 4. Generate a fresh JWT that does NOT contain requires_password_reset claim anymore
         var userDtoResult = await _identityService.GetUserByIdAsync(userId);
         if (userDtoResult.IsFailure)
         {

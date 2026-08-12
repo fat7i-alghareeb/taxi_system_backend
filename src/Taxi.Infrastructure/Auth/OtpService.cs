@@ -37,20 +37,31 @@ internal sealed class OtpService(
     {
         var now = timeProvider.GetUtcNow();
 
-        // Resend cooldown per recipient/purpose (defence in depth alongside API rate limiting).
-        var cooldown = TimeSpan.FromSeconds(_options.ResendCooldownSeconds);
-        var lastSentAt = await dbContext.OtpCodes
-            .Where(o => o.Recipient == recipient && o.Channel == channel && o.Purpose == purpose)
-            .OrderByDescending(o => o.LastSentAtUtc)
-            .Select(o => (DateTimeOffset?)o.LastSentAtUtc)
-            .FirstOrDefaultAsync(ct);
+        // Store-reviewer bypass: a single configured recipient gets a fixed, reusable
+        // code with no real send and no cooldown, so app store/play reviewers can sign
+        // in on demand without a live SMS/email inbox. Disabled unless both values are
+        // configured (never committed — user-secrets/env only). See OtpOptions.
+        var isReviewBypass = !string.IsNullOrWhiteSpace(_options.ReviewBypassRecipient)
+            && !string.IsNullOrWhiteSpace(_options.ReviewBypassCode)
+            && string.Equals(recipient, _options.ReviewBypassRecipient, StringComparison.OrdinalIgnoreCase);
 
-        if (lastSentAt is not null && lastSentAt.Value.Add(cooldown) > now)
+        if (!isReviewBypass)
         {
-            return OtpErrors.ResendCooldown;
+            // Resend cooldown per recipient/purpose (defence in depth alongside API rate limiting).
+            var cooldown = TimeSpan.FromSeconds(_options.ResendCooldownSeconds);
+            var lastSentAt = await dbContext.OtpCodes
+                .Where(o => o.Recipient == recipient && o.Channel == channel && o.Purpose == purpose)
+                .OrderByDescending(o => o.LastSentAtUtc)
+                .Select(o => (DateTimeOffset?)o.LastSentAtUtc)
+                .FirstOrDefaultAsync(ct);
+
+            if (lastSentAt is not null && lastSentAt.Value.Add(cooldown) > now)
+            {
+                return OtpErrors.ResendCooldown;
+            }
         }
 
-        var code = GenerateCode(_options.CodeLength);
+        var code = isReviewBypass ? _options.ReviewBypassCode : GenerateCode(_options.CodeLength);
         var codeHash = hasher.Hash(code);
 
         var otp = OtpCode.Create(
@@ -59,26 +70,30 @@ internal sealed class OtpService(
             recipient,
             codeHash,
             now,
-            TimeSpan.FromMinutes(_options.ExpiryMinutes),
+            isReviewBypass ? TimeSpan.FromDays(3650) : TimeSpan.FromMinutes(_options.ExpiryMinutes),
             _options.MaxAttempts,
             ipAddress,
             deviceId);
 
         // Deliver first; only persist a row we actually managed to send, so we never
         // leave an undeliverable code behind. The plain code is never logged.
-        Result<string> sendResult = channel switch
-        {
-            OtpChannel.Sms => await smsSender.SendAsync(recipient, BuildSmsBody(code), ct),
-            OtpChannel.Email => await SendEmailAsync(recipient, code, ct),
-            _ => OtpErrors.SendFailed,
-        };
+        // The review-bypass recipient never gets a real message — it doesn't own a real
+        // phone/inbox we could deliver to.
+        Result<string> sendResult = isReviewBypass
+            ? "review-bypass"
+            : channel switch
+            {
+                OtpChannel.Sms => await smsSender.SendAsync(recipient, BuildSmsBody(code), ct),
+                OtpChannel.Email => await SendEmailAsync(recipient, code, ct),
+                _ => OtpErrors.SendFailed,
+            };
 
         if (sendResult.IsError)
         {
             return sendResult.Errors;
         }
 
-        if (channel == OtpChannel.Sms)
+        if (channel == OtpChannel.Sms && !isReviewBypass)
         {
             otp.SetProviderMessageId(sendResult.Value);
         }

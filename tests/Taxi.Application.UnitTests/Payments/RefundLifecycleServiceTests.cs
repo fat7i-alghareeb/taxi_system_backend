@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 
@@ -655,5 +656,14 @@ public class RefundLifecycleServiceTests
     }
 
     private RefundLifecycleService CreateService(IAppDbContext context)
-        => new(context, clientConfig, options, stripe, wallet, notifications, Substitute.For<ITripNotifier>(), logger);
+        => new(
+            context,
+            clientConfig,
+            options,
+            stripe,
+            wallet,
+            notifications,
+            Substitute.For<ITripNotifier>(),
+            Substitute.For<HybridCache>(),
+            logger);
 }

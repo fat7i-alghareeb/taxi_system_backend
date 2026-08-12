@@ -149,6 +149,7 @@ public static class LocalizationKeys
         public const string DocumentsNotApproved = "Driver.DocumentsNotApproved";
         public const string NoActiveVehicle = "Driver.NoActiveVehicle";
         public const string InvalidApprovalTransition = "Driver.InvalidApprovalTransition";
+        public const string DocumentsNotOwned = "Driver.Documents.NotOwned";
     }
 
     public static class DriverDocument
@@ -221,6 +222,7 @@ public static class LocalizationKeys
         public const string ActiveWaitingSessionExists = "Trip.Waiting.ActiveSessionExists";
         public const string ActiveWaitingSessionNotFound = "Trip.Waiting.ActiveSessionNotFound";
         public const string NotOwnedByPassenger = "Trip.NotOwnedByPassenger";
+        public const string NotParticipant = "Trip.NotParticipant";
         public const string DriverMismatch = "Trip.DriverMismatch";
         public const string StopNotFound = "Trip.Stop.NotFound";
         public const string StopOutOfOrder = "Trip.Stop.OutOfOrder";

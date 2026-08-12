@@ -9,7 +9,11 @@ EXPOSE 8081
 # (photos, chat, documents, ...) are created at runtime by StorageInitializer — no
 # folder needs baking in here. In production a named volume overlays wwwroot and its
 # ownership is fixed by the taxi.api-init compose service.
-RUN mkdir -p /app/wwwroot && chmod -R 777 /app/wwwroot
+#
+# Ownership + 750, never 0777: this directory holds driver KYC scans and trip
+# recordings, and a world-writable upload root lets any other process in the
+# container (or anything that gains a foothold) replace a stored document.
+RUN mkdir -p /app/wwwroot && chown -R $APP_UID:$APP_UID /app/wwwroot && chmod -R 750 /app/wwwroot
 USER $APP_UID
 
 
@@ -46,6 +50,6 @@ COPY --from=publish /app/publish .
 # layer and keeps its OWN ownership, so this build-time chmod does not reach it —
 # runtime write access there is guaranteed by the `taxi.api-init` compose service.
 USER root
-RUN mkdir -p /app/wwwroot && chmod -R 777 /app/wwwroot
+RUN mkdir -p /app/wwwroot && chown -R $APP_UID:$APP_UID /app/wwwroot && chmod -R 750 /app/wwwroot
 USER $APP_UID
 ENTRYPOINT ["dotnet", "Taxi.Api.dll"]

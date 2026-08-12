@@ -47,6 +47,34 @@ public class RefreshTokenQueryHandler(
             return getUserResult.Errors;
         }
 
+        // Re-check account state on every refresh. IsActive is otherwise only consulted at
+        // login, so a suspended or self-deleted account could keep minting access tokens
+        // from a refresh token issued before the suspension.
+        if (!Guid.TryParse(userId, out var domainUserId))
+        {
+            this.logger.LogError("User id claim is not a GUID for user {UserId}", userId);
+            return ApplicationErrors.UserIdClaimInvalid;
+        }
+
+        // Admins have no DomainUsers row (they are AppUser + AdminProfile), so both stores
+        // are consulted — checking only DomainUsers would lock every admin out of refresh.
+        var isActivePassengerOrDriver = await this.context.DomainUsers
+            .AsNoTracking()
+            .AnyAsync(u => u.Id == domainUserId && u.IsActive, ct);
+
+        var isActiveAdmin = !isActivePassengerOrDriver
+            && await this.context.AdminProfiles
+                .AsNoTracking()
+                .AnyAsync(a => a.Id == domainUserId && a.IsActive, ct);
+
+        if (!isActivePassengerOrDriver && !isActiveAdmin)
+        {
+            this.logger.LogWarning(
+                "[Security] Refresh denied — account {UserId} is suspended, deleted, or missing.",
+                userId);
+            return ApplicationErrors.RefreshTokenExpired;
+        }
+
         var refreshToken = await this.context.RefreshTokens
             .FirstOrDefaultAsync(r => r.Token == request.RefreshToken && r.UserId == userId, ct);
 

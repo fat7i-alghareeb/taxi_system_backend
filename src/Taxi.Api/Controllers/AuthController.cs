@@ -14,6 +14,7 @@ using Taxi.Application.Features.Auth.Commands.ForceResetPassword;
 using Taxi.Application.Features.Auth.Commands.FreshStart;
 using Taxi.Application.Features.Auth.Commands.Google;
 using Taxi.Application.Features.Auth.Commands.Login;
+using Taxi.Application.Features.Auth.Commands.Logout;
 using Taxi.Application.Features.Auth.Commands.PhoneLogin;
 using Taxi.Application.Features.Auth.Commands.PhoneSignup;
 using Taxi.Application.Features.Auth.Commands.PhoneVerify;
@@ -103,6 +104,24 @@ public sealed class AuthController(ISender sender) : ApiController
     {
         var result = await sender.Send(request, ct);
         return result.Match(Ok, Problem);
+    }
+
+    // Logout = deleting the session resource. Without this there was no way for a user or
+    // an admin to terminate a session server-side; a leaked refresh token stayed usable
+    // for its full 30-day life.
+    [HttpDelete("sessions/current")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [EndpointSummary("Logs out, revoking the presented refresh token (or every session).")]
+    [EndpointDescription("Pass the refresh token to end this device's session, or allDevices=true to sign out everywhere.")]
+    [EndpointName("Logout")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> Logout([FromBody] LogoutCommand command, CancellationToken ct)
+    {
+        var result = await sender.Send(command, ct);
+        return result.Match(_ => NoContent(), Problem);
     }
 
     // ---------------------------------------------------------------------------------

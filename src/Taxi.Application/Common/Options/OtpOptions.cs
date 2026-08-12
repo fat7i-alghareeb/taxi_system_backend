@@ -29,4 +29,17 @@ public sealed class OtpOptions
     /// provide it via user-secrets / environment variables.
     /// </summary>
     public string HashSecret { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Store-reviewer bypass: when a code is requested for exactly this recipient
+    /// (normalized phone/email, case-insensitive), a fixed reusable code is issued
+    /// instead of a random one and no real SMS/email is sent. Empty disables the
+    /// bypass entirely. Never commit a real value — provide it via user-secrets /
+    /// environment variables, and use a recipient that isn't a real customer's.
+    /// </summary>
+    public string ReviewBypassRecipient { get; set; } = string.Empty;
+
+    /// <summary>The fixed code returned for <see cref="ReviewBypassRecipient"/>. Must be
+    /// set (via user-secrets/env) whenever <see cref="ReviewBypassRecipient"/> is set.</summary>
+    public string ReviewBypassCode { get; set; } = string.Empty;
 }

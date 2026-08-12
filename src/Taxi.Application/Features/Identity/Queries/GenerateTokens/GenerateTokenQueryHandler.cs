@@ -22,7 +22,12 @@ public class GenerateTokenQueryHandler(
 
         if (checkPasswordResult.IsError)
         {
-            this.logger.LogError("Check password error occurred for userName {UserName}: {ErrorDescription}", request.UserName, checkPasswordResult.TopError.Description);
+            // Tagged [Security] so failed admin authentication is alertable in Seq —
+            // repeated failures for one account are the signal for credential stuffing.
+            this.logger.LogWarning(
+                "[Security] Admin login FAILED for userName {UserName}: {ErrorCode}",
+                request.UserName,
+                checkPasswordResult.TopError.Code);
             return checkPasswordResult.Errors;
         }
 
@@ -33,6 +38,11 @@ public class GenerateTokenQueryHandler(
             this.logger.LogError("Generate token error occurred for userName {UserName}: {ErrorDescription}", request.UserName, generateTokenResult.TopError.Description);
             return generateTokenResult.Errors;
         }
+
+        this.logger.LogInformation(
+            "[Security] Admin login SUCCEEDED for userName {UserName} (userId {UserId})",
+            request.UserName,
+            checkPasswordResult.Value.UserId);
 
         return generateTokenResult.Value;
     }

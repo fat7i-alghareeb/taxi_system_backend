@@ -39,12 +39,21 @@ public class UploadProfilePhotoCommandHandler(
             return Error.NotFound(LocalizationKeys.User.NotFound, "User not found.");
         }
 
+        var supersededPhotoUrl = user.ProfilePhotoUrl;
+
         var extension = request.ContentType == "image/png" ? ".png" : ".jpg";
         var storedUrl = await fileStorage.SaveAsync(
             request.FileStream, StoragePaths.ProfilePhoto(userId, extension), ct);
 
         user.UpdateProfile(user.Name, storedUrl);
         await context.SaveChangesAsync(ct);
+
+        // Random file names mean the old photo is no longer overwritten in place.
+        if (!string.IsNullOrWhiteSpace(supersededPhotoUrl)
+            && !string.Equals(supersededPhotoUrl, storedUrl, StringComparison.OrdinalIgnoreCase))
+        {
+            await fileStorage.DeleteAsync(supersededPhotoUrl, ct);
+        }
 
         return storedUrl;
     }

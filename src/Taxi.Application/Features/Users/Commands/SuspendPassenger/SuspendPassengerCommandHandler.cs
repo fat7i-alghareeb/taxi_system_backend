@@ -8,7 +8,10 @@ using Taxi.Domain.Common.Results;
 
 namespace Taxi.Application.Features.Users.Commands.SuspendPassenger;
 
-public sealed class SuspendPassengerCommandHandler(IAppDbContext context, IUser currentUser)
+public sealed class SuspendPassengerCommandHandler(
+    IAppDbContext context,
+    IUser currentUser,
+    ISessionRevoker sessionRevoker)
     : IRequestHandler<SuspendPassengerCommand, Result<Success>>
 {
     public async Task<Result<Success>> Handle(SuspendPassengerCommand request, CancellationToken ct)
@@ -40,6 +43,12 @@ public sealed class SuspendPassengerCommandHandler(IAppDbContext context, IUser 
         }
 
         await context.SaveChangesAsync(ct);
+
+        // Deactivating the row is not enough: IsActive is only consulted at login, so an
+        // already-issued refresh token would keep minting access tokens for a suspended
+        // account until it expired naturally.
+        await sessionRevoker.RevokeAllForUserAsync(user.Id.ToString(), ct);
+
         return Result.Success;
     }
 }

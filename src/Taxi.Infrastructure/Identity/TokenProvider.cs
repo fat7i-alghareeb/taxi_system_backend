@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Taxi.Application.Common.Errors;
 using Taxi.Application.Common.Interfaces;
@@ -15,7 +16,11 @@ using Taxi.Infrastructure.Data;
 
 namespace Taxi.Infrastructure.Identity;
 
-public class TokenProvider(IConfiguration configuration, AppDbContext context, UserManager<AppUser> userManager) : ITokenProvider
+public class TokenProvider(
+    IConfiguration configuration,
+    AppDbContext context,
+    UserManager<AppUser> userManager,
+    ILogger<TokenProvider> logger) : ITokenProvider
 {
     // If a client retries a refresh with a token we already rotated (its first
     // response was lost, e.g. right as the device woke from idle and reconnected),
@@ -25,6 +30,7 @@ public class TokenProvider(IConfiguration configuration, AppDbContext context, U
     private readonly IConfiguration configuration = configuration;
     private readonly AppDbContext context = context;
     private readonly UserManager<AppUser> _userManager = userManager;
+    private readonly ILogger<TokenProvider> logger = logger;
 
     public async Task<Result<TokenResponse>> GenerateJwtTokenAsync(AppUserDto user, CancellationToken ct = default)
     {
@@ -98,6 +104,24 @@ public class TokenProvider(IConfiguration configuration, AppDbContext context, U
                     }
                 }
 
+                // Reuse outside the grace window is the signature of a stolen token being
+                // replayed: this row was already rotated long ago, yet someone still holds
+                // it. Treat it as compromise and revoke every live session for the user so
+                // the thief and the legitimate device are both forced to re-authenticate.
+                if (current is not null && !string.IsNullOrWhiteSpace(current.UserId))
+                {
+                    var revoked = await db.RefreshTokens
+                        .Where(rt => rt.UserId == current.UserId && rt.RevokedAtUtc == null)
+                        .ExecuteUpdateAsync(
+                            s => s.SetProperty(rt => rt.RevokedAtUtc, DateTimeOffset.UtcNow),
+                            token);
+
+                    provider.logger.LogWarning(
+                        "[Security] Refresh-token reuse detected for user {UserId}; revoked {Count} live session(s).",
+                        current.UserId,
+                        revoked);
+                }
+
                 await tx.CommitAsync(token);
                 return ApplicationErrors.RefreshTokenExpired;
             },
@@ -106,6 +130,21 @@ public class TokenProvider(IConfiguration configuration, AppDbContext context, U
     }
 
     public ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
+    {
+        // Returns null on any invalid token rather than throwing. Letting the
+        // SecurityTokenException escape turned a bad/forged token into an unhandled 500
+        // that echoed the provider's error text back to the caller.
+        try
+        {
+            return ValidateExpiredToken(token);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    private ClaimsPrincipal? ValidateExpiredToken(string token)
     {
         var tokenValidationParameters = new TokenValidationParameters
         {

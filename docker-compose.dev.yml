@@ -1,9 +1,15 @@
-# Development overrides (ports exposed on 0.0.0.0, Seq no-auth, etc.).
-# Auto-loaded by `docker compose up` (no `-f` flag needed).
+# Development overrides — LOCAL MACHINES ONLY.
 #
-# Run dev :  docker compose up -d
-# Stop dev:  docker compose down
-# Logs    :  docker compose logs -f taxi.api
+# Renamed from docker-compose.override.yml on purpose: Compose auto-loads a file
+# named `docker-compose.override.yml`, which meant a bare `docker compose up -d`
+# on the production host would have served this file — Development environment
+# (Swagger + Scalar published), the API on 0.0.0.0:5001 bypassing Caddy and TLS,
+# PostgreSQL on 0.0.0.0:5433, and Seq with authentication disabled on 0.0.0.0:8081.
+# It must never be picked up implicitly, so it now requires an explicit -f.
+#
+# Run dev :  docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# Stop dev:  docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+# Logs    :  docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f taxi.api
 
 services:
   taxi.api:
@@ -27,6 +33,8 @@ services:
       Otp__MaxAttempts: ${OTP_MAX_ATTEMPTS:-5}
       Otp__ResendCooldownSeconds: ${OTP_RESEND_COOLDOWN_SECONDS:-60}
       Otp__OtpRetentionDays: ${OTP_RETENTION_DAYS:-30}
+      Otp__ReviewBypassRecipient: ${OTP_REVIEW_BYPASS_RECIPIENT:-}
+      Otp__ReviewBypassCode: ${OTP_REVIEW_BYPASS_CODE:-}
       # Auth — CM.com SMS
       Sms__CmCom__BaseUrl: ${CM_BASE_URL:-https://gw.messaging.cm.com/}
       Sms__CmCom__ProductToken: ${CM_PRODUCT_TOKEN}
@@ -69,7 +77,9 @@ services:
 
   grafana:
     environment:
-      GF_SECURITY_ADMIN_PASSWORD: YourStrongPwd
+      # From .env even locally — a hardcoded password in a tracked file becomes the
+      # password everyone reuses, and this file is one -f flag away from a real host.
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-changeme-local-only}
     ports:
       - "3000:3000"
     restart: unless-stopped

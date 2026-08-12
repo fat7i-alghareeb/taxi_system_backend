@@ -116,23 +116,35 @@ public static class DependencyInjection
     {
         services.AddRateLimiter(options =>
         {
-            options.AddSlidingWindowLimiter("SlidingWindow", limiterOptions =>
-            {
-                limiterOptions.PermitLimit = 100;
-                limiterOptions.Window = TimeSpan.FromMinutes(1);
-                limiterOptions.SegmentsPerWindow = 6;
-                limiterOptions.QueueLimit = 10;
-                limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                limiterOptions.AutoReplenishment = true;
-            });
-            options.AddSlidingWindowLimiter("SignalRConnections", limiterOptions =>
-            {
-                limiterOptions.PermitLimit = 30;
-                limiterOptions.Window = TimeSpan.FromMinutes(1);
-                limiterOptions.SegmentsPerWindow = 6;
-                limiterOptions.QueueLimit = 0;
-                limiterOptions.AutoReplenishment = true;
-            });
+            // PARTITIONED, not global. AddSlidingWindowLimiter(name, ...) builds a single
+            // limiter shared by every request on the server — 100 req/min for the whole
+            // platform — so one client could starve every customer and driver. Each caller
+            // (authenticated user, else remote IP) gets its own window instead.
+            options.AddPolicy("SlidingWindow", httpContext =>
+                RateLimitPartition.GetSlidingWindowLimiter(
+                    partitionKey: GetPartitionKey(httpContext),
+                    factory: _ => new SlidingWindowRateLimiterOptions
+                    {
+                        PermitLimit = 300,
+                        Window = TimeSpan.FromMinutes(1),
+                        SegmentsPerWindow = 6,
+                        QueueLimit = 10,
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        AutoReplenishment = true,
+                    }));
+
+            options.AddPolicy("SignalRConnections", httpContext =>
+                RateLimitPartition.GetSlidingWindowLimiter(
+                    partitionKey: GetPartitionKey(httpContext),
+                    factory: _ => new SlidingWindowRateLimiterOptions
+                    {
+                        PermitLimit = 30,
+                        Window = TimeSpan.FromMinutes(1),
+                        SegmentsPerWindow = 6,
+                        QueueLimit = 0,
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        AutoReplenishment = true,
+                    }));
 
             // Stricter, per-IP limiter for OTP request/resend endpoints to curb SMS/email
             // spam and OTP brute-force (defence in depth alongside per-recipient cooldown).
@@ -368,15 +380,49 @@ public static class DependencyInjection
         app.UseExceptionHandler();
         app.UseStatusCodePages();
         app.UseHttpsRedirection();
-        app.UseStaticFiles();
         app.UseSerilogRequestLogging();
         app.UseCors(configuration["AppSettings:CorsPolicyName"]!);
         app.UseRateLimiter();
         app.UseAuthentication();
         app.UseAuthorization();
+
+        // Static files MUST stay after authentication: the upload areas under wwwroot hold
+        // driver KYC scans, trip recordings and chat photos, and static-file middleware does
+        // no authorization of its own. ProtectedFilesMiddleware rejects unauthorized reads
+        // before the file is streamed. Moving UseStaticFiles above UseAuthentication would
+        // silently make every uploaded artifact public again.
+        app.UseMiddleware<ProtectedFilesMiddleware>();
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            OnPrepareResponse = ctx =>
+            {
+                // Uploads are user-supplied content served from the API's own origin —
+                // never let a browser sniff one into active content, and never render inline.
+                ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+                ctx.Context.Response.Headers["Content-Security-Policy"] = "default-src 'none'; sandbox";
+                ctx.Context.Response.Headers["Cache-Control"] = "private, max-age=300";
+            },
+        });
+
         app.UseOutputCache();
 
         return app;
     }
+
+    /// <summary>
+    /// Rate-limit partition key: the authenticated user when there is one, otherwise the
+    /// remote IP. Runs after <c>UseForwardedHeaders</c>, so the IP is the real client
+    /// address and not the Caddy container.
+    /// </summary>
+    private static string GetPartitionKey(HttpContext httpContext)
+    {
+        var userId = httpContext.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        return !string.IsNullOrWhiteSpace(userId)
+            ? $"user:{userId}"
+            : $"ip:{httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"}";
+    }
 }
+
+
 

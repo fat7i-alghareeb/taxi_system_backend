@@ -1,13 +1,19 @@
 # Base compose file (services without environment-specific settings).
 #
-# Do NOT run this file alone — it relies on either the dev override
-# (auto-loaded) or the prod override (explicit -f flag).
+# Do NOT run this file alone — it relies on an explicitly selected environment
+# overlay. Neither overlay auto-loads: picking an environment is always deliberate.
 #
-# Dev  : docker compose up -d
-#        (auto-merges docker-compose.override.yml)
-#
+# Dev  : docker compose -f docker-compose.yml -f docker-compose.dev.yml  up -d
 # Prod : docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
+# SUPPLY CHAIN — ACTION REQUIRED: seq / prometheus / grafana below still use `:latest`,
+# so any rebuild can silently pull a different upstream image. Pin each by digest once,
+# then refresh deliberately as its own reviewed change:
+#
+#   docker image inspect datalust/seq:latest --format '{{index .RepoDigests 0}}'
+#
+# and paste the resulting `repo@sha256:...` in place of the tag. Digests are not pinned
+# here because they must be read from the images you actually intend to run.
 services:
   taxi.api:
     build:
@@ -19,9 +25,15 @@ services:
         condition: service_healthy
       seq:
         condition: service_started
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   postgres:
     image: postgres:16
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:

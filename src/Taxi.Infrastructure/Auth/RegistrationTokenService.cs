@@ -23,6 +23,14 @@ internal sealed class RegistrationTokenService(
 {
     private const string ScopeClaim = "scope";
     private const string ScopeValue = "registration";
+
+    /// <summary>
+    /// Dedicated audience so the JwtBearer middleware rejects a registration token outright.
+    /// Sharing the access-token audience made these tokens pass <c>[Authorize]</c> — harmless
+    /// today only because they carry no subject and no roles, but one added claim away from
+    /// being a privilege-escalation primitive.
+    /// </summary>
+    private const string RegistrationAudience = "TaxiRegistration";
     private const string GoogleIdClaim = "google_id";
     private const string EmailVerifiedClaim = "email_verified";
     private static readonly TimeSpan Lifetime = TimeSpan.FromMinutes(15);
@@ -54,7 +62,7 @@ internal sealed class RegistrationTokenService(
             Subject = new ClaimsIdentity(claims),
             Expires = DateTime.UtcNow.Add(Lifetime),
             Issuer = jwt["Issuer"],
-            Audience = jwt["Audience"],
+            Audience = RegistrationAudience,
             SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature),
         };
 
@@ -72,7 +80,7 @@ internal sealed class RegistrationTokenService(
             ValidateIssuer = true,
             ValidIssuer = jwt["Issuer"],
             ValidateAudience = true,
-            ValidAudience = jwt["Audience"],
+            ValidAudience = RegistrationAudience,
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero,
         };

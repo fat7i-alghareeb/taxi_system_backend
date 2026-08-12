@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 using Taxi.Domain.Admins;
@@ -13,16 +14,23 @@ public class ApplicationDbContextInitialiser(
     AppDbContext context,
     RoleManager<IdentityRole> roleManager,
     UserManager<AppUser> userManager,
-    IHostEnvironment environment)
+    IHostEnvironment environment,
+    IConfiguration configuration)
 {
     private const string AdminUserName = "admin";
-    private const string AdminPassword = "admin";
     private const string AdminDisplayName = "Admin";
     private const string AdminEmail = "admin@fat7i.dev";
     private const string SecondAdminUserName = "admin2";
-    private const string SecondAdminPassword = "admin2";
     private const string SecondAdminDisplayName = "Second Admin";
     private const string SecondAdminEmail = "admin2@fat7i.dev";
+
+    /// <summary>
+    /// Development-only fallback passwords. Outside Development the seed password MUST come
+    /// from configuration (<c>Seed:AdminPassword</c> / <c>Seed:SecondAdminPassword</c>);
+    /// seeding throws rather than creating a well-known admin account on a public host.
+    /// </summary>
+    private const string DevAdminPassword = "Dev!Admin#Seed1";
+    private const string DevSecondAdminPassword = "Dev!Admin#Seed2";
 
     public async Task SeedAsync()
     {
@@ -151,13 +159,47 @@ public class ApplicationDbContextInitialiser(
         await SeedCompanyContactAsync(AppConfigKeys.SupportWhatsApp, "+31639550352", "Support WhatsApp number used by the customer app's in-trip 'Report problem' action.");
 
         // 4. Seed admin users
-        await SeedAdminAsync(AdminUserName, AdminPassword, AdminDisplayName, AdminEmail);
-        await SeedAdminAsync(SecondAdminUserName, SecondAdminPassword, SecondAdminDisplayName, SecondAdminEmail);
+        await SeedAdminAsync(
+            AdminUserName,
+            ResolveSeedPassword("Seed:AdminPassword", DevAdminPassword),
+            AdminDisplayName,
+            AdminEmail);
+        await SeedAdminAsync(
+            SecondAdminUserName,
+            ResolveSeedPassword("Seed:SecondAdminPassword", DevSecondAdminPassword),
+            SecondAdminDisplayName,
+            SecondAdminEmail);
 
         if (environment.IsDevelopment())
         {
             await SeedDevelopmentOnlyAsync();
         }
+    }
+
+    /// <summary>
+    /// Resolves a seed admin password from configuration. Outside Development a missing
+    /// value is fatal: silently falling back to a compiled-in password is how "admin/admin"
+    /// ends up reachable on a production host. Existing admins are never re-passworded —
+    /// <see cref="SeedAdminAsync"/> only uses this when creating the account.
+    /// </summary>
+    private string ResolveSeedPassword(string configurationKey, string developmentFallback)
+    {
+        var configured = configuration[configurationKey];
+
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            return configured;
+        }
+
+        if (!environment.IsDevelopment())
+        {
+            throw new InvalidOperationException(
+                $"'{configurationKey}' is not configured. Set it (environment variable "
+                + $"{configurationKey.Replace(':', '_')}) before seeding outside Development — "
+                + "the API refuses to create an admin account with a built-in password.");
+        }
+
+        return developmentFallback;
     }
 
     private async Task SeedCompanyContactAsync(string key, string value, string description)

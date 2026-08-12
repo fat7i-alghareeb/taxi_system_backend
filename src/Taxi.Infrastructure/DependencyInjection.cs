@@ -146,13 +146,22 @@ public static class DependencyInjection
         services
         .AddIdentityCore<AppUser>(options =>
         {
-            options.Password.RequiredLength = 5;
+            // Password complexity is intentionally disabled — owner decision, so any
+            // password is accepted for admin accounts. Brute-force protection therefore
+            // rests entirely on the lockout below and the per-caller rate limiter.
+            options.Password.RequiredLength = 1;
             options.Password.RequireDigit = false;
             options.Password.RequireNonAlphanumeric = false;
             options.Password.RequireUppercase = false;
             options.Password.RequireLowercase = false;
             options.Password.RequiredUniqueChars = 1;
             options.SignIn.RequireConfirmedAccount = false;
+
+            // Throttle credential stuffing against admin login at the account level; the
+            // per-caller rate limiter only bounds a single IP/user partition.
+            options.Lockout.AllowedForNewUsers = true;
+            options.Lockout.MaxFailedAccessAttempts = 5;
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         })
         .AddRoles<IdentityRole>()
         .AddEntityFrameworkStores<AppDbContext>()
@@ -160,6 +169,7 @@ public static class DependencyInjection
 
         services.AddTransient<IIdentityService, IdentityService>();
         services.AddTransient<ITokenProvider, TokenProvider>();
+        services.AddScoped<ISessionRevoker, SessionRevoker>();
 
         services.AddSingleton<IFirebaseAuthService, FirebaseAuthService>();
 

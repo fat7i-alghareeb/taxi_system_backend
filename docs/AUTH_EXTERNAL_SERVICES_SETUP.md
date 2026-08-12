@@ -45,6 +45,8 @@ Otp__MaxAttempts=5
 Otp__ResendCooldownSeconds=60
 Otp__OtpRetentionDays=30
 Otp__HashSecret=<long-random-secret-32+chars>     # REQUIRED — HMAC key for OTP hashes
+Otp__ReviewBypassRecipient=                        # optional — App/Play store reviewer bypass, see below
+Otp__ReviewBypassCode=                              # optional — fixed code for the recipient above
 
 # --- CM.com SMS ---
 Sms__CmCom__BaseUrl=https://gw.messaging.cm.com/
@@ -93,6 +95,7 @@ Add these to your `.env` (documented in `.env.example`):
 | --- | --- | --- |
 | `OTP_HASH_SECRET` | `Otp__HashSecret` | **yes** |
 | `OTP_CODE_LENGTH` / `OTP_EXPIRY_MINUTES` / `OTP_MAX_ATTEMPTS` / `OTP_RESEND_COOLDOWN_SECONDS` / `OTP_RETENTION_DAYS` | `Otp__*` | no (defaults) |
+| `OTP_REVIEW_BYPASS_RECIPIENT` / `OTP_REVIEW_BYPASS_CODE` | `Otp__ReviewBypass*` | no — see below |
 | `CM_PRODUCT_TOKEN` | `Sms__CmCom__ProductToken` | **yes** |
 | `CM_SENDER` | `Sms__CmCom__Sender` | no (default `Fat7i`) |
 | `CM_BASE_URL` | `Sms__CmCom__BaseUrl` | no (default gateway) |
@@ -112,6 +115,18 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 Once the variables are present in `.env`, the auth settings are injected into the container
 automatically — no code or appsettings changes needed.
+
+### App store / Play Store reviewer bypass
+
+Google Play (and Apple) app review needs sign-in credentials that stay valid indefinitely —
+real phone/email OTPs expire in `OTP_EXPIRY_MINUTES` and reviewers can't receive SMS/email.
+Set `OTP_REVIEW_BYPASS_RECIPIENT` to a phone/email that is **not a real customer's**, and
+`OTP_REVIEW_BYPASS_CODE` to a fixed code (e.g. a 6-digit value). Requesting an OTP for that
+exact recipient then always returns that fixed code, never expires, skips the resend
+cooldown, and sends no real SMS/email. Leave both unset to disable — this is off by default
+and must never be committed to `appsettings*.json` (env-only, like `OTP_HASH_SECRET`).
+Use these values as the "Username, email, or phone" / "Any other information" fields in the
+Play Console "Add sign in details" form.
 
 ---
 

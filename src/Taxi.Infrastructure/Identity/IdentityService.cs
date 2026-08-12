@@ -53,9 +53,10 @@ public class IdentityService(
             return Error.Conflict("Email_Not_Confirmed", "Email not confirmed");
         }
 
-        if (!await _userManager.CheckPasswordAsync(user, password))
+        var passwordResult = await VerifyPasswordWithLockoutAsync(user, password);
+        if (passwordResult.IsError)
         {
-            return Error.Conflict("Invalid_Login_Attempt", "Email / Password are incorrect");
+            return passwordResult.Errors;
         }
 
         return new AppUserDto(user.Id, user.Email!, await _userManager.GetRolesAsync(user), await _userManager.GetClaimsAsync(user));
@@ -70,12 +71,36 @@ public class IdentityService(
             return Error.NotFound("User_Not_Found", "User not found");
         }
 
-        if (!await _userManager.CheckPasswordAsync(user, password))
+        var passwordResult = await VerifyPasswordWithLockoutAsync(user, password);
+        if (passwordResult.IsError)
         {
-            return Error.Conflict("Invalid_Login_Attempt", "Username / Password are incorrect");
+            return passwordResult.Errors;
         }
 
         return new AppUserDto(user.Id, user.Email ?? string.Empty, await _userManager.GetRolesAsync(user), await _userManager.GetClaimsAsync(user));
+    }
+
+    /// <summary>
+    /// Verifies a password and maintains Identity's lockout counters.
+    /// <see cref="UserManager{TUser}.CheckPasswordAsync"/> alone never records a failure, so
+    /// configuring <c>options.Lockout</c> without this does nothing at all — admin login
+    /// would stay brute-forceable regardless of the configured attempt limit.
+    /// </summary>
+    private async Task<Result<Success>> VerifyPasswordWithLockoutAsync(AppUser user, string password)
+    {
+        if (await _userManager.IsLockedOutAsync(user))
+        {
+            return Error.Conflict("Account_Locked", "Account is temporarily locked. Try again later.");
+        }
+
+        if (!await _userManager.CheckPasswordAsync(user, password))
+        {
+            await _userManager.AccessFailedAsync(user);
+            return Error.Conflict("Invalid_Login_Attempt", "Username / Password are incorrect");
+        }
+
+        await _userManager.ResetAccessFailedCountAsync(user);
+        return Result.Success;
     }
 
     public async Task<Result<string>> CreateAdminUserAsync(string userName, string email, string password)

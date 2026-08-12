@@ -6,7 +6,10 @@ using Taxi.Domain.Common.Results;
 
 namespace Taxi.Application.Features.Users.Commands.DeleteCurrentUser;
 
-public class DeleteCurrentUserCommandHandler(IAppDbContext context, IUser currentUser)
+public class DeleteCurrentUserCommandHandler(
+    IAppDbContext context,
+    IUser currentUser,
+    ISessionRevoker sessionRevoker)
     : IRequestHandler<DeleteCurrentUserCommand, Result<Success>>
 {
     private readonly IAppDbContext _context = context;
@@ -34,6 +37,9 @@ public class DeleteCurrentUserCommandHandler(IAppDbContext context, IUser curren
         }
 
         await _context.SaveChangesAsync(ct);
+
+        // End every device session so the soft-deleted account cannot keep refreshing.
+        await sessionRevoker.RevokeAllForUserAsync(userGuid.ToString(), ct);
 
         return Result.Success;
     }

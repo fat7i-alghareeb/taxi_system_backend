@@ -105,6 +105,14 @@ public static class TripErrors
         code: LocalizationKeys.Trip.NotOwnedByPassenger,
         description: "This trip does not belong to the current passenger.");
 
+    /// <summary>
+    /// Returned when the caller is neither the trip's passenger, its assigned driver,
+    /// nor an admin. Role membership alone never grants access to a specific trip.
+    /// </summary>
+    public static readonly Error NotATripParticipant = Error.Forbidden(
+        code: LocalizationKeys.Trip.NotParticipant,
+        description: "You are not a participant of this trip.");
+
     public static Error StopNotFound(int sequence) => Error.NotFound(
         code: LocalizationKeys.Trip.StopNotFound,
         description: $"Trip stop with sequence '{sequence}' was not found.");
