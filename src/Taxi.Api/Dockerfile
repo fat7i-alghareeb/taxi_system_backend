@@ -5,6 +5,15 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
+
+# Npgsql P/Invokes into GSSAPI while negotiating authentication with PostgreSQL, and the
+# aspnet runtime image does not ship libgssapi-krb5-2. Without it the process dies at
+# startup with "libgssapi_krb5.so.2: cannot open shared object file".
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Make wwwroot writable for the non-root app user. Individual upload-area folders
 # (photos, chat, documents, ...) are created at runtime by StorageInitializer — no
 # folder needs baking in here. In production a named volume overlays wwwroot and its
