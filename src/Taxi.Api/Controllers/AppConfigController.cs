@@ -2,12 +2,15 @@ using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Taxi.Application.Features.Config.GetAppVersionConfig;
+using Taxi.Application.Features.Config.GetBootstrapConfig;
 using Taxi.Application.Features.Config.GetClientConfig;
 using Taxi.Application.Features.Config.GetCompanyContact;
 using Taxi.Application.Features.Config.GetCurrency;
 using Taxi.Application.Features.Config.GetSupportContact;
 using Taxi.Application.Features.Config.GetTripDiscount;
 using Taxi.Application.Features.Config.GetVatRate;
+using Taxi.Application.Features.Config.UpdateAppVersionConfig;
 using Taxi.Application.Features.Config.UpdateCompanyContact;
 using Taxi.Application.Features.Config.UpdateCurrency;
 using Taxi.Application.Features.Config.UpdateSupportContact;
@@ -168,6 +171,60 @@ public class AppConfigController(ISender sender) : ApiController
         CancellationToken ct)
     {
         var result = await sender.Send(new UpdateSupportContactCommand(request.WhatsApp), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpGet("app-version")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(AppVersionConfigDto), StatusCodes.Status200OK)]
+    [EndpointSummary("Gets the customer app version gate configuration (master switch, per-platform latest/minimum versions and store URLs).")]
+    [EndpointDescription("Consumed by the customer app at bootstrap to decide whether to force an update, suggest one, or do nothing. Anonymous because the check runs before login.")]
+    [EndpointName("GetAppVersionConfig")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetAppVersionConfig(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetAppVersionConfigQuery(), ct);
+        return result.Match(Ok, Problem);
+    }
+
+    // TODO: replace the "Admin" literal with a shared Roles constant once one exists.
+    // Every controller in the solution uses raw role strings today, so introducing the
+    // class here would leave the codebase half-converted; tracked as separate cleanup.
+    [HttpPut("app-version")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(AppVersionConfigDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [EndpointSummary("Updates the customer app version gate configuration.")]
+    [EndpointDescription("A blank version or store URL clears that value and leaves the platform ungated. The minimum required version may not exceed the latest version.")]
+    [EndpointName("UpdateAppVersionConfig")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> UpdateAppVersionConfig(
+        [FromBody] UpdateAppVersionConfigRequest request,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(
+            new UpdateAppVersionConfigCommand(
+                request.Enabled,
+                request.Android?.LatestVersion,
+                request.Android?.MinimumRequiredVersion,
+                request.Android?.StoreUrl,
+                request.Ios?.LatestVersion,
+                request.Ios?.MinimumRequiredVersion,
+                request.Ios?.StoreUrl),
+            ct);
+        return result.Match(Ok, Problem);
+    }
+
+    [HttpGet("bootstrap")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(BootstrapConfigDto), StatusCodes.Status200OK)]
+    [EndpointSummary("Returns the customer app's entire startup payload in one request.")]
+    [EndpointDescription("Combines client config, support contact and the version gate so the app makes one round trip at launch instead of three. The individual endpoints remain available for the admin app.")]
+    [EndpointName("GetBootstrapConfig")]
+    [MapToApiVersion("1.0")]
+    public async Task<IActionResult> GetBootstrapConfig(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetBootstrapConfigQuery(), ct);
         return result.Match(Ok, Problem);
     }
 }

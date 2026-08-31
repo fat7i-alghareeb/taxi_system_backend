@@ -153,10 +153,25 @@ public class ApplicationDbContextInitialiser(
         }
 
         // Company contact details printed in the invoice footer (admin-editable).
-        await SeedCompanyContactAsync(AppConfigKeys.CompanyEmail, "info@fat7i.dev", "Company email shown on invoices.");
-        await SeedCompanyContactAsync(AppConfigKeys.CompanyPhone, "0639550352", "Company phone shown on invoices.");
-        await SeedCompanyContactAsync(AppConfigKeys.CompanyWebsite, "www.fat7i.dev", "Company website shown on invoices.");
-        await SeedCompanyContactAsync(AppConfigKeys.SupportWhatsApp, "+31639550352", "Support WhatsApp number used by the customer app's in-trip 'Report problem' action.");
+        await SeedAppConfigAsync(AppConfigKeys.CompanyEmail, "info@fat7i.dev", "Company email shown on invoices.");
+        await SeedAppConfigAsync(AppConfigKeys.CompanyPhone, "0639550352", "Company phone shown on invoices.");
+        await SeedAppConfigAsync(AppConfigKeys.CompanyWebsite, "www.fat7i.dev", "Company website shown on invoices.");
+        await SeedAppConfigAsync(AppConfigKeys.SupportWhatsApp, "+31639550352", "Support WhatsApp number used by the customer app's in-trip 'Report problem' action.");
+
+        // Remote version gate for the customer app. Seeded OFF: the feature deploys
+        // inert and an admin turns it on deliberately once the values are verified.
+        // The version rows are seeded anyway so enabling is a one-toggle action.
+        await SeedAppConfigAsync(AppConfigKeys.AppUpdateCheckEnabled, "false", "Master switch for the customer app version gate.");
+        await SeedAppConfigAsync(AppConfigKeys.AndroidLatestVersion, "1.0.3", "Latest customer app version published on Google Play.");
+        await SeedAppConfigAsync(AppConfigKeys.AndroidMinimumRequiredVersion, "1.0.0", "Oldest customer app version allowed on Android.");
+        await SeedAppConfigAsync(AppConfigKeys.AndroidStoreUrl, "https://play.google.com/store/apps/details?id=dev.fat7i.customertaxi", "Google Play listing opened by the Android update prompt.");
+        await SeedAppConfigAsync(AppConfigKeys.IosLatestVersion, "1.0.3", "Latest customer app version published on the App Store.");
+        await SeedAppConfigAsync(AppConfigKeys.IosMinimumRequiredVersion, "1.0.0", "Oldest customer app version allowed on iOS.");
+
+        // IosStoreUrl is deliberately NOT seeded: the numeric App Store ID does not
+        // exist anywhere in the repo, the AppConfig invariant forbids seeding "", and
+        // a guessed URL is worse than an absent one. The client fails open on a blank
+        // store URL, so iOS stays ungated until an admin saves the real link.
 
         // 4. Seed admin users
         await SeedAdminAsync(
@@ -202,7 +217,7 @@ public class ApplicationDbContextInitialiser(
         return developmentFallback;
     }
 
-    private async Task SeedCompanyContactAsync(string key, string value, string description)
+    private async Task SeedAppConfigAsync(string key, string value, string description)
     {
         if (await context.AppConfigs.AnyAsync(c => c.Key == key))
         {

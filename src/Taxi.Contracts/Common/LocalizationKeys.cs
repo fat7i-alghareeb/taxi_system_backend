@@ -290,6 +290,12 @@ public static class LocalizationKeys
         public const string KeyRequired = "AppConfig.Key.Required";
         public const string ValueRequired = "AppConfig.Value.Required";
         public const string NotFound = "AppConfig.NotFound";
+
+        // Remote version gate validation.
+        public const string AppVersionEnabledRequired = "AppConfig.AppVersion.EnabledRequired";
+        public const string AppVersionInvalid = "AppConfig.AppVersion.Invalid";
+        public const string AppVersionStoreUrlInvalid = "AppConfig.AppVersion.StoreUrlInvalid";
+        public const string AppVersionMinimumAboveLatest = "AppConfig.AppVersion.MinimumAboveLatest";
     }
 
     public static class Promo

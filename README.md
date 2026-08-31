@@ -105,6 +105,7 @@ Bilingual fields (name, description, etc.) use the `LocalizedText` value object 
 | Webhooks      | `POST /api/webhooks/stripe` — Stripe signature-validated event handler                                         |
 | Refunds       | `GET /api/v1/refunds`, `GET /api/v1/refunds/{id}`, `POST /api/v1/refunds/{id}/retry`                          |
 | Refund issues | `POST /api/v1/trips/{tripId}/refund-issues`, admin review under `/api/v1/refund-issues`                       |
+| App version   | `GET /api/v1/app-config/app-version` (anonymous), `PUT` same route (Admin) — customer app update gate            |
 
 ---
 
@@ -163,6 +164,37 @@ Key `appsettings.json` / User Secrets entries:
 ```
 
 Local dev: `dotnet user-secrets set "Stripe:SecretKey" "sk_test_..."` from `src/Taxi.Api`.
+
+---
+
+## Customer app version gate
+
+`GET /api/v1/app-config/app-version` is read by the customer app at every cold
+start. It returns a master switch plus, per platform, a latest version, a
+minimum required version and a store URL. Below the minimum the app is blocked
+behind a full-screen wall; below the latest it shows a dismissible nudge.
+
+Values live in the existing `AppConfig` key-value table (`AppUpdateCheckEnabled`,
+`Android*`/`Ios*`), are edited from the admin app, and require **no migration**.
+
+Three things that will bite whoever operates this:
+
+1. **It ships inert.** `AppUpdateCheckEnabled` seeds to `"false"`. Nothing
+   happens until an admin turns it on deliberately.
+
+2. **A hotfix must bump `versionName`, not just the build number.** The gate
+   compares the dotted version only, so `1.0.3+7` and `1.0.3+8` are
+   indistinguishable to it. Shipping a fix as a build-number-only bump leaves
+   the fixed build gated exactly like the broken one.
+
+3. **`MinimumRequiredVersion` above `LatestVersion` would lock out every
+   install**, including fully up-to-date ones, with no client-side recovery.
+   The validator rejects that pair outright — do not weaken that rule.
+
+A platform with no store URL is still gated; the app drops the store button and
+tells the user to update manually. This is what makes iOS gatable before the
+numeric App Store ID is known. Leave all of a platform's fields blank to skip
+that platform entirely.
 
 ---
 

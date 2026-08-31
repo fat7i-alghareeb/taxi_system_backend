@@ -17,4 +17,18 @@ public static class AppConfigKeys
 
     // Admin-editable support contact used by the in-trip "Report problem" action.
     public const string SupportWhatsApp = "SupportWhatsApp";
+
+    // Remote version gate for the customer app (Fat7i, dev.fat7i.customertaxi).
+    // The master switch is stored as "true"/"false" because the AppConfig
+    // invariant forbids empty values; a missing or unparseable value reads as
+    // false, so a lost row disables the gate rather than locking users out.
+    // The per-platform values are blank when unconfigured, which the client
+    // treats as "do not gate this platform".
+    public const string AppUpdateCheckEnabled = "AppUpdateCheckEnabled";
+    public const string AndroidLatestVersion = "AndroidLatestVersion";
+    public const string AndroidMinimumRequiredVersion = "AndroidMinimumRequiredVersion";
+    public const string AndroidStoreUrl = "AndroidStoreUrl";
+    public const string IosLatestVersion = "IosLatestVersion";
+    public const string IosMinimumRequiredVersion = "IosMinimumRequiredVersion";
+    public const string IosStoreUrl = "IosStoreUrl";
 }

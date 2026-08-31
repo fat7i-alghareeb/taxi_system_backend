@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Taxi.Application.Common.Interfaces;
 using Taxi.Contracts.Responses.Config;
 using Taxi.Domain.Common.Results;
@@ -7,10 +8,11 @@ using Taxi.Domain.Configuration;
 
 namespace Taxi.Application.Features.Config.UpdateCompanyContact;
 
-public class UpdateCompanyContactCommandHandler(IAppDbContext context)
+public class UpdateCompanyContactCommandHandler(IAppDbContext context, HybridCache cache)
     : IRequestHandler<UpdateCompanyContactCommand, Result<CompanyContactDto>>
 {
     private readonly IAppDbContext _context = context;
+    private readonly HybridCache _cache = cache;
 
     public async Task<Result<CompanyContactDto>> Handle(UpdateCompanyContactCommand request, CancellationToken ct)
     {
@@ -23,6 +25,9 @@ public class UpdateCompanyContactCommandHandler(IAppDbContext context)
         await UpsertAsync(AppConfigKeys.CompanyWebsite, website, "Company website shown on invoices.", ct);
 
         await _context.SaveChangesAsync(ct);
+
+        // Shared with the combined bootstrap payload, which embeds this value.
+        await _cache.RemoveByTagAsync("app-config", ct);
         return new CompanyContactDto(email, phone, website);
     }
 
