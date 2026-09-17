@@ -8,10 +8,13 @@
 
 **Backend for the Fat7i taxi platform — trip lifecycle, payments, wallet, and real-time driver dispatch behind a single Clean Architecture / CQRS service.**
 
-[![.NET](https://img.shields.io/badge/.NET-10-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-EF%20Core-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![MediatR](https://img.shields.io/badge/CQRS-MediatR-FF8C00?style=for-the-badge)](https://github.com/jbogard/MediatR)
+<p>
+  <img src="https://skillicons.dev/icons?i=dotnet,postgres,docker,git,github,githubactions&theme=dark" alt="Tech stack">
+</p>
+<p>
+  <img src="https://img.shields.io/badge/CQRS-MediatR-FF8C00?style=for-the-badge" alt="MediatR">
+  <img src="https://img.shields.io/badge/Architecture-Clean%20Architecture-38D6D6?style=for-the-badge" alt="Architecture">
+</p>
 
 </div>
 
