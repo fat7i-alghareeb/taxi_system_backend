@@ -1,221 +1,194 @@
-# Taxi.Server
+# Fat7i Taxi API
 
-.NET 10 Clean-Architecture taxi backend: CQRS, JWT auth, Stripe payments, real-time SignalR notifications, and a Blazor WebAssembly admin client.
+Backend for the Fat7i taxi platform — trip lifecycle, payments, wallet, and real-time driver dispatch behind a single Clean Architecture / CQRS service.
 
----
+[![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-EF%20Core-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![MediatR](https://img.shields.io/badge/CQRS-MediatR-orange)](https://github.com/jbogard/MediatR)
 
-## Quick start
+## Overview
 
-**Prerequisites**: .NET 10 SDK, Docker Desktop
+This is the API that powers the Fat7i taxi platform: it serves **customertaxi** (the passenger-facing mobile app) and **dashboardtaxi** (the driver/operations app) as separate client applications, plus ships an in-repo Blazor WebAssembly admin console (`Taxi.Client`) for internal operations. The service owns the full trip lifecycle — booking, pricing, driver dispatch, live status via SignalR — alongside payments (Stripe), an internal passenger wallet, PDF invoicing, and backend-owned OTP authentication with SMS/email delivery.
 
-```bash
-# 1. Provision Postgres + Seq
-docker-compose up -d
+It's built as a Clean Architecture solution with a strict CQRS pipeline (MediatR + FluentValidation), designed to run as a small, self-hostable Docker Compose stack behind Caddy.
 
-# 2. Apply migrations as a deployment step
-dotnet ef database update --project src/Taxi.Infrastructure --startup-project src/Taxi.Api
+## Features
 
-# 3. Run the API
-dotnet run --project src/Taxi.Api
+**Trips & Dispatch**
+- 🚕 Full trip state machine — request, pricing quote, driver assignment, live tracking, stops, completion, cancellation
+- 📡 Real-time updates over SignalR (driver assignment, trip status push)
+- 🗺️ Route search, reverse geocoding, and pricing quotes via a Maps integration
+- 📨 In-trip messaging between passenger and driver
+
+**Payments & Money**
+- 💳 Stripe PaymentIntents — fare charged at booking confirmation, not at trip completion, reconciled via signature-validated webhooks
+- 👛 Passenger wallet with balance and transaction history, plus wallet top-ups
+- 🧾 Server-rendered PDF invoices (QuestPDF) per completed trip
+- ↩️ Centralized refund lifecycle — cancellations, compensation claims, and admin-initiated refunds all funnel through one idempotent refund service, with retry and audit trail
+
+**Identity & Auth**
+- 🔐 Backend-owned OTP authentication — phone (SMS), email, and Google Sign-In, each independently verifiable per account
+- 🪪 JWT access tokens + refresh tokens, with session revocation on password reset/logout
+- 👮 Role-based authorization for passengers, drivers, and admins, including a separate admin login and driver document review/approval workflow
+
+**Platform**
+- 🌍 Notifications and backend error messages localized into 9 languages
+- 📱 Remote client version gate (forced update / soft nudge) for the customer app, editable from the admin side with no deploy required
+- 📈 Structured logging (Serilog → Seq) and OpenTelemetry tracing/metrics (Prometheus)
+- 🧯 Audit log of sensitive admin actions
+- 🚨 Customer incident reporting
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Runtime | .NET 10 |
+| API | ASP.NET Core Web API, API versioning, rate limiting, output caching |
+| CQRS | MediatR + FluentValidation pipeline behaviors |
+| Persistence | EF Core 10 on PostgreSQL (Npgsql), JSONB for bilingual/localized fields |
+| Auth | ASP.NET Core Identity + JWT, backend-owned OTP (SMS via CM.com, email via Titan SMTP), Google Sign-In via Firebase Admin SDK |
+| Payments | Stripe.net |
+| Real-time | SignalR |
+| Caching | `Microsoft.Extensions.Caching.Hybrid`, culture-partitioned |
+| PDF generation | QuestPDF |
+| Observability | Serilog + Seq, OpenTelemetry (traces/metrics), Prometheus, Grafana |
+| API docs | Swagger/Swashbuckle + Scalar (dev only) |
+| Admin frontend | Blazor WebAssembly (in-repo, `Taxi.Client`) |
+| Infra | Docker Compose, Caddy (reverse proxy + automatic TLS) |
+
+## Architecture
+
+The solution follows Clean Architecture with a strict inward dependency rule, organized internally as CQRS vertical slices (one folder per feature, under `Features/`, containing its command/query, handler, and validator together).
+
+- **Taxi.Contracts** — the innermost layer: DTOs, request/response shapes, and the centralized `LocalizationKeys` registry. No dependencies of its own.
+- **Taxi.Domain** — aggregates, value objects, domain events, and the `Result<T>` pattern used instead of exceptions for expected business failures.
+- **Taxi.Application** — MediatR command/query handlers, validators, and pipeline behaviors (validation, caching).
+- **Taxi.Infrastructure** — EF Core (`AppDbContext`), ASP.NET Identity, Stripe integration, SignalR hubs, background jobs, and every other implementation of an `Application`-defined interface.
+- **Taxi.Api** — REST controllers, middleware, OpenAPI/Scalar docs, and the composition root that wires everything together.
+- **Taxi.Client** — a Blazor WebAssembly admin console consuming the API's public contracts.
+
+```mermaid
+graph TD
+    Contracts["Taxi.Contracts<br/>DTOs & LocalizationKeys"]
+    Domain["Taxi.Domain<br/>Aggregates, Value Objects, Result&lt;T&gt;"]
+    Application["Taxi.Application<br/>CQRS Handlers (MediatR)"]
+    Infrastructure["Taxi.Infrastructure<br/>EF Core, Identity, Stripe, SignalR"]
+    Client["Taxi.Client<br/>Blazor WebAssembly Admin Console"]
+    Api["Taxi.Api<br/>REST Controllers / Host"]
+
+    Domain --> Contracts
+    Application --> Domain
+    Application --> Contracts
+    Infrastructure --> Application
+    Client --> Contracts
+    Api --> Application
+    Api --> Infrastructure
+    Api --> Client
+    Api --> Contracts
 ```
 
-Default admin credentials: `admin@taxi.com` / `Admin123!`
+Business failures use a functional `Result<T>` instead of thrown exceptions; the API layer maps `Result.Failure` into RFC 7807 `application/problem+json` responses at the boundary, so internal errors never leak upward as stack traces.
 
----
+## API Overview
 
-## Tech stack
+Swagger UI and Scalar are available at `/swagger` and `/scalar` when running in Development. Routes are versioned (`/api/v{version}/...`) and follow a consistent REST-ish naming convention (plural nouns, kebab-case, sub-resources for actions).
 
-|               |                                                                                        |
-| ------------- | -------------------------------------------------------------------------------------- |
-| Runtime       | .NET 10                                                                                |
-| ORM           | EF Core 10 (Npgsql / PostgreSQL) — Code-First, UTC strategy, JSONB for bilingual fields |
-| CQRS          | MediatR + FluentValidation pipeline behaviors                                          |
-| Auth          | ASP.NET Identity + JWT + refresh tokens                                                |
-| Payments      | Stripe.net — PaymentIntent + webhook handler                                           |
-| Real-time     | SignalR (driver assignment, trip status push)                                          |
-| Observability | Serilog → Seq, OpenTelemetry (traces + metrics)                                        |
-| Caching       | Hybrid Cache (multi-tier, culture-partitioned)                                         |
-| Admin client  | Blazor WebAssembly                                                                     |
-| API docs      | Scalar + Swagger (OpenAPI)                                                             |
+| Area | Controllers | Responsibility |
+|---|---|---|
+| Auth & Identity | `AuthController`, `IdentityController`, `AdminsController`, `UsersController` | OTP/Google sign-up & login, sessions, current-user profile, admin accounts |
+| Trips | `TripsController`, `TripMessagesController` | Booking, pricing quotes, driver assignment, trip lifecycle, in-trip chat |
+| Drivers & Vehicles | `DriversController`, `DriverDocumentsController`, `VehicleTypesController` | Driver management, KYC document review/approval, vehicle types |
+| Payments & Wallet | `PaymentMethodsController`, `PaymentPreferencesController`, `WalletController`, `RefundsController`, `RefundIssuesController`, `WebhooksController` | Saved payment methods, passenger wallet, refund lifecycle, Stripe webhook intake |
+| Support | `CustomerIncidentsController`, `NotificationsController` | Incident reporting, push/notification management |
+| Platform | `AppConfigController`, `AuditLogsController`, `MapsController`, `UploadsController` | Client config & version gate, admin audit trail, maps/geocoding proxy, file uploads |
 
----
+## Project Structure
 
-## Solution layout
-
-```
+```text
 src/
 ├── Taxi.Domain          # Aggregates, Value Objects, Domain Events, Result<T>
 ├── Taxi.Contracts       # DTOs, Requests, Responses, LocalizationKeys
-├── Taxi.Application     # CQRS handlers (Vertical Slices), validators, mappers
-├── Taxi.Infrastructure  # EF Core, Identity, Stripe, SignalR, Background Jobs
-├── Taxi.Api             # REST Controllers, middleware, OpenAPI, host
-└── Taxi.Client          # Blazor WebAssembly admin frontend
+├── Taxi.Application     # CQRS handlers (vertical slices), validators, pipeline behaviors
+├── Taxi.Infrastructure  # EF Core, Identity, Stripe, SignalR, background jobs
+├── Taxi.Api             # REST controllers, middleware, OpenAPI, composition root
+└── Taxi.Client          # Blazor WebAssembly admin console
 tests/
-├── Taxi.Domain.Tests
-├── Taxi.Application.Tests
+├── Taxi.Domain.UnitTests
+├── Taxi.Application.UnitTests
 ├── Taxi.Api.IntegrationTests
 ├── Taxi.Api.EndToEndTests
-└── Taxi.Testing         # Shared fixtures, builders, DbSet mocks
+└── Taxi.Testing          # Shared fixtures, builders, test doubles
 ```
 
-Dependencies flow strictly inward: `Api → Application → Domain ← Contracts ← Infrastructure`.
+## Getting Started
 
----
+### Prerequisites
 
-## Domain at a glance
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- [Docker](https://www.docker.com/) + Docker Compose
 
-**Aggregates**: User, Driver, Trip, Vehicle, VehicleType, Payment, PricingQuote, PromoCode, PassengerPaymentMethod, AppConfig, AuditLog, Notification, RefreshToken.
+### Clone
 
-**Trip state machine**
-
-```
-AwaitingPayment → PendingDriver (or Scheduled)
-PendingDriver   → DriverAssigned → Started → Completed
-                                             → Cancelled
-                → PaymentFailed
-                → Cancelled
-Completed       → Refunded
+```bash
+git clone git@github.com:fat7i-alghareeb/taxi_system_backend.git
+cd taxi_system_backend
 ```
 
-**Payment state machine**
+### Configure
 
-```
-Pending → Completed
-        → Failed
-        → Refunded
-```
+Copy the example environment file and fill in your own values — never commit a real `.env`:
 
-Bilingual fields (name, description, etc.) use the `LocalizedText` value object stored as JSONB. Raw `string` properties for translatable text are forbidden.
-
----
-
-## API endpoints
-
-| Group         | Routes                                                                                                         |
-| ------------- | -------------------------------------------------------------------------------------------------------------- |
-| Auth          | `POST /api/auth/login`, `POST /api/auth/refresh`, `POST /api/auth/revoke`                                      |
-| Identity      | `GET/PUT /api/identity/me`, `POST /api/identity/change-password`                                               |
-| Trips         | `POST /api/trips`, `GET /api/trips`, `GET /api/trips/{id}`, `POST /api/trips/{id}/cancel`                      |
-| Drivers       | `GET /api/drivers`, `POST /api/drivers`, `PUT /api/drivers/{id}`, `PATCH /api/drivers/{id}/status`             |
-| Vehicles      | CRUD under `/api/vehicles`                                                                                     |
-| Vehicle types | CRUD under `/api/vehicle-types`                                                                                |
-| Users         | `GET /api/users`, `GET /api/users/{id}`, `DELETE /api/users/{id}`                                              |
-| Maps          | `GET /api/maps/search`, `GET /api/maps/reverse-geocode`, `GET /api/maps/route`, `GET /api/maps/pricing-quotes` |
-| Config        | `GET /api/config` — returns `ClientConfigResponse` (includes `stripeEnabled` flag)                             |
-| Webhooks      | `POST /api/webhooks/stripe` — Stripe signature-validated event handler                                         |
-| Refunds       | `GET /api/v1/refunds`, `GET /api/v1/refunds/{id}`, `POST /api/v1/refunds/{id}/retry`                          |
-| Refund issues | `POST /api/v1/trips/{tripId}/refund-issues`, admin review under `/api/v1/refund-issues`                       |
-| App version   | `GET /api/v1/app-config/app-version` (anonymous), `PUT` same route (Admin) — customer app update gate            |
-
----
-
-## Stripe integration
-
-Fare charging happens at booking confirmation, not at trip completion.
-
-1. **RequestTripCommandHandler** reads `ClientConfig.StripeEnabled`. If enabled, it creates a `Payment` aggregate and calls `IStripePaymentService.CreatePaymentIntentAsync`. The response includes `clientSecret` + `publishableKey` — returned to the Flutter app, which presents the Payment Sheet.
-
-2. **Webhook handler** (`POST /api/webhooks/stripe`) is `[AllowAnonymous]`; authentication is the `Stripe-Signature` header validated by `IStripeWebhookValidator`. Payment and refund events are handled:
-
-   | Event                           | Effect                                                        |
-   | ------------------------------- | ------------------------------------------------------------- |
-   | `payment_intent.succeeded`      | Payment → Completed; Trip → confirms payment + assigns driver |
-   | `payment_intent.payment_failed` | Payment → Failed; Trip → PaymentFailed                        |
-   | `payment_intent.canceled`       | Payment → Failed; Trip → PaymentFailed                        |
-   | `refund.created`                | PaymentRefund → Pending                                       |
-   | `refund.updated`                | PaymentRefund → Pending/Succeeded/Failed                      |
-   | `refund.failed`                 | PaymentRefund → Failed; admins are notified                   |
-   | `charge.refunded`               | Compatibility only; full-payment state is recalculated        |
-
-   All handlers are idempotent — re-delivered webhooks short-circuit when state already matches. Unknown event types return HTTP 200 so Stripe does not retry.
-
-For the full Stripe architecture see [ARCHITECTURE.md — Stripe Payment Architecture](ARCHITECTURE.md#stripe-payment-architecture).
-
----
-
-## Refund lifecycle
-
-Refund execution is centralized in `IRefundLifecycleService`. Cancellation handlers, compensation approval, manual incident refunds, and admin retry submit refund requests to this service; customer refund issue requests create support/review records only and never call Stripe.
-
-The durable source of truth is `PaymentRefunds`. Each record stores the payment/trip links, amount, currency, percent/full-refund flags, Stripe refund identifiers, idempotency key, attempt count, status, retry eligibility, and safe customer failure text. `Payment.Status` is set to `Refunded` only when successful refunds equal the captured payment amount; partial refunds and compensation refunds do not mark the full payment as refunded.
-
-Stripe refund status is tracked by `refund.created`, `refund.updated`, and `refund.failed` webhooks. Immediate Stripe rejection is stored as a failed `PaymentRefund`; later Stripe failure is detected from webhook events and also stored. Admins receive localized push notifications for refund failures, refund issue submissions, and retry results. SignalR broadcasts `RefundLifecycleChanged` to admins and related passenger/trip groups, and `RefundIssueCreated` to admins so dashboards can refresh live.
-
-Local development can force a realistic failed refund with `Stripe:ForceRefundFailure`; production ignores/rejects this mode through the refund processing options provider.
-
----
-
-## Configuration
-
-Key `appsettings.json` / User Secrets entries:
-
-```json
-{
-  "ConnectionStrings": { "Default": "..." },
-  "Jwt": { "Secret": "...", "Issuer": "...", "Audience": "..." },
-  "Stripe": {
-    "SecretKey": "sk_test_...",
-    "PublishableKey": "pk_test_...",
-    "WebhookSecret": "whsec_...",
-    "TestMode": true
-  },
-  "FeatureFlags": { "StripeEnabled": true }
-}
+```bash
+cp .env.example .env
 ```
 
-Local dev: `dotnet user-secrets set "Stripe:SecretKey" "sk_test_..."` from `src/Taxi.Api`.
+`.env.example` documents every category a self-hoster needs:
 
----
+- **Database** — PostgreSQL user/password, whether migrations apply on startup
+- **JWT** — signing secret
+- **Admin seeding** — passwords for the two bootstrap admin accounts (required outside Development; seeding refuses to start without them)
+- **Google Maps** — Places/Directions API key
+- **Firebase** — service-account credentials, used for Google Sign-In token verification
+- **Stripe** — secret/publishable keys, webhook secret, test-mode flag
+- **Invoicing** — issuer name/address/VAT number printed on generated PDFs
+- **OTP policy** — code length, expiry, resend cooldown, HMAC hash secret
+- **CM.com** — SMS gateway product token (phone OTP delivery)
+- **Titan.email** — SMTP credentials (email OTP delivery)
+- **Observability** — Grafana admin password
 
-## Customer app version gate
+### Run locally
 
-`GET /api/v1/app-config/app-version` is read by the customer app at every cold
-start. It returns a master switch plus, per platform, a latest version, a
-minimum required version and a store URL. Below the minimum the app is blocked
-behind a full-screen wall; below the latest it shows a dismissible nudge.
+With Docker Compose (Postgres, Seq, Prometheus, Grafana, and the API):
 
-Values live in the existing `AppConfig` key-value table (`AppUpdateCheckEnabled`,
-`Android*`/`Ios*`), are edited from the admin app, and require **no migration**.
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+```
 
-Three things that will bite whoever operates this:
+Or run just the infrastructure in containers and the API from your IDE:
 
-1. **It ships inert.** `AppUpdateCheckEnabled` seeds to `"false"`. Nothing
-   happens until an admin turns it on deliberately.
+```bash
+docker compose up -d                 # Postgres + Seq only
+dotnet ef database update --project src/Taxi.Infrastructure --startup-project src/Taxi.Api
+dotnet run --project src/Taxi.Api
+```
 
-2. **A hotfix must bump `versionName`, not just the build number.** The gate
-   compares the dotted version only, so `1.0.3+7` and `1.0.3+8` are
-   indistinguishable to it. Shipping a fix as a build-number-only bump leaves
-   the fixed build gated exactly like the broken one.
+A production layout (Caddy reverse proxy with automatic TLS, locked-down ports, explicit migration step) is documented in [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
-3. **`MinimumRequiredVersion` above `LatestVersion` would lock out every
-   install**, including fully up-to-date ones, with no client-side recovery.
-   The validator rejects that pair outright — do not weaken that rule.
-
-A platform with no store URL is still gated; the app drops the store button and
-tells the user to update manually. This is what makes iOS gatable before the
-numeric App Store ID is known. Leave all of a platform's fields blank to skip
-that platform entirely.
-
----
-
-## Testing
+### Run tests
 
 ```bash
 dotnet test
 ```
 
-Five test projects: Domain unit tests, Application unit tests (includes Stripe path: webhook handler + request-trip handler), API integration tests, API end-to-end tests, shared Testing helpers.
+Coverage spans domain unit tests (aggregates, value objects, state machines), application unit tests (CQRS handlers including the Stripe and wallet flows), and API-level integration/end-to-end tests (auth, drivers, wallet, SignalR hubs).
 
----
+## Supported Languages
 
-## Further reading
+Backend-driven notification and error-message strings are localized into 9 languages:
 
-| Document                                                                                       | What it covers                                                                    |
-| ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| [ARCHITECTURE.md](ARCHITECTURE.md)                                                             | Layer constitution, CQRS philosophy, Golden Workflow, Stripe payment architecture |
-| [Domain_Layer_Blueprint.md](src/Taxi.Domain/Domain_Layer_Blueprint.md)                         | Aggregate rules, Value Objects, Domain Events                                     |
-| [Application_Layer_Blueprint.md](src/Taxi.Application/Application_Layer_Blueprint.md)          | CQRS handler patterns, pipeline behaviors                                         |
-| [Infrastructure_Layer_Blueprint.md](src/Taxi.Infrastructure/Infrastructure_Layer_Blueprint.md) | EF Core, Identity, JSONB, background jobs                                         |
-| [Api_Layer_Blueprint.md](src/Taxi.Api/Api_Layer_Blueprint.md)                                  | Controller patterns, Result → ProblemDetails mapping                              |
-| [Contracts_Layer_Blueprint.md](src/Taxi.Contracts/Contracts_Layer_Blueprint.md)                | DTO rules, LocalizationKeys registry                                              |
-| [Client_Layer_Blueprint.md](src/Taxi.Client/Client_Layer_Blueprint.md)                         | Blazor auth state, hub client, token refresh                                      |
+Arabic (ar) · German (de) · English (en) · Spanish (es) · French (fr) · Dutch (nl) · Polish (pl) · Romanian (ro) · Ukrainian (uk)
+
+## Contributing
+
+This is currently a portfolio/product project maintained by a single team. Issues and pull requests are welcome — please open an issue to discuss significant changes before submitting a PR.
