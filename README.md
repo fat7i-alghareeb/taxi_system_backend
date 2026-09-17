@@ -19,8 +19,14 @@
 </div>
 
 <div align="center">
+  <img src=".github/assets/stats.png" alt="Project highlights" width="100%">
+</div>
+
+<div align="center">
 
 [Overview](#overview) ·
+[How It Works](#how-it-works) ·
+[Engineering Highlights](#engineering-highlights) ·
 [Features](#features) ·
 [Tech Stack](#tech-stack) ·
 [Architecture](#architecture) ·
@@ -31,7 +37,7 @@
 
 </div>
 
----
+<div align="center"><img src=".github/assets/divider.png" alt="" width="100%" height="6"></div>
 
 ## Overview
 
@@ -39,7 +45,29 @@ This is the API that powers the Fat7i taxi platform: it serves **customertaxi** 
 
 It's built as a Clean Architecture solution with a strict CQRS pipeline (MediatR + FluentValidation), designed to run as a small, self-hostable Docker Compose stack behind Caddy.
 
----
+<div align="center"><img src=".github/assets/divider.png" alt="" width="100%" height="6"></div>
+
+## How It Works
+
+<div align="center">
+  <img src=".github/assets/how-it-works.png" alt="Request, handle, respond" width="100%">
+</div>
+
+<div align="center"><img src=".github/assets/divider.png" alt="" width="100%" height="6"></div>
+
+## Engineering Highlights
+
+What makes this codebase worth a closer look:
+
+- 🧩 **Functional error handling** — a `Result<T>` pattern replaces exceptions for expected business failures, mapped to RFC 7807 `application/problem+json` at the API boundary, so internals never leak as stack traces.
+- 💳 **Real payment integrity** — Stripe PaymentIntents charged at booking confirmation, reconciled via signature-validated webhooks, with a centralized, idempotent refund service shared by cancellations, compensation claims, and admin-initiated refunds.
+- 📡 **Real-time dispatch (SignalR)** — driver assignment and trip-status changes pushed live, not polled.
+- 🔐 **Backend-owned OTP security** — HMAC-hashed codes, configurable expiry/resend cooldown, independent SMS/email/Google verification per account.
+- 📊 **Real observability, not just logs** — structured logging (Serilog → Seq) plus OpenTelemetry traces/metrics exported to Prometheus/Grafana.
+- 🧪 **Tested across every layer** — domain unit tests (aggregates, state machines), application unit tests (CQRS handlers incl. Stripe/wallet flows), and API integration/end-to-end tests.
+- 🌍 **Localization at the API layer** — notification and error strings served in 9 languages, not just translated client-side.
+
+<div align="center"><img src=".github/assets/divider.png" alt="" width="100%" height="6"></div>
 
 ## Features
 
@@ -67,7 +95,7 @@ It's built as a Clean Architecture solution with a strict CQRS pipeline (MediatR
 - 🧯 Audit log of sensitive admin actions
 - 🚨 Customer incident reporting
 
----
+<div align="center"><img src=".github/assets/divider.png" alt="" width="100%" height="6"></div>
 
 ## Tech Stack
 
@@ -87,7 +115,7 @@ It's built as a Clean Architecture solution with a strict CQRS pipeline (MediatR
 | Admin frontend | Blazor WebAssembly (in-repo, `Taxi.Client`) |
 | Infra | Docker Compose, Caddy (reverse proxy + automatic TLS) |
 
----
+<div align="center"><img src=".github/assets/divider.png" alt="" width="100%" height="6"></div>
 
 ## Architecture
 
@@ -122,7 +150,30 @@ graph TD
 
 Business failures use a functional `Result<T>` instead of thrown exceptions; the API layer maps `Result.Failure` into RFC 7807 `application/problem+json` responses at the boundary, so internal errors never leak upward as stack traces.
 
----
+**Invoice generation**, as a concrete example of the request lifecycle:
+
+```mermaid
+sequenceDiagram
+    participant Client as customertaxi
+    participant Api as TripsController
+    participant Mediatr as MediatR
+    participant Handler as GetTripInvoicePdfQueryHandler
+    participant Renderer as InvoicePdfRenderer (QuestPDF)
+    participant Db as PostgreSQL
+
+    Client->>Api: GET /api/trips/{id}/invoice
+    Api->>Mediatr: Send(GetTripInvoicePdfQuery)
+    Mediatr->>Handler: Handle()
+    Handler->>Db: Load trip, issuer config, localized copy
+    Db-->>Handler: Trip + config data
+    Handler->>Renderer: Render(trip, issuer)
+    Renderer-->>Handler: PDF bytes
+    Handler-->>Mediatr: Result<byte[]>
+    Mediatr-->>Api: PDF bytes
+    Api-->>Client: 200 OK (application/pdf)
+```
+
+<div align="center"><img src=".github/assets/divider.png" alt="" width="100%" height="6"></div>
 
 ## API Overview
 
@@ -137,7 +188,7 @@ Swagger UI and Scalar are available at `/swagger` and `/scalar` when running in 
 | Support | `CustomerIncidentsController`, `NotificationsController` | Incident reporting, push/notification management |
 | Platform | `AppConfigController`, `AuditLogsController`, `MapsController`, `UploadsController` | Client config & version gate, admin audit trail, maps/geocoding proxy, file uploads |
 
----
+<div align="center"><img src=".github/assets/divider.png" alt="" width="100%" height="6"></div>
 
 ## Project Structure
 
@@ -162,7 +213,7 @@ tests/
 
 </details>
 
----
+<div align="center"><img src=".github/assets/divider.png" alt="" width="100%" height="6"></div>
 
 ## Getting Started
 
@@ -229,7 +280,7 @@ dotnet test
 
 Coverage spans domain unit tests (aggregates, value objects, state machines), application unit tests (CQRS handlers including the Stripe and wallet flows), and API-level integration/end-to-end tests (auth, drivers, wallet, SignalR hubs).
 
----
+<div align="center"><img src=".github/assets/divider.png" alt="" width="100%" height="6"></div>
 
 ## Supported Languages
 
@@ -237,7 +288,7 @@ Backend-driven notification and error-message strings are localized into 9 langu
 
 Arabic (ar) · German (de) · English (en) · Spanish (es) · French (fr) · Dutch (nl) · Polish (pl) · Romanian (ro) · Ukrainian (uk)
 
----
+<div align="center"><img src=".github/assets/divider.png" alt="" width="100%" height="6"></div>
 
 ## Contributing
 
