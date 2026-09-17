@@ -1,17 +1,42 @@
+<div align="center">
+  <img src=".github/assets/banner.png" alt="Fat7i Taxi Backend" width="100%">
+</div>
+
+<div align="center">
+
 # Fat7i Taxi API
 
-Backend for the Fat7i taxi platform — trip lifecycle, payments, wallet, and real-time driver dispatch behind a single Clean Architecture / CQRS service.
+**Backend for the Fat7i taxi platform — trip lifecycle, payments, wallet, and real-time driver dispatch behind a single Clean Architecture / CQRS service.**
 
-[![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-EF%20Core-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![MediatR](https://img.shields.io/badge/CQRS-MediatR-orange)](https://github.com/jbogard/MediatR)
+[![.NET](https://img.shields.io/badge/.NET-10-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-EF%20Core-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![MediatR](https://img.shields.io/badge/CQRS-MediatR-FF8C00?style=for-the-badge)](https://github.com/jbogard/MediatR)
+
+</div>
+
+<div align="center">
+
+[Overview](#overview) ·
+[Features](#features) ·
+[Tech Stack](#tech-stack) ·
+[Architecture](#architecture) ·
+[API Overview](#api-overview) ·
+[Project Structure](#project-structure) ·
+[Getting Started](#getting-started) ·
+[Languages](#supported-languages)
+
+</div>
+
+---
 
 ## Overview
 
 This is the API that powers the Fat7i taxi platform: it serves **customertaxi** (the passenger-facing mobile app) and **dashboardtaxi** (the driver/operations app) as separate client applications, plus ships an in-repo Blazor WebAssembly admin console (`Taxi.Client`) for internal operations. The service owns the full trip lifecycle — booking, pricing, driver dispatch, live status via SignalR — alongside payments (Stripe), an internal passenger wallet, PDF invoicing, and backend-owned OTP authentication with SMS/email delivery.
 
 It's built as a Clean Architecture solution with a strict CQRS pipeline (MediatR + FluentValidation), designed to run as a small, self-hostable Docker Compose stack behind Caddy.
+
+---
 
 ## Features
 
@@ -39,6 +64,8 @@ It's built as a Clean Architecture solution with a strict CQRS pipeline (MediatR
 - 🧯 Audit log of sensitive admin actions
 - 🚨 Customer incident reporting
 
+---
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -56,6 +83,8 @@ It's built as a Clean Architecture solution with a strict CQRS pipeline (MediatR
 | API docs | Swagger/Swashbuckle + Scalar (dev only) |
 | Admin frontend | Blazor WebAssembly (in-repo, `Taxi.Client`) |
 | Infra | Docker Compose, Caddy (reverse proxy + automatic TLS) |
+
+---
 
 ## Architecture
 
@@ -90,9 +119,11 @@ graph TD
 
 Business failures use a functional `Result<T>` instead of thrown exceptions; the API layer maps `Result.Failure` into RFC 7807 `application/problem+json` responses at the boundary, so internal errors never leak upward as stack traces.
 
+---
+
 ## API Overview
 
-Swagger UI and Scalar are available at `/swagger` and `/scalar` when running in Development. Routes are versioned (`/api/v{version}/...`) and follow a consistent REST-ish naming convention (plural nouns, kebab-case, sub-resources for actions).
+Swagger UI and Scalar are available at `/swagger` and `/scalar` when running in Development. Routes are versioned (`/api/v{version}/...`) and follow a consistent REST-ish naming convention (plural nouns, kebab-case, sub-resources for actions). Controllers are grouped below by functional area:
 
 | Area | Controllers | Responsibility |
 |---|---|---|
@@ -103,7 +134,12 @@ Swagger UI and Scalar are available at `/swagger` and `/scalar` when running in 
 | Support | `CustomerIncidentsController`, `NotificationsController` | Incident reporting, push/notification management |
 | Platform | `AppConfigController`, `AuditLogsController`, `MapsController`, `UploadsController` | Client config & version gate, admin audit trail, maps/geocoding proxy, file uploads |
 
+---
+
 ## Project Structure
+
+<details>
+<summary><b>Solution layout (src/ and tests/)</b></summary>
 
 ```text
 src/
@@ -120,6 +156,10 @@ tests/
 ├── Taxi.Api.EndToEndTests
 └── Taxi.Testing          # Shared fixtures, builders, test doubles
 ```
+
+</details>
+
+---
 
 ## Getting Started
 
@@ -143,7 +183,8 @@ Copy the example environment file and fill in your own values — never commit a
 cp .env.example .env
 ```
 
-`.env.example` documents every category a self-hoster needs:
+<details>
+<summary><b>What <code>.env.example</code> documents</b></summary>
 
 - **Database** — PostgreSQL user/password, whether migrations apply on startup
 - **JWT** — signing secret
@@ -156,6 +197,8 @@ cp .env.example .env
 - **CM.com** — SMS gateway product token (phone OTP delivery)
 - **Titan.email** — SMTP credentials (email OTP delivery)
 - **Observability** — Grafana admin password
+
+</details>
 
 ### Run locally
 
@@ -183,12 +226,26 @@ dotnet test
 
 Coverage spans domain unit tests (aggregates, value objects, state machines), application unit tests (CQRS handlers including the Stripe and wallet flows), and API-level integration/end-to-end tests (auth, drivers, wallet, SignalR hubs).
 
+---
+
 ## Supported Languages
 
 Backend-driven notification and error-message strings are localized into 9 languages:
 
 Arabic (ar) · German (de) · English (en) · Spanish (es) · French (fr) · Dutch (nl) · Polish (pl) · Romanian (ro) · Ukrainian (uk)
 
+---
+
 ## Contributing
 
 This is currently a portfolio/product project maintained by a single team. Issues and pull requests are welcome — please open an issue to discuss significant changes before submitting a PR.
+
+---
+
+<div align="center">
+
+Built by [Fat7i](https://github.com/fat7i-alghareeb)
+
+[⬆ Back to top](#fat7i-taxi-api)
+
+</div>
