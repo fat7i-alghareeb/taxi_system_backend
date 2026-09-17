@@ -51,7 +51,7 @@ Otp__ReviewBypassCode=                              # optional — fixed code fo
 # --- CM.com SMS ---
 Sms__CmCom__BaseUrl=https://gw.messaging.cm.com/
 Sms__CmCom__ProductToken=<cm-product-token>        # REQUIRED
-Sms__CmCom__Sender=Fat7i                       # sender name / originator
+Sms__CmCom__Sender=Fat7i                            # sender name / originator
 
 # --- Titan.email SMTP ---
 Email__Titan__Host=smtp.titan.email
